@@ -87,6 +87,13 @@
       <!-- LEFT: Catalog & Settings -->
       <section class="card">
         <h2>Garment Catalog</h2>
+        <label class="pill" style="display:inline-flex;align-items:center;gap:8px;margin-top:6px">
+  Source:
+  <select id="sourceSelect">
+    <option value="sheet">Google Sheet</option>
+    <option value="ssaw">S&S API</option>
+  </select>
+</label>
         <div class="sub">Search styles by brand, style #, or keyword. Click a result to add sizes & quantities.</div>
         <div class="row" style="margin-top:10px">
           <div class="field" style="flex:2">
@@ -482,7 +489,7 @@ export default async function handler(req, res){
   }
 
   // ---------- Search (Demo or Proxy) ----------
-  async function search(){
+  /*async function search(){
     const q = $('#searchInput').value.trim();
     const pf = $('#priceField').value; state.settings.priceField = pf;
     if(!q){ renderResults([]); return; }
@@ -503,7 +510,78 @@ export default async function handler(req, res){
       renderResults([]);
       $('#corsWarning').style.display='block';
     }
+  }*/
+const onSearch = debounce(async function(){
+  const qEl = document.getElementById('searchInput');
+  const src = document.getElementById('sourceSelect')?.value || 'sheet';
+  const q = (qEl?.value||'').trim();
+  if(!q){ renderResults(state.catalog); return; }
+  document.getElementById('loadStatus').style.display='block';
+  document.getElementById('loadStatus').innerHTML = src==='ssaw' ? 'Searching S&S…' : 'Searching Sheet…';
+  try{
+    if(src==='ssaw'){
+      const rows = await ssawFindByStyle(q);
+      state.catalog = rows;
+      state.columns = Object.keys(rows[0]||{});
+      renderResults(rows);
+    } else {
+      // existing local filter against already-loaded Sheet rows
+      const filtered = state.catalog.filter(row=> Object.values(row).some(v => String(v).toLowerCase().includes(q.toLowerCase())) );
+      renderResults(filtered);
+    }
+  }catch(err){
+    document.getElementById('loadStatus').innerHTML = 'Error: '+err.message;
   }
+}, 400);
+
+function searchCatalog(){ onSearch(); }
+// Also trigger on typing
+const _si = document.getElementById('searchInput');
+_si && _si.addEventListener('input', onSearch);
+  async function ssawFindByStyle(q, opts = {}) {
+  const params = new URLSearchParams({
+    path: 'products',
+    style: q, // accepts StyleID, PartNumber, or "BrandName Name"
+    // keep payload small and include mockup images
+    fields: [
+      'sku','styleID','brandName','styleName','colorName','sizeName','qty',
+      'customerPrice','salePrice','piecePrice',
+      'colorFrontImage','colorBackImage'
+    ].join(','),
+    ...opts
+  });
+  const r = await fetch(`/api/ssaw?${params}`);
+  if (!r.ok) throw new Error(`S&S error ${r.status}`);
+  return r.json();
+}
+
+    async function searchCatalog() {
+  const q = document.getElementById('searchInput').value.trim();
+  if (!q) return;
+  const rows = await ssawFindByStyle(q);
+  // rows already include colorFrontImage/colorBackImage as full URLs
+  state.catalog = rows;
+  state.columns = Object.keys(rows[0] || {});
+  renderResults(rows);
+}
+
+    // --- Debounce so you don't blow through 60 req/min
+function debounce(fn, delay=350){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),delay); } }
+
+// --- S&S finder (via your /api/ssaw proxy)
+async function ssawFindByStyle(q, extra={}){
+  const params = new URLSearchParams({
+    path:'products', style:q,
+    fields:[
+      'sku','styleID','brandName','styleName','colorName','sizeName','qty',
+      'customerPrice','salePrice','piecePrice','colorFrontImage','colorBackImage'
+    ].join(',')
+  });
+  for (const [k,v] of Object.entries(extra||{})) params.set(k, v);
+  const r = await fetch(`/api/ssaw?${params}`);
+  if(!r.ok) throw new Error(`S&S error ${r.status}`);
+  return r.json();
+}
 
   // ---------- Export: PDF / Email / Share ----------
   async function exportPDF(){
@@ -849,24 +927,6 @@ export default async function handler(req, res){
     populateLines(); fitCanvas(); draw();
   })();
 
-</script>
-  <script>
-async function ssawFindByStyle(q) {
-  const params = new URLSearchParams({
-    path: 'products',
-    // "style" accepts StyleID, PartNumber, or "BrandName Name" strings
-    style: q,
-    // keep payload small and include mockup images
-    fields: [
-      'sku','styleID','brandName','styleName','colorName','sizeName','qty',
-      'customerPrice','salePrice','piecePrice',
-      'colorFrontImage','colorBackImage'
-    ].join(',')
-  });
-  const r = await fetch(`/api/ssaw?${params}`);
-  if (!r.ok) throw new Error(`S&S error ${r.status}`);
-  return r.json();
-}
 </script>
 </body>
 </html>
