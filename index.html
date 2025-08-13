@@ -41,7 +41,7 @@
     input:focus,select:focus,textarea:focus{border-color:rgb(var(--ring));box-shadow:0 0 0 3px rgba(var(--ring)/.15)}
     label{font-size:12px;color:rgb(var(--muted))}
     .field{display:grid;gap:6px;flex:1;min-width:120px}
-    .list{display:block;gap:10px;overflow:scroll}
+    .list{display:block;gap:10px}
     .pill{padding:4px 10px;border-radius:999px;background:rgb(var(--bg));border:1px solid rgba(0,0,0,.08);font-size:12px}
     .table{width:100%;border-collapse:collapse}
     .table th,.table td{padding:10px;border-bottom:1px solid rgba(0,0,0,.06);text-align:left}
@@ -65,7 +65,7 @@
     .accent{color:rgb(var(--brand))}
     .kv{display:grid;grid-template-columns:140px 1fr;gap:6px;font-size:12px}
     .kv div{padding:4px 8px;border:1px solid rgba(0,0,0,.06);border-radius:8px;background:rgb(var(--bg))}
-    #results{height:40vh;}
+    #results{max-height: 55vh;overflow: scroll;}
   </style>
 </head>
 <body>
