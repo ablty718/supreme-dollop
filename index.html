@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Apparel Quote Builder — DTF & Screen Print (Sheet + S&S)</title>
+  <title>Apparel Quote Builder — DTF, Screen Print (Sheet + SS)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -22,7 +22,7 @@
     *{box-sizing:border-box}
     html,body{margin:0;height:100%;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:rgb(var(--text));}
     body{background:linear-gradient(135deg, rgba(var(--brand)/0.06), rgba(var(--brand-2)/0.06)), rgb(var(--bg));}
-    .container{max-width:1200px;margin-inline:auto;padding:24px;}
+    .container{max-width:100%;margin-inline:auto;padding:24px;}
     header{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:16px}
     .brand{display:flex;gap:12px;align-items:center}
     .logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(145deg, rgba(var(--brand)/.9), rgba(var(--brand-2)/.9));box-shadow:0 8px 30px rgba(0,0,0,.12)}
@@ -32,7 +32,7 @@
     .btn.primary{background:linear-gradient(90deg, rgba(var(--brand)/.95), rgba(var(--brand-2)/.95));color:white;border-color:transparent}
     .btn.ghost{background:transparent;border-color:rgba(0,0,0,.12)}
     .grid{display:grid;grid-template-columns:1fr;gap:16px}
-    @media(min-width:1000px){.grid{grid-template-columns:420px 1fr}}
+    @media(min-width:1000px){.grid{grid-template-columns:50% 1fr}}
     .card{background:rgb(var(--card));border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:16px;box-shadow:0 8px 30px rgba(0,0,0,.04)}
     .card h2{margin:0 0 8px;font-size:18px}
     .sub{color:rgb(var(--muted));font-size:12px}
@@ -51,6 +51,7 @@
     .divider{height:1px;background:linear-gradient(90deg,rgba(0,0,0,.06),transparent)}
     .chip{font-size:11px;padding:4px 8px;border-radius:999px;background:rgba(var(--brand)/.12);color:rgb(var(--brand));font-weight:700}
     .badge{font-size:11px;padding:4px 8px;border-radius:999px;background:rgba(var(--ok)/.12);color:rgb(var(--ok));font-weight:700}
+    details code{display:block;background:#0f172a;color:#e5e7eb;padding:12px;border-radius:12px;overflow:auto;font-size:12px}
     .stickyActions{position:sticky;bottom:0;display:flex;gap:8px;background:linear-gradient(180deg, transparent, rgba(255,255,255,.9));padding-top:12px}
     .totals{display:grid;grid-template-columns:1fr auto; gap:8px;padding:8px;border-radius:12px;background:rgb(var(--bg));border:1px dashed rgba(0,0,0,.12)}
     .kpi{display:grid;gap:4px;background:rgb(var(--bg));border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:10px;min-width:120px}
@@ -59,11 +60,12 @@
     .loc{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid rgba(0,0,0,.08);border-radius:12px;background:rgb(var(--bg));}
     .loc input{width:76px}
     .help{font-size:12px;color:rgb(var(--muted))}
-    .alert{padding:10px 12px;border-radius:12px;background:rgba(var(--warn)/.12);border:1px solid rgba(245,158,11,.3)}
+    .alert{padding:10px 12px;border-radius:12px;background:rgba(var(--warn)/.12);border:1px solid rgba(var(--warn)/.3)}
     .hidden{display:none}
     .accent{color:rgb(var(--brand))}
     .kv{display:grid;grid-template-columns:140px 1fr;gap:6px;font-size:12px}
     .kv div{padding:4px 8px;border:1px solid rgba(0,0,0,.06);border-radius:8px;background:rgb(var(--bg))}
+    #results{max-height: 55vh;overflow: scroll;}
   </style>
 </head>
 <body>
@@ -642,193 +644,25 @@
 
   // ---------- PDF & Email & Share ----------
   async function generatePDF(){
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ unit:'pt', format:'letter' });
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
-    const M = 40; // margin
-    let y = M;
-
-    // ---- Inputs / data ----
-    const brand = ($('#brandName').value || 'Your Business').trim();
-    const logoUrl = ($('#logoUrl').value || '').trim();
-
-    const fmt = (n)=> '$' + Number(n||0).toFixed(2);
-    const today = new Date();
-    const dateStr = today.toLocaleDateString();
-    const quoteNo = 'Q' + Math.random().toString(36).slice(2, 8).toUpperCase();
-
-    // Helpers
-    async function toDataURL(url){
-      try{
-        const r = await fetch(url, { mode:'cors' });
-        const b = await r.blob();
-        return await new Promise(res=>{ const fr = new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(b); });
-      }catch(_){ return null; }
-    }
-    function hr(yy){ doc.setDrawColor(230); doc.line(M, yy, pageW - M, yy); }
-    function ensure(h=0){ if(y + h > pageH - M){ addFooter(); doc.addPage(); y = M; addHeader(); } }
-
-    function addHeader(){
-      // top banner
-      doc.setFillColor(88,101,242); // indigo
-      doc.rect(0, 0, pageW, 64, 'F');
-      doc.setTextColor(255);
-      doc.setFont('helvetica','bold'); doc.setFontSize(14);
-      doc.text(brand, M + 60, 38);
-      doc.setFontSize(22); doc.text('ESTIMATE', pageW - M - 140, 40);
-      // logo placeholder (actual image below)
-      doc.setFillColor(255,255,255);
-      doc.circle(M+30, 34, 18, 'F');
-    }
-    function addFooter(){
-      const n = doc.internal.getNumberOfPages();
-      const p = n; // current page is always last when called here
-      doc.setFontSize(9); doc.setTextColor(140);
-      doc.text('Page ' + p, pageW - M, pageH - 12, { align:'right' });
-    }
-
-    // Header first page
-    addHeader();
-
-    // Insert logo if provided
-    if(logoUrl){
-      const logoData = await toDataURL(logoUrl);
-      if(logoData){ try{ doc.addImage(logoData, 'PNG', M+12, 16, 36, 36); }catch(_){} }
-    }
-
-    y = 64 + 18; // below banner
-
-    // Quote + Client meta
-    doc.setTextColor(30);
-    doc.setFont('helvetica','normal'); doc.setFontSize(10);
-    doc.text('Date: ' + dateStr, M, y);
-    doc.text('Quote #: ' + quoteNo, M+180, y);
-    y += 20;
-
-    const cName = $('#clientName').value || '';
-    const cEmail = $('#clientEmail').value || '';
-    const cPO = $('#clientPO').value || '';
-
-    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('Bill To', M, y); y += 14;
-    doc.setFont('helvetica','normal'); doc.setFontSize(10);
-    if(cName){ doc.text(cName, M, y); y += 12; }
-    if(cEmail){ doc.text(cEmail, M, y); y += 12; }
-    if(cPO){ doc.text('PO: ' + cPO, M, y); y += 14; }
-
-    // Placements table
-    if(state.placements.length){
-      ensure(80);
-      doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(30);
-      doc.text('Placements', M, y); y += 10; hr(y); y += 12;
-      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(80);
-      const colX = { loc:M, tech:M+170, size:M+280, colors:M+420 };
-      doc.text('Location', colX.loc, y);
-      doc.text('Technique', colX.tech, y);
-      doc.text('Size (W×H in)', colX.size, y);
-      doc.text('Colors', colX.colors, y);
-      y += 8; hr(y); y += 8; doc.setFont('helvetica','normal'); doc.setTextColor(30);
-      state.placements.forEach(p=>{
-        ensure(18);
-        const sizeStr = (p.width||0) + ' × ' + (p.height||0);
-        doc.text(String(p.location||''), colX.loc, y);
-        doc.text(String(p.technique||''), colX.tech, y);
-        doc.text(sizeStr, colX.size, y);
-        doc.text(p.technique==='Screen Print' ? String(p.colors||1) : '-', colX.colors, y);
-        y += 16;
-      });
+    const { jsPDF } = window.jspdf; const doc = new jsPDF({ unit:'pt', format:'letter' });
+    const pad = 36; let y = pad;
+    const brand = $('#brandName').value || 'Quote';
+    const logo = $('#logoUrl').value.trim();
+    doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.text(brand, pad, y); y += 18;
+    const client = `${$('#clientName').value}  •  ${$('#clientEmail').value}  •  PO:${$('#clientPO').value}`;
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.text(client, pad, y+8);
+    y += 24;
+    state.lines.forEach(line=>{
+      doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text(`${line.brandName} ${line.styleName} — ${line.colorName}`, pad, y); y += 14;
+      doc.setFont('helvetica','normal');
+      line.units.forEach(u=>{ const ext = (Number(u.qty)*Number(u.unitPrice)).toFixed(2); doc.text(`${u.size}  Qty:${u.qty}  Unit:$${Number(u.unitPrice).toFixed(2)}  Ext:$${ext}`, pad, y); y += 14; });
       y += 6;
-    }
-
-    // Items table
-    ensure(40);
-    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(30);
-    doc.text('Items', M, y); y += 10; hr(y); y += 12;
-    const IX = { item:M, size:M+260, qty:M+360, unit:M+420, ext:M+500 };
-    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(80);
-    doc.text('Item', IX.item, y);
-    doc.text('Size', IX.size, y);
-    doc.text('Qty', IX.qty, y);
-    doc.text('Unit', IX.unit, y);
-    doc.text('Ext', IX.ext, y);
-    y += 8; hr(y); y += 8; doc.setFont('helvetica','normal'); doc.setTextColor(30);
-
-    state.lines.forEach(line=>{
-      const name = (line.brandName||'') + ' ' + (line.styleName||'') + ' • ' + (line.colorName||'');
-      const units = line.units||[];
-      units.forEach((u, idx)=>{
-        ensure(18);
-        if(idx===0){ doc.text(name, IX.item, y); }
-        doc.text(String(u.size||''), IX.size, y);
-        doc.text(String(u.qty||0), IX.qty, y);
-        doc.text(fmt(u.unitPrice||0), IX.unit, y);
-        doc.text(fmt((Number(u.qty)||0)*(Number(u.unitPrice)||0)), IX.ext, y);
-        y += 16;
-      });
-      y += 4;
     });
-
-    // Totals
-    const deco = perPieceDecoration();
-    const totals = { qty:0, garmentCost:0 };
-    state.lines.forEach(line=>{
-      const lineQty = (line.units||[]).reduce((a,b)=> a + Number(b.qty||0), 0);
-      const lineCost = (line.units||[]).reduce((s,u)=> s + Number(u.qty||0)*Number(u.unitPrice||0), 0);
-      totals.qty += lineQty; totals.garmentCost += lineCost;
-    });
-    const markup = 1 + (Number($('#markupPct').value||state.settings.markupPct)/100);
-    const garmentSell = totals.garmentCost * markup;
-    const decoTotal = (totals.qty * (deco.perPiece||0)) + (deco.setup||0);
-    const shipping = Number($('#shipping').value||0);
-    const sub = garmentSell + decoTotal + shipping;
-    const taxRate = Number($('#taxPct').value||0)/100; const tax = sub * taxRate; const grand = sub + tax;
-
-    ensure(120);
-    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('Totals', M, y); y += 10; hr(y); y += 12;
-    const boxW = (pageW - M*2 - 16)/2;
-    function totalRow(x,y,label,val,accent=false){
-      if(accent){ doc.setFillColor(232,235,255); } else { doc.setFillColor(247,248,251); }
-      doc.roundedRect(x, y, boxW, 28, 6, 6, 'F');
-      doc.setFont('helvetica','normal'); doc.setTextColor(90); doc.setFontSize(10); doc.text(label, x+10, y+18);
-      doc.setFont('helvetica','bold'); doc.setTextColor(accent? [88,101,242] : [20]); doc.setFontSize(accent?14:11);
-      doc.text(val, x+boxW-10, y+18, { align:'right' });
-    }
-    totalRow(M, y, 'Total Pieces', String(totals.qty));
-    totalRow(M, y+34, 'Garments (w/ markup)', fmt(garmentSell));
-    totalRow(M, y+68, 'Decoration per piece', fmt(deco.perPiece||0));
-    totalRow(M, y+102, 'Screen setups', fmt(deco.setup||0));
-    totalRow(M+boxW+16, y, 'Shipping', fmt(shipping));
-    totalRow(M+boxW+16, y+34, 'Tax', fmt(tax));
-    totalRow(M+boxW+16, y+68, 'Grand Total', fmt(grand), true);
-    y += 140;
-
-    // Mockup (optional)
-    try{
-      const mock = document.getElementById('mockCanvas');
-      if(mock && mock.width && mock.height){
-        const url = mock.toDataURL('image/png'); // may fail if CORS-tainted
-        ensure(220);
-        doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(30);
-        doc.text('Mockup Preview', M, y); y += 10;
-        const w = pageW - M*2; const scale = Math.min(1, w / mock.width); const h = mock.height * scale;
-        doc.addImage(url, 'PNG', M, y, w, h); y += h + 10;
-      }
-    }catch(_){}
-
-    // Terms / Notes
-    const terms = ($('#terms').value||'').trim();
-    if(terms){
-      ensure(50);
-      doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(30); doc.text('Notes / Terms', M, y); y += 14;
-      doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(60);
-      const wrapped = doc.splitTextToSize(terms, pageW - M*2);
-      wrapped.forEach(t=>{ ensure(14); doc.text(t, M, y); y += 14; });
-    }
-
-    addFooter();
-    const safeBrand = brand.toLowerCase().replace(/[^a-z0-9]+/gi,'_');
-    const fname = 'quote_' + safeBrand + '.pdf';
-    doc.save(fname);
+    y += 8;
+    const totText = $('#totals').innerText.replace(/\n/g,'  ');
+    doc.text(totText, pad, y);
+    if(logo){ try{ /* could add image load */ }catch(_){} }
+    doc.save('quote.pdf');
   }
 
   function composeEmail(){
