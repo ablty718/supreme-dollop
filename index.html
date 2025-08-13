@@ -644,6 +644,94 @@
   // Initial render
   renderResults([]); renderPlacements(); renderLines(); calcTotals();
   if(location.hash.includes('#q=')) loadFromHash();
+  // === Mockup Preview — uses line.image from Quote Builder ===
+    (function(){
+      const canvas = document.getElementById('mockCanvas');
+      const stage = document.getElementById('mockStage');
+      const sel = document.getElementById('mockLine');
+      if(!canvas || !stage || !sel) return;
+      const ctx = canvas.getContext('2d');
+      const urlInput = document.getElementById('designUrl');
+      const fileInput = document.getElementById('designFile');
+      const scaleInp = document.getElementById('mockScale');
+      const rotInp = document.getElementById('mockRotate');
+      const opInp = document.getElementById('mockOpacity');
+      const centerBtn = document.getElementById('btnCenterOverlay');
+      const exportBtn = document.getElementById('btnExportPng');
+
+      const mock = { garmentUrl:'', garmentImg:new Image(), designUrl:'', designImg:new Image(), x:0, y:0, scale:0.4, rot:0, opacity:1, dragging:false, dx:0, dy:0 };
+
+      function fitCanvasToStage(){
+        const w = stage.clientWidth || 600;
+        const ar = (mock.garmentImg && mock.garmentImg.naturalWidth) ? (mock.garmentImg.naturalWidth / (mock.garmentImg.naturalHeight||1)) : 1;
+        const h = Math.max(260, Math.round(w / (ar||1)));
+        canvas.width = w; canvas.height = h;
+      }
+      function draw(){
+        ctx.clearRect(0,0,canvas.width, canvas.height);
+        if(mock.garmentUrl && mock.garmentImg.complete && mock.garmentImg.naturalWidth){
+          const gw = mock.garmentImg.naturalWidth; const gh = mock.garmentImg.naturalHeight;
+          const s = Math.max(canvas.width/gw, canvas.height/gh);
+          const dw = gw*s, dh = gh*s; const dx = (canvas.width - dw)/2, dy = (canvas.height - dh)/2;
+          ctx.drawImage(mock.garmentImg, dx, dy, dw, dh);
+        }
+        if(mock.designUrl && mock.designImg.complete && mock.designImg.naturalWidth){
+          const iw = mock.designImg.naturalWidth, ih = mock.designImg.naturalHeight;
+          const base = Math.min(canvas.width, canvas.height);
+          const drawW = base * mock.scale, drawH = drawW * (ih/iw);
+          ctx.save(); ctx.globalAlpha = mock.opacity; ctx.translate(mock.x, mock.y); ctx.rotate(mock.rot * Math.PI/180);
+          ctx.drawImage(mock.designImg, -drawW/2, -drawH/2, drawW, drawH);
+          ctx.restore();
+        }
+      }
+      function populateLines(){
+        const prev = sel.value;
+        const opts = (state.lines||[]).map(l=>`<option value="${l.id}">${(l.brandName||'')} ${(l.styleName||'')} • ${(l.colorName||'')}</option>`).join('');
+        sel.innerHTML = `<option value="">— choose garment from quote —</option>${opts}`;
+        if(prev && [...sel.options].some(o=>o.value===prev)) sel.value = prev;
+      }
+      function centerOverlay(){ mock.x = Math.round(canvas.width/2); mock.y = Math.round(canvas.height/2); }
+      function loadGarmentFromLine(){
+        const line = (state.lines||[]).find(l=>l.id===sel.value);
+        if(!line){ mock.garmentUrl=''; draw(); return; }
+        mock.garmentUrl = line.image || '';
+        const img = new Image(); img.crossOrigin = 'anonymous';
+        img.onload = ()=>{ mock.garmentImg = img; fitCanvasToStage(); centerOverlay(); draw(); };
+        img.onerror = ()=>{ mock.garmentImg = img; fitCanvasToStage(); draw(); };
+        img.src = mock.garmentUrl;
+      }
+      function setDesignFromUrl(u){
+        if(!u){ mock.designUrl=''; draw(); return; }
+        const img = new Image(); img.crossOrigin = 'anonymous';
+        img.onload = ()=>{ mock.designImg = img; if(mock.x===0 && mock.y===0) centerOverlay(); draw(); };
+        img.onerror = ()=>{ alert('Could not load design image URL'); };
+        img.src = u; mock.designUrl = u;
+      }
+      // Dragging & wheel zoom
+      function toCanvas(evt){ const r = canvas.getBoundingClientRect(); return { x: (evt.clientX - r.left), y: (evt.clientY - r.top) }; }
+      canvas.addEventListener('mousedown', e=>{ if(!mock.designUrl) return; const p = toCanvas(e); mock.dragging=true; mock.dx = p.x - mock.x; mock.dy = p.y - mock.y; });
+      window.addEventListener('mouseup', ()=>{ mock.dragging=false; });
+      canvas.addEventListener('mousemove', e=>{ if(!mock.dragging) return; const p = toCanvas(e); mock.x = p.x - mock.dx; mock.y = p.y - mock.dy; draw(); });
+      canvas.addEventListener('wheel', e=>{ if(!mock.designUrl) return; e.preventDefault(); const d = e.deltaY>0?-0.05:0.05; mock.scale = Math.max(0.05, Math.min(5, mock.scale+d)); scaleInp.value = String(mock.scale); draw(); }, { passive:false });
+
+      // Controls
+      sel.addEventListener('change', loadGarmentFromLine);
+      if(fileInput){ fileInput.addEventListener('change', ()=>{ const f = fileInput.files && fileInput.files[0]; if(!f) return; const r = new FileReader(); r.onload = ()=> setDesignFromUrl(r.result); r.readAsDataURL(f); }); }
+      if(urlInput){ urlInput.addEventListener('change', ()=> setDesignFromUrl(urlInput.value.trim())); }
+      if(scaleInp){ scaleInp.addEventListener('input', ()=>{ mock.scale = Number(scaleInp.value||1); draw(); }); }
+      if(rotInp){ rotInp.addEventListener('input', ()=>{ mock.rot = Number(rotInp.value||0); draw(); }); }
+      if(opInp){ opInp.addEventListener('input', ()=>{ mock.opacity = Number(opInp.value||1); draw(); }); }
+      if(centerBtn){ centerBtn.addEventListener('click', ()=>{ centerOverlay(); draw(); }); }
+      if(exportBtn){ exportBtn.addEventListener('click', ()=>{ try{ const url = canvas.toDataURL('image/png'); const a = document.createElement('a'); a.href=url; a.download='mockup.png'; a.click(); } catch(e){ alert('Export blocked by image host (CORS). You can still screenshot this preview.'); } }); }
+
+      new ResizeObserver(()=>{ fitCanvasToStage(); draw(); }).observe(stage);
+
+      // Hook into renderLines so options stay in sync
+      if(window.renderLines){ const orig = window.renderLines; window.renderLines = function(){ const r = orig.apply(this, arguments); populateLines(); draw(); return r; }; }
+
+      // Initial
+      populateLines(); fitCanvasToStage(); draw();
+    })();
   </script>
 </body>
 </html>
