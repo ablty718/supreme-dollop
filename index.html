@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Quote Builder — DTF & Screen Print (Google Sheets Catalog)</title>
+  <title>Quote Builder — DTF & Screen Print</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-<style>
+  <style>
     :root{
       --bg: 245 245 248;
       --text: 20 23 28;
@@ -63,8 +63,6 @@
     .alert{padding:10px 12px;border-radius:12px;background:rgba(var(--warn)/.12);border:1px solid rgba(var(--warn)/.3)}
     .hidden{display:none}
     .accent{color:rgb(var(--brand))}
-    .kv{display:grid;grid-template-columns:140px 1fr;gap:6px;font-size:12px}
-    .kv div{padding:4px 8px;border:1px solid rgba(0,0,0,.06);border-radius:8px;background:rgb(var(--bg))}
     #results{height:40vh;}
   </style>
 </head>
@@ -75,95 +73,46 @@
         <div class="logo"></div>
         <div>
           <div class="title">Apparel Quote Builder</div>
-          <div class="sub">DTF & Screen Print • Catalog from Google Sheets</div>
+          <div class="sub">DTF & Screen Print • single‑file site (HTML/CSS/JS)</div>
         </div>
       </div>
       <div class="row">
+        <button class="btn ghost" id="btnLoad">Load from URL</button>
         <button class="btn" id="btnNew">New Quote</button>
         <button class="btn primary" id="btnExport">Generate PDF</button>
       </div>
     </header>
 
     <div class="grid">
-      <!-- LEFT: Catalog & Sheet Loader -->
+      <!-- LEFT: Catalog & Settings -->
       <section class="card">
-        <h2>Garment Catalog (Google Sheets)</h2>
-        <div class="sub">We will load rows from your sheet and show <b>all columns</b>. Map which columns are price, size, image, etc.</div>
-
+        <h2>Garment Catalog</h2>
+        <div class="sub">Search styles by brand, style #, or keyword. Click a result to add sizes & quantities.</div>
         <div class="row" style="margin-top:10px">
           <div class="field" style="flex:2">
-            <label>Google Sheet ID</label>
-            <input id="sheetId" value="1EFw4qZn6YSZmPNC_FeW-pSc5PiDPeuaqJe4YjIpgb4U" placeholder="1EFw4qZn6YSZmPNC_FeW-pSc5PiDPeuaqJe4YjIpgb4U" />
+            <label>Search</label>
+            <input id="searchInput" placeholder="e.g., Bella+Canvas 3001, Gildan 5000, 18000, hoodie" />
           </div>
           <div class="field" style="max-width:160px">
-            <label>Sheet GID (tab)</label>
-            <input id="sheetGid" placeholder="(optional)" />
-          </div>
-          <div class="field" style="max-width:130px">
-            <label>&nbsp;</label>
-            <button class="btn" id="btnLoadSheet">Load Sheet</button>
-          </div>
-        </div>
-        <div class="help" style="margin-top:6px">Tip: In Google Sheets → <b>File → Share → Publish to web</b> → Entire Sheet → CSV. Or provide the <b>GID</b> for a specific tab.</div>
-
-        <div class="row" style="margin-top:10px">
-          <div class="field" style="flex:3">
-            <label>Auto‑generated CSV URL</label>
-            <input id="csvUrl" placeholder="https://docs.google.com/spreadsheets/d/ID/export?format=csv&gid=GID"/>
-          </div>
-          <div class="field" style="max-width:130px">
-            <label>&nbsp;</label>
-            <button class="btn ghost" id="btnTestCsv">Test Fetch</button>
-          </div>
-        </div>
-
-        <div id="loadStatus" class="alert hidden" style="margin-top:10px"></div>
-
-        <div class="divider" style="margin:16px 0"></div>
-        <div class="row">
-          <div class="field" style="flex:2">
-            <label>Search catalog</label>
-            <input id="searchInput" placeholder="Search across all columns" />
+            <label>Price Field</label>
+            <select id="priceField">
+              <option value="customerPrice">customerPrice (Your wholesale)</option>
+              <option value="salePrice">salePrice</option>
+              <option value="piecePrice">piecePrice</option>
+            </select>
           </div>
           <div class="field" style="max-width:120px">
             <label>&nbsp;</label>
             <button class="btn" id="btnSearch">Search</button>
           </div>
         </div>
-
-        <div class="sectionTitle">Column Mapping</div>
-        <div class="sub">These mappings drive pricing and display. Choices populate after loading the sheet.</div>
-        <div id="mapping" class="row" style="margin-top:8px">
-          <div class="field"><label>Brand</label><select id="mapBrand"></select></div>
-          <div class="field"><label>Style</label><select id="mapStyle"></select></div>
-          <div class="field"><label>Color</label><select id="mapColor"></select></div>
-          <div class="field"><label>SKU</label><select id="mapSku"></select></div>
-          <div class="field"><label>Size</label><select id="mapSize"></select></div>
-          <div class="field"><label>Unit Price</label><select id="mapPrice"></select></div>
-          <div class="field"><label>Image URL</label><select id="mapImage"></select></div>
+        <div class="alert" id="corsWarning" style="margin-top:10px">
+          <b>Heads up:</b> Live S&S API calls require a small server (proxy) so your API key stays private and to avoid CORS. Use <span class="chip">demo data</span> now, or add your proxy URL in <b>Settings → Integrations</b> and switch off Demo Mode.
         </div>
-
         <div id="results" class="list" style="margin-top:12px"></div>
-      </section>
 
-      <!-- RIGHT: Quote Builder & Preview -->
-      <section class="card">
-        <h2>Quote Builder</h2>
-        <div class="row" style="margin-top:8px">
-          <div class="field"><label>Client Name</label><input id="clientName" placeholder="Client / Organization"/></div>
-          <div class="field"><label>Client Email</label><input id="clientEmail" placeholder="name@email.com"/></div>
-          <div class="field"><label>PO / Ref (optional)</label><input id="clientPO" placeholder="Internal ref"/></div>
-        </div>
-
-        <div class="sectionTitle">Placements</div>
-        <div class="help">Add decoration locations. DTF is priced by square‑foot of art. Screen print is per color per location with one‑time setup.</div>
-        <div id="placements" class="list" style="margin-top:8px"></div>
-        <div class="row stickyActions">
-          <button class="btn" id="btnAddPlacement">Add Placement</button>
-          <span class="right help">Common sizes: Left Chest ~ 4"×4" • Full Front ~ 12"×14" • Neck ~ 3"×3"</span>
-        </div>
-
-        <div class="sectionTitle">Settings</div>
+        <div class="divider" style="margin:16px 0"></div>
+        <h2>Settings</h2>
         <div class="row wrap">
           <div class="kpi"><span class="muted">DTF $/sqft</span><b id="kpiDTF">$8.00</b></div>
           <div class="kpi"><span class="muted">Screen: Setup /color</span><b id="kpiSetup">$20.00</b></div>
@@ -186,6 +135,48 @@
           <div class="field"><label>Shipping ($)</label><input type="number" id="shipping" step="0.01" value="0"/></div>
           <div class="field"><label>Terms / Notes</label><input id="terms" placeholder="Lead time, art approval, etc."/></div>
         </div>
+        <div class="row" style="margin-top:10px">
+          <div class="field"><label>Demo Mode</label>
+            <select id="demoMode"><option value="on">On (mock data)</option><option value="off">Off (use proxy)</option></select>
+          </div>
+          <div class="field" style="flex:2"><label>Integrations → S&S Proxy URL</label>
+            <input id="proxyUrl" placeholder="e.g., /api/ss (Netlify/Cloudflare/Next.js function)"/>
+          </div>
+        </div>
+
+        <details style="margin-top:12px">
+          <summary><b>How to enable live S&S data (securely)</b></summary>
+          <div class="help" style="margin:8px 0 8px">Create a small serverless proxy that adds <code>Authorization: Basic base64(Account#:API_KEY)</code> and forwards your request to <code>https://api.ssactivewear.com/v2/...</code>. Keep keys off the browser.</div>
+          <code>// Example Netlify/Cloudflare/Next.js API route (Node)
+export default async function handler(req, res){
+  const { path = 'products', q = '', fields = '' } = req.query;
+  const endpoint = `https://api.ssactivewear.com/v2/${path}/` + (q?`?style=${encodeURIComponent(q)}`:'') + (fields?`&fields=${encodeURIComponent(fields)}`:'');
+  const auth = Buffer.from(`${process.env.SS_ACCOUNT}:${process.env.SS_API_KEY}`).toString('base64');
+  const r = await fetch(endpoint, { headers: { 'Authorization': `Basic ${auth}` }});
+  const data = await r.json();
+  res.status(r.status).json(data);
+}
+// Usage in this app once deployed:
+// set Proxy URL in Settings to your route, e.g. /api/ss?path=products&q=bella%20canvas%203001</code>
+        </details>
+      </section>
+
+      <!-- RIGHT: Quote Builder & Preview -->
+      <section class="card">
+        <h2>Quote Builder</h2>
+        <div class="row" style="margin-top:8px">
+          <div class="field"><label>Client Name</label><input id="clientName" placeholder="Client / Organization"/></div>
+          <div class="field"><label>Client Email</label><input id="clientEmail" placeholder="name@email.com"/></div>
+          <div class="field"><label>PO / Ref (optional)</label><input id="clientPO" placeholder="Internal ref"/></div>
+        </div>
+
+        <div class="sectionTitle">Placements</div>
+        <div class="help">Add decoration locations. DTF is priced by square‑foot of art. Screen print is per color per location with one‑time setup.</div>
+        <div id="placements" class="list" style="margin-top:8px"></div>
+        <div class="row stickyActions">
+          <button class="btn" id="btnAddPlacement">Add Placement</button>
+          <span class="right help">Common sizes: Left Chest ~ 4"×4" • Full Front ~ 12"×14" • Neck ~ 3"×3"</span>
+        </div>
 
         <div class="sectionTitle">Garments in Quote</div>
         <div id="quoteLines" class="list"></div>
@@ -201,41 +192,50 @@
       </section>
     </div>
 
-      <!-- MOCKUP PREVIEW (full-width below the grid) -->
-      <section class="card" id="mockupSection">
-        <h2>Mockup Preview</h2>
-        <div class="sub">Pick a garment from your quote (uses its image URL), then upload or paste your design to position it as a mockup. Drag to move, mouse wheel to zoom. Export as PNG.</div>
+    <!-- MOCKUP STUDIO -->
+    <section class="card" id="mockSection">
+      <h2>Mockup Studio</h2>
+      <div class="sub">Choose a garment from the quote (front/back) and overlay one or more designs. Drag to move, use handles to scale/rotate, and snap to smart guides. Export as PNG.</div>
 
-        <div class="row" style="margin-top:10px">
-          <div class="field" style="flex:2"><label>Garment from Quote</label>
-            <select id="mockLine"><option value="">— choose garment from quote —</option></select>
-          </div>
-          <div class="field"><label>Design (Upload)</label>
-            <input id="designFile" type="file" accept="image/*" />
-          </div>
-          <div class="field" style="flex:2"><label>Design URL</label>
-            <input id="designUrl" placeholder="https://..." />
+      <div class="row" style="margin-top:10px">
+        <div class="field" style="flex:2"><label>Garment from Quote</label>
+          <select id="mockLine"><option value="">— choose garment from quote —</option></select>
+        </div>
+        <div class="field" style="max-width:160px"><label>Image Side</label>
+          <select id="mockSide"><option value="front">Front</option><option value="back">Back</option><option value="custom">Custom URL</option></select>
+        </div>
+        <div class="field" style="flex:2"><label>Custom Garment URL</label>
+          <input id="mockGarmentUrl" placeholder="https://... (optional when Side=Custom)"/>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:6px">
+        <div class="field"><label>Add Design (Upload)</label><input id="ovFile" type="file" accept="image/*"/></div>
+        <div class="field" style="flex:2"><label>Add Design (URL)</label><input id="ovUrl" placeholder="https://..."/></div>
+        <div class="field" style="max-width:160px"><label>&nbsp;</label><button class="btn" id="btnAddUrl">Add Overlay</button></div>
+        <div class="field" style="max-width:170px"><label>&nbsp;</label><button class="btn ghost" id="btnCenter">Center Active</button></div>
+        <div class="field" style="max-width:150px"><label>&nbsp;</label><button class="btn" id="btnExportPng">Export PNG</button></div>
+      </div>
+
+      <div class="row" style="margin-top:8px">
+        <div class="field" style="flex:1">
+          <label>Stage</label>
+          <div id="stageWrap" style="position:relative;background:rgba(0,0,0,.04);border:1px dashed rgba(0,0,0,.12);border-radius:14px;overflow:hidden;min-height:300px;display:grid;place-items:center">
+            <canvas id="mockCanvas" style="width:100%;height:auto;display:block"></canvas>
           </div>
         </div>
-
-        <div class="row" style="margin-top:6px">
-          <div class="field"><label>Scale</label><input id="mockScale" type="range" min="0.05" max="5" step="0.01" value="0.4"/></div>
-          <div class="field"><label>Rotate (°)</label><input id="mockRotate" type="range" min="-180" max="180" step="1" value="0"/></div>
-          <div class="field"><label>Opacity</label><input id="mockOpacity" type="range" min="0" max="1" step="0.01" value="1"/></div>
-          <div class="field" style="max-width:160px"><label>&nbsp;</label><button class="btn ghost" id="btnCenterOverlay">Center Overlay</button></div>
-          <div class="field" style="max-width:200px"><label>&nbsp;</label><button class="btn" id="btnExportPng">Export PNG</button></div>
+        <div class="field" style="flex:1;min-width:260px">
+          <label>Layers</label>
+          <div id="ovList" class="list" style="max-height:320px;overflow:auto;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:8px;background:rgb(var(--bg))"></div>
         </div>
+      </div>
+    </section>
 
-        <div id="mockStage" style="margin-top:12px; position:relative; background:rgba(0,0,0,.04); border:1px dashed rgba(0,0,0,.12); border-radius:14px; overflow:hidden; width:100%; min-height:260px; display:grid; place-items:center">
-          <canvas id="mockCanvas" style="width:100%; height:auto; display:block"></canvas>
-        </div>
-      </section>
-
-    <footer class="sub" style="margin-top:16px;text-align:center">No external APIs • Catalog from your Google Sheet • Save/Share is encoded in the URL hash.</footer>
+    <footer class="sub" style="margin-top:16px;text-align:center">Built for apparel decorators • No backend required (optional proxy for live S&S). Save/Share is encoded in the URL hash.</footer>
   </div>
 
+  <!-- jsPDF (PDF export) -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
   <script>
   // ---------- State ----------
@@ -248,158 +248,94 @@
       markupPct: 35,
       taxPct: 0,
       shipping: 0,
+      priceField: 'customerPrice',
+      demoMode: 'on',
+      proxyUrl: ''
     },
     brand: { name: '', logo: '' },
     client: { name: '', email: '', po: '' },
-    placements: [],
-    lines: [],
-    catalog: [], // array of row objects {col: val}
-    columns: [], // header names
-    mapping: { brand:'', style:'', color:'', sku:'', size:'', price:'', image:'' },
-    sheet: { id:'', gid:'', csvUrl:'' }
+    placements: [], // {id, location, technique, width, height, colors}
+    lines: [], // {id, styleName, brandName, colorName, image, priceField, units: [{size, qty, unitPrice}]}
   };
 
   const defaultLocations = ['Left Chest','Right Chest','Full Front','Full Back','Sleeve Left','Sleeve Right','Neck/Locker','Hood'];
+
   const $ = sel => document.querySelector(sel);
   const $$ = sel => Array.from(document.querySelectorAll(sel));
 
-  // ---------- Google Sheet helpers ----------
-  function buildCsvUrl(id, gid){
-    if(!id) return '';
-    if(gid){ return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`; }
-    // fallback to the first sheet via gviz CSV (works if the sheet is viewable)
-    return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv`;
-  }
+  // ---------- Mock Catalog (Demo Mode) ----------
+  const DEMO = [
+    { sku:'BC3001-WHT-M', styleID: 123, brandName:'Bella+Canvas', styleName:'3001', colorName:'White', sizeName:'M', customerPrice:3.99, salePrice:3.79, piecePrice:4.29, qty:12000, colorFrontImage:'https://www.ssactivewear.com/Images/Color/13049_f_fm.jpg', colorBackImage:'https://www.ssactivewear.com/Images/Color/13049_b_fm.jpg' },
+    { sku:'BC3001-BLK-L', styleID: 123, brandName:'Bella+Canvas', styleName:'3001', colorName:'Black', sizeName:'L', customerPrice:4.29, salePrice:3.99, piecePrice:4.59, qty:8300, colorFrontImage:'https://www.ssactivewear.com/Images/Color/13054_f_fm.jpg', colorBackImage:'https://www.ssactivewear.com/Images/Color/13054_b_fm.jpg' },
+    { sku:'GD5000-WHT-M', styleID: 456, brandName:'Gildan', styleName:'5000', colorName:'White', sizeName:'M', customerPrice:2.19, salePrice:1.99, piecePrice:2.49, qty:24000, colorFrontImage:'https://www.ssactivewear.com/Images/Color/17130_f_fm.jpg', colorBackImage:'https://www.ssactivewear.com/Images/Color/17130_b_fm.jpg' },
+    { sku:'GD18000-ASH-L', styleID: 789, brandName:'Gildan', styleName:'18000', colorName:'Ash', sizeName:'L', customerPrice:10.50, salePrice:9.99, piecePrice:11.25, qty:5400, colorFrontImage:'https://www.ssactivewear.com/Images/Color/2233_f_fm.jpg', colorBackImage:'https://www.ssactivewear.com/Images/Color/2233_b_fm.jpg' }
+  ];
 
-  async function fetchCsv(url){
-    const r = await fetch(url, { cache: 'no-store' });
-    if(!r.ok) throw new Error(`Fetch failed: ${r.status}`);
-    const text = await r.text();
-    return new Promise((resolve, reject)=>{
-      Papa.parse(text, { header:true, skipEmptyLines:true, complete: res=> resolve(res.data), error: err=> reject(err) });
-    });
-  }
-
-  function hydrateMappings(){
-    const selects = ['mapBrand','mapStyle','mapColor','mapSku','mapSize','mapPrice','mapImage'].map(id=>$("#"+id));
-    selects.forEach(sel=>{ sel.innerHTML = `<option value="">— none —</option>` + state.columns.map(c=>`<option value="${c}">${c}</option>`).join(''); });
-    // Try to auto-guess common headers
-    const guess = (names) => state.columns.find(h=> names.some(n=> h.toLowerCase().includes(n)) ) || '';
-    state.mapping.brand ||= guess(['brand']);
-    state.mapping.style ||= guess(['style','model']);
-    state.mapping.color ||= guess(['color']);
-    state.mapping.sku   ||= guess(['sku','item','code']);
-    state.mapping.size  ||= guess(['size']);
-    state.mapping.price ||= guess(['price','cost']);
-    state.mapping.image ||= guess(['image','img','photo','thumbnail']);
-    // set selects
-    $('#mapBrand').value = state.mapping.brand;
-    $('#mapStyle').value = state.mapping.style;
-    $('#mapColor').value = state.mapping.color;
-    $('#mapSku').value = state.mapping.sku;
-    $('#mapSize').value = state.mapping.size;
-    $('#mapPrice').value = state.mapping.price;
-    $('#mapImage').value = state.mapping.image;
-  }
-
-  function setLoadStatus(msg, ok=false){
-    const el = $('#loadStatus');
-    el.classList.remove('hidden');
-    el.style.borderColor = ok? 'rgba(16,185,129,.4)' : 'rgba(245,158,11,.3)';
-    el.style.background = ok? 'rgba(16,185,129,.12)' : 'rgba(245,158,11,.12)';
-    el.innerHTML = msg;
-  }
-
-  async function loadSheet(){
-    try{
-      const id = $('#sheetId').value.trim();
-      const gid = $('#sheetGid').value.trim();
-      if(!id){ setLoadStatus('Please paste your <b>Google Sheet ID</b>. It\'s the long string in the URL.', false); return; }
-      const url = buildCsvUrl(id, gid);
-      $('#csvUrl').value = url;
-      setLoadStatus('Loading CSV…');
-      const rows = await fetchCsv(url);
-      if(!rows || !rows.length){ setLoadStatus('Loaded but found no rows. Ensure the sheet/tab has data and is published to the web as CSV.', false); return; }
-      state.sheet = { id, gid, csvUrl: url };
-      state.catalog = rows.map(r=> Object.fromEntries(Object.entries(r).map(([k,v])=>[String(k).trim(), String(v??'').trim()])) );
-      state.columns = Object.keys(state.catalog[0]||{});
-      setLoadStatus(`Loaded <b>${state.catalog.length}</b> rows with <b>${state.columns.length}</b> columns.`, true);
-      hydrateMappings();
-      renderResults(state.catalog);
-    }catch(err){
-      setLoadStatus(`Error: ${err.message}. Make sure the sheet is publicly viewable or <b>Publish to the web → CSV</b>.`, false);
-      renderResults([]);
-    }
-  }
-
-  // ---------- Catalog ----------
-  function searchCatalog(){
-    const q = $('#searchInput').value.trim().toLowerCase();
-    if(!q){ renderResults(state.catalog); return; }
-    const filtered = state.catalog.filter(row=> Object.values(row).some(val => String(val).toLowerCase().includes(q)) );
-    renderResults(filtered);
-  }
-
+  // ---------- UI Builders ----------
   function renderResults(items){
     const container = $('#results');
     container.innerHTML = '';
-    if(!items.length){ container.innerHTML = '<div class="muted">No results. Load your sheet and try searching.</div>'; return; }
-
-    const get = (row, key) => key && row[key] != null ? row[key] : '';
-
-    items.slice(0, 200).forEach((row,i)=>{
-      const image = get(row, state.mapping.image);
-      const brand = get(row, state.mapping.brand);
-      const style = get(row, state.mapping.style);
-      const color = get(row, state.mapping.color);
-      const sku   = get(row, state.mapping.sku);
-      const size  = get(row, state.mapping.size) || 'One Size';
-      const price = parseFloat(String(get(row, state.mapping.price)).replace(/[^0-9.\-]/g,'')) || 0;
-
+    if(!items.length){ container.innerHTML = '<div class="muted">No results yet. Try a keyword like <b>3001</b> or <b>hoodie</b>.</div>'; return; }
+    items.slice(0, 30).forEach((p,i)=>{
+      const price = Number(p[state.settings.priceField] ?? p.customerPrice ?? 0);
       const card = document.createElement('div');
-      card.className = 'list';
-      card.style.cssText='border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:10px;background:rgb(var(--bg));';
+      card.className = 'row';
+      card.style.cssText='border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:10px;align-items:center;background:rgb(var(--bg));';
       card.innerHTML = `
-        <div class="row" style="align-items:center">
-          <img src="${image || 'https://via.placeholder.com/64x64?text=IMG'}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid rgba(0,0,0,.06)"/>
-          <div style="flex:1">
-            <div style="font-weight:700">${brand||''} ${style||''} <span class="muted">• ${color||''}</span></div>
-            <div class="sub">SKU: ${sku||''} ${state.mapping.price?`<span class='pill'>Price: $${price.toFixed(2)}</span>`:''}</div>
-          </div>
-          <div class="row" style="gap:6px">
-            <input type="text" value="${size}" id="size-${i}" style="width:110px"/>
-            <input type="number" min="0" value="12" id="qty-${i}" style="width:90px"/>
-            <button class="btn" data-idx="${i}">Add</button>
-          </div>
+        <img src="${p.colorFrontImage || 'https://via.placeholder.com/64x64?text=IMG'}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid rgba(0,0,0,.06)"/>
+        <div style="flex:1">
+          <div style="font-weight:700">${p.brandName || ''} ${p.styleName || ''} <span class="muted">• ${p.colorName || ''}</span></div>
+          <div class="sub">SKU: ${p.sku || ''} <span class="pill">${state.settings.priceField}: $${price.toFixed(2)}</span></div>
         </div>
-        <details style="margin-top:8px">
-          <summary>View row data</summary>
-          <div class="kv" style="margin-top:8px">${state.columns.map(c=>`<div>${c}</div><div>${row[c]??''}</div>`).join('')}</div>
-        </details>
-      `;
+        <div class="row" style="gap:6px">
+          <input type="number" min="0" value="12" id="qty-${i}" style="width:90px"/>
+          <select id="size-${i}" style="width:120px">
+            ${['XS','S','M','L','XL','2XL','3XL'].map(s=>`<option ${p.sizeName===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+          <button class="btn" data-idx="${i}">Add</button>
+        </div>`;
       card.querySelector('button').onclick = () => {
         const qty = Number(document.getElementById(`qty-${i}`).value||0);
-        const sizeInput = document.getElementById(`size-${i}`).value || 'One Size';
+        const size = document.getElementById(`size-${i}`).value;
         if(!qty) return;
-        addLineFromRow(row, sizeInput, qty, price, image, brand, style, color);
+        addLineFromProduct(p, size, qty);
       };
       container.appendChild(card);
     });
   }
 
-  function addLineFromRow(row, size, qty, price, image, brand, style, color){
-    const keyBrand = brand || '';
-    const keyStyle = style || '';
-    const keyColor = color || '';
-    // Find or create a line grouping by brand/style/color
-    let line = state.lines.find(l => l.brandName===keyBrand && l.styleName===keyStyle && l.colorName===keyColor && l.image===image);
+  function addLineFromProduct(p, size, qty){
+    const price = Number(p[state.settings.priceField] ?? p.customerPrice ?? 0);
+    let line = state.lines.find(l =>
+      l.brandName===p.brandName &&
+      l.styleName===p.styleName &&
+      l.colorName===p.colorName &&
+      l.image===(p.colorFrontImage) &&
+      l.priceField===state.settings.priceField
+    );
     if(!line){
-      line = { id: crypto.randomUUID(), styleName: keyStyle, brandName: keyBrand, colorName: keyColor, image: image, units: [], meta: row };
+      line = {
+        id: crypto.randomUUID(),
+        styleName: p.styleName,
+        brandName: p.brandName,
+        colorName: p.colorName,
+        image: p.colorFrontImage,
+        images: { front: p.colorFrontImage || '', back: p.colorBackImage || '' },
+        priceField: state.settings.priceField,
+        units: [],
+        meta: p
+      };
       state.lines.push(line);
+    } else {
+      // enrich existing line with images/meta if missing
+      line.images = line.images || { front: p.colorFrontImage || '', back: p.colorBackImage || '' };
+      line.meta = line.meta || p;
     }
     const found = line.units.find(u=>u.size===size);
-    if(found){ found.qty += qty; found.unitPrice = price; } else { line.units.push({ size, qty, unitPrice: price }); }
-    renderLines(); calcTotals();
+    if(found){ found.qty += qty; found.unitPrice = price; }
+    else { line.units.push({ size, qty, unitPrice: price }); }
+    renderLines();
+    calcTotals();
   }
 
   function renderLines(){
@@ -416,8 +352,8 @@
         <div class="row" style="align-items:center">
           <img src="${line.image || 'https://via.placeholder.com/56x56?text=IMG'}" style="width:56px;height:56px;border-radius:10px;border:1px solid rgba(0,0,0,.06);object-fit:cover"/>
           <div style="flex:1">
-            <div style="font-weight:700">${line.brandName||''} ${line.styleName||''} • ${line.colorName||''}</div>
-            <div class="sub">Qty: <b>${totalQty}</b></div>
+            <div style="font-weight:700">${line.brandName} ${line.styleName} • ${line.colorName}</div>
+            <div class="sub">Price basis: <b>${line.priceField}</b> • Qty: <b>${totalQty}</b></div>
           </div>
           <button class="btn ghost" data-del="${line.id}">Remove</button>
         </div>
@@ -432,9 +368,6 @@
             </tr>`).join('')}
           </tbody>
         </table>
-        <details><summary>Show all item fields</summary>
-          <div class="kv" style="margin-top:8px">${state.columns.map(c=>`<div>${c}</div><div>${line.meta?.[c]??''}</div>`).join('')}</div>
-        </details>
         <div class="row"><span class="muted">Garment subtotal (before markup):</span><b class="right">$${garmentSub.toFixed(2)}</b></div>
       `;
       el.querySelector('[data-del]').onclick = ()=>{ state.lines = state.lines.filter(x=>x.id!==line.id); renderLines(); calcTotals(); };
@@ -449,65 +382,11 @@
     })
   }
 
-  // ---------- Pricing Engine ----------
-  function perPieceDecoration(){
-    let setup = 0; let perPiece = 0;
-    state.placements.forEach(p=>{
-      if(p.technique==='DTF'){
-        const sqft = (Number(p.width)||0) * (Number(p.height)||0) / 144;
-        const base = sqft * Number($('#dtfRate').value||state.settings.dtfRate);
-        const withWaste = base * (1 + (Number($('#wastePct').value||state.settings.wastePct)/100));
-        perPiece += withWaste;
-      } else {
-        const colors = Math.max(1, Number(p.colors)||1);
-        perPiece += colors * Number($('#spRun').value||state.settings.spRun);
-        setup += colors * Number($('#spSetup').value||state.settings.spSetup);
-      }
-    });
-    return { perPiece, setup };
-  }
-
-  function calcTotals(){
-    $('#kpiDTF').textContent = `$${Number($('#dtfRate').value||state.settings.dtfRate).toFixed(2)}`;
-    $('#kpiSetup').textContent = `$${Number($('#spSetup').value||state.settings.spSetup).toFixed(2)}`;
-    $('#kpiRun').textContent = `$${Number($('#spRun').value||state.settings.spRun).toFixed(2)}`;
-    $('#kpiMU').textContent = `${Number($('#markupPct').value||state.settings.markupPct)}%`;
-
-    const totals = { qty:0, garmentCost:0, garmentSell:0, decoPerPiece:0, setup:0, decoTotal:0, shipping: Number($('#shipping').value||0), tax:0, grand:0 };
-    const { perPiece, setup } = perPieceDecoration();
-    totals.decoPerPiece = perPiece; totals.setup = setup;
-
-    state.lines.forEach(line=>{
-      const lineQty = line.units.reduce((a,b)=>a+Number(b.qty||0),0);
-      const lineCost = line.units.reduce((sum,u)=> sum + Number(u.qty||0)*Number(u.unitPrice||0), 0);
-      totals.qty += lineQty; totals.garmentCost += lineCost;
-    });
-
-    const markup = 1 + (Number($('#markupPct').value||state.settings.markupPct)/100);
-    totals.garmentSell = totals.garmentCost * markup;
-    totals.decoTotal = (totals.qty * totals.decoPerPiece) + totals.setup;
-    const sub = totals.garmentSell + totals.decoTotal + totals.shipping;
-    totals.tax = sub * (Number($('#taxPct').value||state.settings.taxPct)/100);
-    totals.grand = sub + totals.tax;
-
-    $('#totals').innerHTML = `
-      <div class="muted">Total Pieces</div><div><b>${totals.qty}</b></div>
-      <div class="muted">Garments (w/ markup)</div><div><b>$${totals.garmentSell.toFixed(2)}</b></div>
-      <div class="muted">Decoration per piece</div><div><b>$${totals.decoPerPiece.toFixed(2)}</b></div>
-      <div class="muted">Screen setups</div><div><b>$${totals.setup.toFixed(2)}</b></div>
-      <div class="muted">Decoration total</div><div><b>$${totals.decoTotal.toFixed(2)}</b></div>
-      <div class="muted">Shipping</div><div><b>$${totals.shipping.toFixed(2)}</b></div>
-      <div class="muted">Tax</div><div><b>$${totals.tax.toFixed(2)}</b></div>
-      <div class="muted">Grand Total</div><div><b>$${totals.grand.toFixed(2)}</b></div>
-    `;
-    return totals;
-  }
-
-  // ---------- Placements ----------
   function addPlacement(){
     state.placements.push({ id: crypto.randomUUID(), location: defaultLocations[Math.min(state.placements.length, defaultLocations.length-1)] || 'Custom', technique: 'DTF', width: 4, height: 4, colors: 1 });
     renderPlacements(); calcTotals();
   }
+
   function renderPlacements(){
     const host = $('#placements'); host.innerHTML='';
     if(!state.placements.length){ host.innerHTML = '<div class="muted">No placements yet.</div>'; return; }
@@ -532,6 +411,7 @@
           const key = el.dataset.key; let val = el.value;
           if(['width','height','colors'].includes(key)) val = Number(val);
           if(key==='technique'){
+            // toggle color inputs visibility
             row.querySelector('.colorsLab').classList.toggle('hidden', val!=='Screen Print');
             row.querySelector('.colorsInp').classList.toggle('hidden', val!=='Screen Print');
           }
@@ -541,6 +421,88 @@
       row.querySelector('[data-remove]').onclick = ()=>{ state.placements = state.placements.filter(x=>x.id!==p.id); renderPlacements(); calcTotals(); };
       host.appendChild(row);
     });
+  }
+
+  // ---------- Pricing Engine ----------
+  function perPieceDecoration(){
+    // Returns { perPiece, setup }
+    let setup = 0; let perPiece = 0;
+    state.placements.forEach(p=>{
+      if(p.technique==='DTF'){
+        const sqft = (Number(p.width)||0) * (Number(p.height)||0) / 144;
+        const base = sqft * Number($('#dtfRate').value||state.settings.dtfRate);
+        const withWaste = base * (1 + (Number($('#wastePct').value||state.settings.wastePct)/100));
+        perPiece += withWaste;
+      } else {
+        // Screen print: per color run + setup once per location
+        const colors = Math.max(1, Number(p.colors)||1);
+        perPiece += colors * Number($('#spRun').value||state.settings.spRun);
+        setup += colors * Number($('#spSetup').value||state.settings.spSetup);
+      }
+    });
+    return { perPiece, setup };
+  }
+
+  function calcTotals(){
+    // Update KPI mirrors
+    $('#kpiDTF').textContent = `$${Number($('#dtfRate').value||state.settings.dtfRate).toFixed(2)}`;
+    $('#kpiSetup').textContent = `$${Number($('#spSetup').value||state.settings.spSetup).toFixed(2)}`;
+    $('#kpiRun').textContent = `$${Number($('#spRun').value||state.settings.spRun).toFixed(2)}`;
+    $('#kpiMU').textContent = `${Number($('#markupPct').value||state.settings.markupPct)}%`;
+
+    const totals = { qty:0, garmentCost:0, garmentSell:0, decoPerPiece:0, setup:0, decoTotal:0, shipping: Number($('#shipping').value||0), tax:0, grand:0 };
+    const { perPiece, setup } = perPieceDecoration();
+    totals.decoPerPiece = perPiece; totals.setup = setup;
+
+    state.lines.forEach(line=>{
+      const lineQty = line.units.reduce((a,b)=>a+Number(b.qty||0),0);
+      const lineCost = line.units.reduce((sum,u)=> sum + Number(u.qty||0)*Number(u.unitPrice||0), 0);
+      totals.qty += lineQty; totals.garmentCost += lineCost;
+    });
+
+    const markup = 1 + (Number($('#markupPct').value||state.settings.markupPct)/100);
+    totals.garmentSell = totals.garmentCost * markup;
+    totals.decoTotal = (totals.qty * totals.decoPerPiece) + totals.setup;
+    const sub = totals.garmentSell + totals.decoTotal + totals.shipping;
+    totals.tax = sub * (Number($('#taxPct').value||state.settings.taxPct)/100);
+    totals.grand = sub + totals.tax;
+
+    // Render
+    $('#totals').innerHTML = `
+      <div class="muted">Total Pieces</div><div><b>${totals.qty}</b></div>
+      <div class="muted">Garments (w/ markup)</div><div><b>$${totals.garmentSell.toFixed(2)}</b></div>
+      <div class="muted">Decoration per piece</div><div><b>$${totals.decoPerPiece.toFixed(2)}</b></div>
+      <div class="muted">Screen setups</div><div><b>$${totals.setup.toFixed(2)}</b></div>
+      <div class="muted">Decoration total</div><div><b>$${totals.decoTotal.toFixed(2)}</b></div>
+      <div class="muted">Shipping</div><div><b>$${totals.shipping.toFixed(2)}</b></div>
+      <div class="muted">Tax</div><div><b>$${totals.tax.toFixed(2)}</b></div>
+      <div class="muted">Grand Total</div><div><b>$${totals.grand.toFixed(2)}</b></div>
+    `;
+    return totals;
+  }
+
+  // ---------- Search (Demo or Proxy) ----------
+  async function search(){
+    const q = $('#searchInput').value.trim();
+    const pf = $('#priceField').value; state.settings.priceField = pf;
+    if(!q){ renderResults([]); return; }
+    if($('#demoMode').value==='on' || !$('#proxyUrl').value){
+      $('#corsWarning').style.display='block';
+      const items = DEMO.filter(x=> `${x.brandName} ${x.styleName} ${x.colorName}`.toLowerCase().includes(q.toLowerCase()));
+      renderResults(items);
+      return;
+    }
+    try{
+      $('#corsWarning').style.display='none';
+      const url = `${$('#proxyUrl').value}?path=products&q=${encodeURIComponent(q)}&fields=brandName,styleName,colorName,sku,customerPrice,salePrice,piecePrice,colorFrontImage,colorBackImage,sizeName,qty`;
+      const res = await fetch(url);
+      if(!res.ok) throw new Error('Proxy error');
+      const data = await res.json();
+      renderResults(Array.isArray(data)?data:[]);
+    }catch(err){
+      renderResults([]);
+      $('#corsWarning').style.display='block';
+    }
   }
 
   // ---------- Export: PDF / Email / Share ----------
@@ -555,17 +517,21 @@
     y+=10; doc.text(new Date().toLocaleString(), pad, y);
     y+=14; doc.setDrawColor(220); doc.line(pad, y, 559, y); y+=14;
 
+    // Placements
     doc.setFont('helvetica','bold'); doc.text('Placements', pad, y); y+=12; doc.setFont('helvetica','normal');
     if(!state.placements.length){ doc.text('— None —', pad, y); y+=14; }
-    else{ state.placements.forEach(p=>{ doc.text(`• ${p.location} — ${p.technique} — ${p.width}"×${p.height}"${p.technique==='Screen Print'?` — ${p.colors} color(s)`:''}`, pad, y); y+=12; }); }
-
+    else{
+      state.placements.forEach(p=>{ doc.text(`• ${p.location} — ${p.technique} — ${p.width}"×${p.height}"${p.technique==='Screen Print'?` — ${p.colors} color(s)`:''}`, pad, y); y+=12; });
+    }
     y+=6; doc.setDrawColor(240); doc.line(pad, y, 559, y); y+=14;
+
+    // Lines
     doc.setFont('helvetica','bold'); doc.text('Garments', pad, y); y+=12; doc.setFont('helvetica','normal');
     if(!state.lines.length){ doc.text('— None —', pad, y); y+=14; }
     else{
       state.lines.forEach(line=>{
         const qty = line.units.reduce((a,b)=>a+Number(b.qty||0),0);
-        doc.text(`${line.brandName||''} ${line.styleName||''} — ${line.colorName||''} — Qty ${qty}`, pad, y); y+=12;
+        doc.text(`${line.brandName} ${line.styleName} — ${line.colorName} — Qty ${qty} — basis: ${line.priceField}`, pad, y); y+=12;
         const sizes = line.units.map(u=>`${u.size}:${u.qty}`).join('  ');
         doc.text(`Sizes: ${sizes}`, pad+12, y); y+=14;
       });
@@ -588,7 +554,7 @@
     y+=10; const terms = $('#terms').value || '';
     if(terms){ doc.setFont('helvetica','bold'); doc.text('Notes', pad, y); y+=12; doc.setFont('helvetica','normal'); doc.text(terms, pad, y, { maxWidth: 523 }); y+=24; }
 
-    doc.save(`${(brand||'Quote').split(' ').join('_')}_Quote.pdf`);
+    doc.save(`${brand.replaceAll(/\s+/g,'_')}_Quote.pdf`);
   }
 
   function composeEmail(){
@@ -597,7 +563,7 @@
     const lines = state.lines.map(l=>{
       const qty = l.units.reduce((a,b)=>a+Number(b.qty||0),0);
       const sizes = l.units.map(u=>`${u.size}:${u.qty}`).join(' ');
-      return `• ${l.brandName||''} ${l.styleName||''} ${l.colorName||''} — Qty ${qty} — Sizes ${sizes}`;
+      return `• ${l.brandName} ${l.styleName} ${l.colorName} — Qty ${qty} — Sizes ${sizes}`;
     }).join('%0A');
     const places = state.placements.map(p=>`• ${p.location} — ${p.technique} — ${p.width}\"×${p.height}\"${p.technique==='Screen Print'?` — ${p.colors} color(s)`:''}`).join('%0A');
     const body = `Hello,%0A%0AHere is your quote:%0A%0APlacements:%0A${places}%0A%0AGarments:%0A${lines}%0A%0ATotals:%0AGrand: $${t.grand.toFixed(2)} (incl. tax/shipping if shown)%0A%0A— ${$('#brandName').value || ''}`;
@@ -628,140 +594,261 @@
       $('#markupPct').value = state.settings.markupPct;
       $('#taxPct').value = state.settings.taxPct;
       $('#shipping').value = state.settings.shipping;
+      $('#priceField').value = state.settings.priceField;
+      $('#demoMode').value = state.settings.demoMode;
+      $('#proxyUrl').value = state.settings.proxyUrl;
       $('#clientName').value = state.client.name || '';
       $('#clientEmail').value = state.client.email || '';
       $('#clientPO').value = state.client.po || '';
-      $('#sheetId').value = state.sheet.id || '';
-      $('#sheetGid').value = state.sheet.gid || '';
-      $('#csvUrl').value = state.sheet.csvUrl || '';
-      hydrateMappings();
       renderPlacements(); renderLines(); calcTotals();
     }catch(e){ console.warn('Failed to load from URL', e); }
   }
 
   // ---------- Wire up ----------
-  $('#btnLoadSheet').onclick = loadSheet;
-  $('#btnTestCsv').onclick = async ()=>{ if(!$('#csvUrl').value) return; setLoadStatus('Testing URL…'); try{ const rows = await fetchCsv($('#csvUrl').value); state.catalog = rows; state.columns = Object.keys(rows[0]||{}); setLoadStatus(`OK — ${rows.length} rows` , true); hydrateMappings(); renderResults(rows);} catch(e){ setLoadStatus('Failed to fetch CSV: '+ e.message, false);} };
-  $('#btnSearch').onclick = searchCatalog;
-  $('#searchInput').addEventListener('keydown', e=>{ if(e.key==='Enter') searchCatalog(); });
-
+  $('#btnSearch').onclick = search;
+  $('#searchInput').addEventListener('keydown', e=>{ if(e.key==='Enter') search(); });
   $('#btnAddPlacement').onclick = addPlacement;
   $('#btnExport').onclick = exportPDF;
   $('#btnEmail').onclick = composeEmail;
   $('#btnShare').onclick = copyShareUrl;
   $('#btnNew').onclick = ()=>{ location.hash=''; location.reload(); };
+  $('#btnLoad').onclick = ()=>{ loadFromHash(); };
 
   // Keep settings/state in sync
-  ;['dtfRate','wastePct','spSetup','spRun','markupPct','taxPct','shipping','brandName','logoUrl','clientName','clientEmail','clientPO','terms'].forEach(id=>{
+  ['dtfRate','wastePct','spSetup','spRun','markupPct','taxPct','shipping','priceField','demoMode','proxyUrl','brandName','logoUrl','clientName','clientEmail','clientPO','terms'].forEach(id=>{
     const el = document.getElementById(id);
-    if(!el) return;
-    el.oninput = ()=>{
-      if(['dtfRate','wastePct','spSetup','spRun','markupPct','taxPct','shipping'].includes(id)){
-        state.settings[id] = Number(el.value||0);
+    el && (el.oninput = ()=>{
+      if(['dtfRate','wastePct','spSetup','spRun','markupPct','taxPct','shipping','priceField','demoMode','proxyUrl'].includes(id)){
+        state.settings[id] = (id==='priceField'||id==='demoMode'||id==='proxyUrl') ? el.value : Number(el.value||0);
+        if(id==='priceField') search();
       }
       if(['brandName','logoUrl'].includes(id)) state.brand[id==='brandName'?'name':'logo'] = el.value;
       if(['clientName','clientEmail','clientPO'].includes(id)) state.client[{clientName:'name',clientEmail:'email',clientPO:'po'}[id]] = el.value;
       calcTotals();
-    };
-  });
-
-  // Map selects
-  ;['mapBrand','mapStyle','mapColor','mapSku','mapSize','mapPrice','mapImage'].forEach(id=>{
-    const el = document.getElementById(id);
-    el.onchange = ()=>{ const key = id.replace('map','').toLowerCase(); state.mapping[key] = el.value; if(state.catalog.length){ renderResults(state.catalog); } };
+    })
   });
 
   // Initial render
   renderResults([]); renderPlacements(); renderLines(); calcTotals();
   if(location.hash.includes('#q=')) loadFromHash();
-    // === Mockup Preview — uses line.image from Quote Builder ===
-    (function(){
-      const canvas = document.getElementById('mockCanvas');
-      const stage = document.getElementById('mockStage');
-      const sel = document.getElementById('mockLine');
-      if(!canvas || !stage || !sel) return;
-      const ctx = canvas.getContext('2d');
-      const urlInput = document.getElementById('designUrl');
-      const fileInput = document.getElementById('designFile');
-      const scaleInp = document.getElementById('mockScale');
-      const rotInp = document.getElementById('mockRotate');
-      const opInp = document.getElementById('mockOpacity');
-      const centerBtn = document.getElementById('btnCenterOverlay');
-      const exportBtn = document.getElementById('btnExportPng');
+    // ===== Mockup Studio Logic =====
+  ;(function(){
+    const canvas = document.getElementById('mockCanvas');
+    const stageWrap = document.getElementById('stageWrap');
+    const selLine = document.getElementById('mockLine');
+    const selSide = document.getElementById('mockSide');
+    const garmentUrlInput = document.getElementById('mockGarmentUrl');
+    const fileInp = document.getElementById('ovFile');
+    const urlInp = document.getElementById('ovUrl');
+    const btnAddUrl = document.getElementById('btnAddUrl');
+    const btnCenter = document.getElementById('btnCenter');
+    const btnExport = document.getElementById('btnExportPng');
+    const list = document.getElementById('ovList');
+    if(!canvas || !stageWrap || !selLine) return;
+    const ctx = canvas.getContext('2d');
 
-      const mock = { garmentUrl:'', garmentImg:new Image(), designUrl:'', designImg:new Image(), x:0, y:0, scale:0.4, rot:0, opacity:1, dragging:false, dx:0, dy:0 };
+    const stateMock = {
+      garmentUrl:'', garmentImg:new Image(),
+      gRect:null, // garment draw rect on canvas
+      overlays:[], // {id, url, img, x,y, scale, rot, opacity, visible, locked, w,h}
+      active:null,
+      dragging:false, dragOffX:0, dragOffY:0,
+      mode:null, handle:null, // 'move'|'scale'|'rotate'
+      guides:[] // [{type:'v'|'h', x? , y?}]
+    };
 
-      function fitCanvasToStage(){
-        const w = stage.clientWidth || 600;
-        const ar = (mock.garmentImg && mock.garmentImg.naturalWidth) ? (mock.garmentImg.naturalWidth / (mock.garmentImg.naturalHeight||1)) : 1;
-        const h = Math.max(260, Math.round(w / (ar||1)));
-        canvas.width = w; canvas.height = h;
+    function fitCanvas(){
+      const w = stageWrap.clientWidth || 600;
+      const ar = (stateMock.garmentImg.naturalWidth||1)/(stateMock.garmentImg.naturalHeight||1);
+      const h = Math.max(300, Math.round(w / ar));
+      canvas.width = w; canvas.height = h;
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      // Garment
+      let dx=0,dy=0,dw=canvas.width,dh=canvas.height;
+      if(stateMock.garmentImg && stateMock.garmentImg.naturalWidth){
+        const gw = stateMock.garmentImg.naturalWidth, gh = stateMock.garmentImg.naturalHeight;
+        const s = Math.max(canvas.width/gw, canvas.height/gh);
+        dw = gw*s; dh = gh*s; dx = (canvas.width-dw)/2; dy = (canvas.height-dh)/2;
+        ctx.drawImage(stateMock.garmentImg, dx, dy, dw, dh);
       }
-      function draw(){
-        ctx.clearRect(0,0,canvas.width, canvas.height);
-        if(mock.garmentUrl && mock.garmentImg.complete && mock.garmentImg.naturalWidth){
-          const gw = mock.garmentImg.naturalWidth; const gh = mock.garmentImg.naturalHeight;
-          const s = Math.max(canvas.width/gw, canvas.height/gh);
-          const dw = gw*s, dh = gh*s; const dx = (canvas.width - dw)/2, dy = (canvas.height - dh)/2;
-          ctx.drawImage(mock.garmentImg, dx, dy, dw, dh);
-        }
-        if(mock.designUrl && mock.designImg.complete && mock.designImg.naturalWidth){
-          const iw = mock.designImg.naturalWidth, ih = mock.designImg.naturalHeight;
-          const base = Math.min(canvas.width, canvas.height);
-          const drawW = base * mock.scale, drawH = drawW * (ih/iw);
-          ctx.save(); ctx.globalAlpha = mock.opacity; ctx.translate(mock.x, mock.y); ctx.rotate(mock.rot * Math.PI/180);
-          ctx.drawImage(mock.designImg, -drawW/2, -drawH/2, drawW, drawH);
-          ctx.restore();
-        }
-      }
-      function populateLines(){
-        const prev = sel.value;
-        const opts = (state.lines||[]).map(l=>`<option value="${l.id}">${(l.brandName||'')} ${(l.styleName||'')} • ${(l.colorName||'')}</option>`).join('');
-        sel.innerHTML = `<option value="">— choose garment from quote —</option>${opts}`;
-        if(prev && [...sel.options].some(o=>o.value===prev)) sel.value = prev;
-      }
-      function centerOverlay(){ mock.x = Math.round(canvas.width/2); mock.y = Math.round(canvas.height/2); }
-      function loadGarmentFromLine(){
-        const line = (state.lines||[]).find(l=>l.id===sel.value);
-        if(!line){ mock.garmentUrl=''; draw(); return; }
-        mock.garmentUrl = line.image || '';
-        const img = new Image(); img.crossOrigin = 'anonymous';
-        img.onload = ()=>{ mock.garmentImg = img; fitCanvasToStage(); centerOverlay(); draw(); };
-        img.onerror = ()=>{ mock.garmentImg = img; fitCanvasToStage(); draw(); };
-        img.src = mock.garmentUrl;
-      }
-      function setDesignFromUrl(u){
-        if(!u){ mock.designUrl=''; draw(); return; }
-        const img = new Image(); img.crossOrigin = 'anonymous';
-        img.onload = ()=>{ mock.designImg = img; if(mock.x===0 && mock.y===0) centerOverlay(); draw(); };
-        img.onerror = ()=>{ alert('Could not load design image URL'); };
-        img.src = u; mock.designUrl = u;
-      }
-      // Dragging & wheel zoom
-      function toCanvas(evt){ const r = canvas.getBoundingClientRect(); return { x: (evt.clientX - r.left), y: (evt.clientY - r.top) }; }
-      canvas.addEventListener('mousedown', e=>{ if(!mock.designUrl) return; const p = toCanvas(e); mock.dragging=true; mock.dx = p.x - mock.x; mock.dy = p.y - mock.y; });
-      window.addEventListener('mouseup', ()=>{ mock.dragging=false; });
-      canvas.addEventListener('mousemove', e=>{ if(!mock.dragging) return; const p = toCanvas(e); mock.x = p.x - mock.dx; mock.y = p.y - mock.dy; draw(); });
-      canvas.addEventListener('wheel', e=>{ if(!mock.designUrl) return; e.preventDefault(); const d = e.deltaY>0?-0.05:0.05; mock.scale = Math.max(0.05, Math.min(5, mock.scale+d)); scaleInp.value = String(mock.scale); draw(); }, { passive:false });
+      stateMock.gRect = { x:dx, y:dy, w:dw, h:dh };
 
-      // Controls
-      sel.addEventListener('change', loadGarmentFromLine);
-      if(fileInput){ fileInput.addEventListener('change', ()=>{ const f = fileInput.files && fileInput.files[0]; if(!f) return; const r = new FileReader(); r.onload = ()=> setDesignFromUrl(r.result); r.readAsDataURL(f); }); }
-      if(urlInput){ urlInput.addEventListener('change', ()=> setDesignFromUrl(urlInput.value.trim())); }
-      if(scaleInp){ scaleInp.addEventListener('input', ()=>{ mock.scale = Number(scaleInp.value||1); draw(); }); }
-      if(rotInp){ rotInp.addEventListener('input', ()=>{ mock.rot = Number(rotInp.value||0); draw(); }); }
-      if(opInp){ opInp.addEventListener('input', ()=>{ mock.opacity = Number(opInp.value||1); draw(); }); }
-      if(centerBtn){ centerBtn.addEventListener('click', ()=>{ centerOverlay(); draw(); }); }
-      if(exportBtn){ exportBtn.addEventListener('click', ()=>{ try{ const url = canvas.toDataURL('image/png'); const a = document.createElement('a'); a.href=url; a.download='mockup.png'; a.click(); } catch(e){ alert('Export blocked by image host (CORS). You can still screenshot this preview.'); } }); }
+      // Overlays
+      stateMock.overlays.forEach(o=>{ if(!o.visible) return; drawOverlay(o); });
 
-      new ResizeObserver(()=>{ fitCanvasToStage(); draw(); }).observe(stage);
+      // Guides (after overlays so they sit on top)
+      if(stateMock.guides.length){
+        ctx.save();
+        ctx.strokeStyle='rgba(88,101,242,0.9)';
+        ctx.setLineDash([6,6]);
+        stateMock.guides.forEach(g=>{
+          ctx.beginPath();
+          if(g.type==='v'){ ctx.moveTo(g.x,0); ctx.lineTo(g.x,canvas.height); }
+          if(g.type==='h'){ ctx.moveTo(0,g.y); ctx.lineTo(canvas.width,g.y); }
+          ctx.stroke();
+        });
+        ctx.restore();
+      }
+    }
 
-      // Hook into renderLines so options stay in sync
-      if(window.renderLines){ const orig = window.renderLines; window.renderLines = function(){ const r = orig.apply(this, arguments); populateLines(); draw(); return r; }; }
+    function drawOverlay(o){
+      const dw = o.w * o.scale; const dh = o.h * o.scale;
+      ctx.save(); ctx.translate(o.x, o.y); ctx.rotate(o.rot*Math.PI/180);
+      ctx.globalAlpha = o.opacity;
+      ctx.drawImage(o.img, -dw/2, -dh/2, dw, dh);
+      ctx.globalAlpha = 1;
+      if(stateMock.active===o.id){ // handles
+        ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.lineWidth = 1; ctx.setLineDash([4,3]);
+        ctx.strokeRect(-dw/2, -dh/2, dw, dh); ctx.setLineDash([]);
+        // corners
+        const hs = 8; const pts = [
+          {name:'tl', x:-dw/2, y:-dh/2}, {name:'tr', x:dw/2, y:-dh/2},
+          {name:'br', x:dw/2, y:dh/2}, {name:'bl', x:-dw/2, y:dh/2}
+        ];
+        ctx.fillStyle='white'; ctx.strokeStyle='black';
+        pts.forEach(p=>{ ctx.beginPath(); ctx.rect(p.x-hs, p.y-hs, hs*2, hs*2); ctx.fill(); ctx.stroke(); });
+        // rotation handle (top middle)
+        const ry = -dh/2 - 26; ctx.beginPath(); ctx.moveTo(0,-dh/2); ctx.lineTo(0,ry); ctx.stroke();
+        ctx.beginPath(); ctx.arc(0, ry, 7, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+      }
+      ctx.restore();
+    }
 
-      // Initial
-      populateLines(); fitCanvasToStage(); draw();
-    })();
-  </script>
+    function populateLines(){
+      const prev = selLine.value;
+      const opts = (state.lines||[]).map(l=>`<option value="${l.id}">${l.brandName||''} ${l.styleName||''} • ${l.colorName||''}</option>`).join('');
+      selLine.innerHTML = `<option value="">— choose garment from quote —</option>${opts}`;
+      if(prev && [...selLine.options].some(o=>o.value===prev)) selLine.value = prev;
+      if(selLine.value) loadGarment();
+    }
+
+    function loadGarment(){
+      const line = (state.lines||[]).find(l=>l.id===selLine.value);
+      if(!line){ stateMock.garmentUrl=''; stateMock.garmentImg=new Image(); draw(); return; }
+      let url = '';
+      const side = selSide.value;
+      if(side==='custom') url = garmentUrlInput.value.trim();
+      else if(side==='back') url = (line.images && line.images.back) || (line.meta && line.meta.colorBackImage) || '';
+      else url = (line.images && line.images.front) || line.image || '';
+      const img = new Image(); img.crossOrigin='anonymous';
+      img.onload = ()=>{ stateMock.garmentImg = img; fitCanvas(); draw(); };
+      img.onerror = ()=>{ stateMock.garmentImg = img; fitCanvas(); draw(); };
+      stateMock.garmentUrl = url; img.src = url || 'https://via.placeholder.com/800x1000?text=Garment+Image';
+    }
+
+    function addOverlayFromUrl(u){ if(!u) return; const img = new Image(); img.crossOrigin='anonymous'; img.onload=()=>{ const id=crypto.randomUUID(); const o={ id, url:u, img, x:canvas.width/2, y:canvas.height/2, scale: Math.min(0.6, canvas.width/(img.naturalWidth||1)), rot:0, opacity:1, visible:true, locked:false, w:img.naturalWidth||500, h:img.naturalHeight||500 }; stateMock.overlays.push(o); stateMock.active=id; rebuildList(); draw(); }; img.onerror=()=>alert('Could not load design URL'); img.src=u; }
+
+    function fileToUrl(file){ return new Promise((res)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(file); }); }
+
+    function rebuildList(){
+      list.innerHTML = stateMock.overlays.map(o=>`<div class="row" data-id="${o.id}" style="align-items:center;border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:6px;background:${stateMock.active===o.id?'#eef2ff':'rgb(var(--bg))'}">
+        <span style=\"font-size:12px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">${o.url.split('/').pop()}</span>
+        <button class=\"btn ghost\" data-vis=\"${o.id}\">${o.visible?'👁️':'🚫'}</button>
+        <button class=\"btn ghost\" data-lock=\"${o.id}\">${o.locked?'🔒':'🔓'}</button>
+        <button class=\"btn ghost\" data-up=\"${o.id}\">⬆️</button>
+        <button class=\"btn ghost\" data-down=\"${o.id}\">⬇️</button>
+        <button class=\"btn\" data-del=\"${o.id}\">✖</button>
+      </div>`).join('');
+      [...list.querySelectorAll('[data-id]')].forEach(el=> el.onclick = (e)=>{ if(e.target.closest('button')) return; stateMock.active = el.getAttribute('data-id'); rebuildList(); draw(); });
+      list.querySelectorAll('[data-vis]').forEach(b=> b.onclick = ()=>{ const id=b.getAttribute('data-vis'); const o = stateMock.overlays.find(x=>x.id===id); o.visible=!o.visible; rebuildList(); draw(); });
+      list.querySelectorAll('[data-lock]').forEach(b=> b.onclick = ()=>{ const id=b.getAttribute('data-lock'); const o = stateMock.overlays.find(x=>x.id===id); o.locked=!o.locked; rebuildList(); draw(); });
+      list.querySelectorAll('[data-del]').forEach(b=> b.onclick = ()=>{ const id=b.getAttribute('data-del'); stateMock.overlays = stateMock.overlays.filter(x=>x.id!==id); if(stateMock.active===id) stateMock.active=null; rebuildList(); draw(); });
+      list.querySelectorAll('[data-up]').forEach(b=> b.onclick = ()=>{ const id=b.getAttribute('data-up'); const i=stateMock.overlays.findIndex(x=>x.id===id); if(i>0){ const t=stateMock.overlays[i]; stateMock.overlays[i]=stateMock.overlays[i-1]; stateMock.overlays[i-1]=t; rebuildList(); draw(); }});
+      list.querySelectorAll('[data-down]').forEach(b=> b.onclick = ()=>{ const id=b.getAttribute('data-down'); const i=stateMock.overlays.findIndex(x=>x.id===id); if(i>=0 && i<stateMock.overlays.length-1){ const t=stateMock.overlays[i]; stateMock.overlays[i]=stateMock.overlays[i+1]; stateMock.overlays[i+1]=t; rebuildList(); draw(); }});
+    }
+
+    function centerActive(){ const o = stateMock.overlays.find(x=>x.id===stateMock.active); if(!o) return; o.x = canvas.width/2; o.y = canvas.height/2; draw(); }
+
+    function localCoords(o, mx,my){ // screen -> local (unrotated)
+      const rad = o.rot*Math.PI/180; const dx = mx - o.x, dy = my - o.y; return { x: Math.cos(rad)*dx + Math.sin(rad)*dy, y: -Math.sin(rad)*dx + Math.cos(rad)*dy };
+    }
+
+    function hitTest(o, mx,my){
+      const dw=o.w*o.scale, dh=o.h*o.scale; const p = localCoords(o,mx,my);
+      const inside = Math.abs(p.x) <= dw/2 && Math.abs(p.y) <= dh/2;
+      const hs=8; const handles=[{name:'tl',x:-dw/2,y:-dh/2},{name:'tr',x:dw/2,y:-dh/2},{name:'br',x:dw/2,y:dh/2},{name:'bl',x:-dw/2,y:dh/2}];
+      const onHandle = handles.find(h=> Math.abs(p.x-h.x)<=hs && Math.abs(p.y-h.y)<=hs );
+      const ry = -dh/2 - 26; const rotHit = Math.hypot(p.x-0, p.y-ry) <= 10;
+      return { inside, handle:onHandle?.name||null, rot:rotHit };
+    }
+
+    function selectTopmost(mx,my){
+      for(let i=stateMock.overlays.length-1;i>=0;i--){ const o=stateMock.overlays[i]; if(!o.visible) continue; if(hitTest(o,mx,my).inside){ stateMock.active=o.id; rebuildList(); draw(); return true; } }
+      return false;
+    }
+
+    function applySnapping(o, nx, ny){
+      const snapT = 8; const guides = [];
+      const dw=o.w*o.scale, dh=o.h*o.scale; // unrotated bbox
+      // canvas centers
+      if(Math.abs(nx - canvas.width/2) < snapT){ nx = canvas.width/2; guides.push({type:'v', x:canvas.width/2}); }
+      if(Math.abs(ny - canvas.height/2) < snapT){ ny = canvas.height/2; guides.push({type:'h', y:canvas.height/2}); }
+      // garment guides (edges + centers)
+      if(stateMock.gRect){ const g=stateMock.gRect; const gx=g.x+g.w/2, gy=g.y+g.h/2; // centers
+        if(Math.abs(nx - gx) < snapT){ nx=gx; guides.push({type:'v', x:gx}); }
+        if(Math.abs(ny - gy) < snapT){ ny=gy; guides.push({type:'h', y:gy}); }
+        // edges (align overlay bbox to garment edges)
+        const leftX = g.x + dw/2, rightX = g.x + g.w - dw/2;
+        const topY = g.y + dh/2, bottomY = g.y + g.h - dh/2;
+        if(Math.abs(nx - leftX) < snapT){ nx=leftX; guides.push({type:'v', x:g.x}); }
+        if(Math.abs(nx - rightX) < snapT){ nx=rightX; guides.push({type:'v', x:g.x+g.w}); }
+        if(Math.abs(ny - topY) < snapT){ ny=topY; guides.push({type:'h', y:g.y}); }
+        if(Math.abs(ny - bottomY) < snapT){ ny=bottomY; guides.push({type:'h', y:g.y+g.h}); }
+      }
+      stateMock.guides = guides; return { x:nx, y:ny };
+    }
+
+    function onDown(e){ const r = canvas.getBoundingClientRect(); const mx = e.clientX - r.left, my = e.clientY - r.top; if(!stateMock.active){ if(!selectTopmost(mx,my)) return; }
+      const o = stateMock.overlays.find(x=>x.id===stateMock.active); if(!o || o.locked) return; const h = hitTest(o,mx,my); if(h.rot){ stateMock.mode='rotate'; } else if(h.handle){ stateMock.mode='scale'; stateMock.handle=h.handle; } else if(h.inside){ stateMock.mode='move'; const p = localCoords(o,mx,my); stateMock.dragOffX=p.x; stateMock.dragOffY=p.y; } else { stateMock.mode=null; return; } stateMock.dragging=true; e.preventDefault(); }
+
+    function onMove(e){ if(!stateMock.dragging || !stateMock.active) return; const o = stateMock.overlays.find(x=>x.id===stateMock.active); const r = canvas.getBoundingClientRect(); const mx = e.clientX - r.left, my = e.clientY - r.top; if(stateMock.mode==='move'){ const dx = mx - (o.x + Math.cos(o.rot*Math.PI/180)*stateMock.dragOffX - Math.sin(o.rot*Math.PI/180)*stateMock.dragOffY); const dy = my - (o.y + Math.sin(o.rot*Math.PI/180)*stateMock.dragOffX + Math.cos(o.rot*Math.PI/180)*stateMock.dragOffY); let nx = o.x + dx, ny = o.y + dy; const s = applySnapping(o, nx, ny); o.x = s.x; o.y = s.y; draw(); }
+      else if(stateMock.mode==='rotate'){ const ang = Math.atan2(my - o.y, mx - o.x); o.rot = (ang*180/Math.PI) + 90; stateMock.guides=[]; draw(); }
+      else if(stateMock.mode==='scale'){ const lp = localCoords(o,mx,my); const hx=Math.abs(lp.x)*2/(o.w||1); const hy=Math.abs(lp.y)*2/(o.h||1); o.scale = Math.max(0.05, Math.min(5, Math.max(hx,hy))); stateMock.guides=[]; draw(); }
+    }
+
+    function onUp(){ stateMock.dragging=false; stateMock.mode=null; stateMock.guides=[]; draw(); }
+
+    canvas.addEventListener('mousedown', onDown);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    canvas.addEventListener('wheel', (e)=>{ const o = stateMock.overlays.find(x=>x.id===stateMock.active); if(!o) return; e.preventDefault(); const d = e.deltaY>0?-0.05:0.05; o.scale = Math.max(0.05, Math.min(5, o.scale+d)); draw(); }, { passive:false });
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', (e)=>{
+      const o = stateMock.overlays.find(x=>x.id===stateMock.active);
+      if(!o) return;
+      const step = e.shiftKey ? 10 : 1;
+      if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){
+        if(e.key==='ArrowLeft') o.x -= step;
+        if(e.key==='ArrowRight') o.x += step;
+        if(e.key==='ArrowUp') o.y -= step;
+        if(e.key==='ArrowDown') o.y += step;
+        draw(); e.preventDefault();
+      }
+      if(e.key==='Delete' || e.key==='Backspace'){
+        stateMock.overlays = stateMock.overlays.filter(x=>x.id!==o.id); stateMock.active=null; rebuildList(); draw(); e.preventDefault();
+      }
+    });
+
+    // Controls
+    selLine.addEventListener('change', loadGarment);
+    selSide.addEventListener('change', loadGarment);
+    garmentUrlInput.addEventListener('change', ()=>{ if(selSide.value==='custom') loadGarment(); });
+    fileInp && fileInp.addEventListener('change', async ()=>{ const f=fileInp.files&&fileInp.files[0]; if(!f) return; const u = await fileToUrl(f); addOverlayFromUrl(u); fileInp.value=''; });
+    btnAddUrl.addEventListener('click', ()=> addOverlayFromUrl((urlInp.value||'').trim()));
+    btnCenter.addEventListener('click', centerActive);
+    btnExport.addEventListener('click', ()=>{ try{ const url = canvas.toDataURL('image/png'); const a=document.createElement('a'); a.href=url; a.download='mockup.png'; a.click(); }catch(e){ alert('Export blocked by image host (CORS). You can still screenshot this preview.'); } });
+
+    new ResizeObserver(()=>{ fitCanvas(); draw(); }).observe(stageWrap);
+
+    // Hook into renderLines so clothing list stays synced
+    if(window.renderLines){ const orig = window.renderLines; window.renderLines = function(){ const r = orig.apply(this, arguments); populateLines(); return r; }; }
+    populateLines(); fitCanvas(); draw();
+  })();
+
+</script>
 </body>
 </html>
