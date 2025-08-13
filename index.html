@@ -850,5 +850,23 @@ export default async function handler(req, res){
   })();
 
 </script>
+  <script>
+async function ssawFindByStyle(q) {
+  const params = new URLSearchParams({
+    path: 'products',
+    // "style" accepts StyleID, PartNumber, or "BrandName Name" strings
+    style: q,
+    // keep payload small and include mockup images
+    fields: [
+      'sku','styleID','brandName','styleName','colorName','sizeName','qty',
+      'customerPrice','salePrice','piecePrice',
+      'colorFrontImage','colorBackImage'
+    ].join(',')
+  });
+  const r = await fetch(`/api/ssaw?${params}`);
+  if (!r.ok) throw new Error(`S&S error ${r.status}`);
+  return r.json();
+}
+</script>
 </body>
 </html>
