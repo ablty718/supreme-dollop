@@ -552,70 +552,43 @@
   }
 
   function calcTotals(){
-  $('#kpiDTF').textContent = `$${Number($('#dtfRate').value||state.settings.dtfRate).toFixed(2)}`;
-  $('#kpiSetup').textContent = `$${Number($('#spSetup').value||state.settings.spSetup).toFixed(2)}`;
-  $('#kpiRun').textContent   = `$${Number($('#spRun').value||state.settings.spRun).toFixed(2)}`;
-  $('#kpiMU').textContent    = `${Number($('#markupPct').value||state.settings.markupPct)}%`;
+    $('#kpiDTF').textContent = `$${Number($('#dtfRate').value||state.settings.dtfRate).toFixed(2)}`;
+    $('#kpiSetup').textContent = `$${Number($('#spSetup').value||state.settings.spSetup).toFixed(2)}`;
+    $('#kpiRun').textContent = `$${Number($('#spRun').value||state.settings.spRun).toFixed(2)}`;
+    $('#kpiMU').textContent = `${Number($('#markupPct').value||state.settings.markupPct)}%`;
 
-  const roundToInc = (n, inc=0.25)=> Math.round((Number(n)||0)/inc)*inc;
+    const totals = { qty:0, garmentCost:0, garmentSell:0, decoPerPiece:0, setup:0, decoTotal:0, shipping: Number($('#shipping').value||0), tax:0, grand:0 };
+    const deco = perPieceDecoration();
+    totals.decoPerPiece = deco.perPiece; totals.setup = deco.setup;
 
-  const totals = {
-    qty:0, garmentCost:0, garmentSell:0,
-    decoPerPiece:0, setup:0, decoTotal:0,
-    shipping:Number($('#shipping').value||0), tax:0, grand:0
-  };
+    state.lines.forEach(line=>{
+      const lineQty = line.units.reduce((a,b)=>a+Number(b.qty||0),0);
+      const lineCost = line.units.reduce((sum,u)=> sum + Number(u.qty||0)*Number(u.unitPrice||0), 0);
+      totals.qty += lineQty; totals.garmentCost += lineCost;
+    });
 
-  // decoration math
-  const deco = perPieceDecoration();
-  totals.decoPerPiece = deco.perPiece;
-  totals.setup        = deco.setup;
+    const markup = 1 + (Number($('#markupPct').value||state.settings.markupPct)/100);
+    totals.garmentSell = totals.garmentCost * markup;
+    const garmentPerPiece = totals.qty ? (totals.garmentSell / totals.qty) : 0;
+    const pricePerPiece = garmentPerPiece + totals.decoPerPiece;
 
-  // garment math
-  state.lines.forEach(line=>{
-    const lineQty  = line.units.reduce((a,b)=> a + Number(b.qty||0), 0);
-    const lineCost = line.units.reduce((s,u)=> s + Number(u.qty||0)*Number(u.unitPrice||0), 0);
-    totals.qty       += lineQty;
-    totals.garmentCost += lineCost;
-  });
+    totals.decoTotal = (totals.qty * totals.decoPerPiece) + totals.setup;
+    const sub = totals.garmentSell + totals.decoTotal + totals.shipping;
+    totals.tax = sub * (Number($('#taxPct').value||state.settings.taxPct)/100);
+    totals.grand = sub + totals.tax;
 
-  const markup = 1 + (Number($('#markupPct').value||state.settings.markupPct)/100);
-  totals.garmentSell = totals.garmentCost * markup;
-
-  // raw per-piece (kept raw for math, rounded only for display)
-  const garmentEaRaw = totals.qty ? (totals.garmentSell / totals.qty) : 0;
-  const priceEaRaw   = garmentEaRaw + totals.decoPerPiece;
-
-  // display-rounded values (nearest $0.25)
-  const rGarmentEa = roundToInc(garmentEaRaw, 0.25);
-  const rDecoEa    = roundToInc(totals.decoPerPiece, 0.25);
-  const rPPE       = roundToInc(priceEaRaw, 0.25);
-
-  // totals (computed from raw, *not* the rounded display numbers)
-  totals.decoTotal = (totals.qty * totals.decoPerPiece) + totals.setup;
-  const sub        = totals.garmentSell + totals.decoTotal + totals.shipping;
-  totals.tax       = sub * (Number($('#taxPct').value||state.settings.taxPct)/100);
-  totals.grand     = sub + totals.tax;
-
-  // display-rounded for the grid
-  const rSetup  = roundToInc(totals.setup,   0.25);
-  const rShip   = roundToInc(totals.shipping,0.25);
-  const rTax    = roundToInc(totals.tax,     0.25);
-  const rGrand  = roundToInc(totals.grand,   0.25);
-
-  const money = (n)=> `$${Number(n||0).toFixed(2)}`;
-
-  let html = '';
-  html += `<div class="muted">Pieces</div><div><b>${totals.qty}</b></div>`;
-  html += `<div class="muted">Garment $/ea</div><div><b>${money(rGarmentEa)}</b></div>`;
-  html += `<div class="muted">Decoration $/ea</div><div><b>${money(rDecoEa)}</b></div>`;
-  html += `<div class="muted">Price per piece</div><div><b class="accent">${money(rPPE)}</b></div>`;
-  if (totals.setup>0)   html += `<div class="muted">Screen setups</div><div><b>${money(rSetup)}</b></div>`;
-  if (totals.shipping>0)html += `<div class="muted">Shipping</div><div><b>${money(rShip)}</b></div>`;
-  if (totals.tax>0)     html += `<div class="muted">Tax</div><div><b>${money(rTax)}</b></div>`;
-  html += `<div class="muted">Grand Total</div><div><b class="accent">${money(rGrand)}</b></div>`;
-
-  $('#totals').innerHTML = html;
-}
+    function money(n){ return `$${Number(n||0).toFixed(2)}`; }
+    let html = '';
+    html += `<div class="muted">Pieces</div><div><b>${totals.qty}</b></div>`;
+    html += `<div class="muted">Garment $/ea</div><div><b>${money(garmentPerPiece)}</b></div>`;
+    html += `<div class="muted">Decoration $/ea</div><div><b>${money(totals.decoPerPiece)}</b></div>`;
+    html += `<div class="muted">Price per piece</div><div><b class="accent">${money(pricePerPiece)}</b></div>`;
+    if(totals.setup>0) html += `<div class="muted">Screen setups</div><div><b>${money(totals.setup)}</b></div>`;
+    if(totals.shipping>0) html += `<div class="muted">Shipping</div><div><b>${money(totals.shipping)}</b></div>`;
+    if(totals.tax>0) html += `<div class="muted">Tax</div><div><b>${money(totals.tax)}</b></div>`;
+    html += `<div class="muted">Grand Total</div><div><b class="accent">${money(totals.grand)}</b></div>`;
+    $('#totals').innerHTML = html;
+  }
 
   // ---------- Mockup Studio (Factory for A & B) ----------
   function populateMockLineOptions(){
