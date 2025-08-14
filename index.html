@@ -1,891 +1,314 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Anton v2.2</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --bg: 245 245 248;
-      --text: 20 23 28;
-      --muted: 110 115 125;
-      --brand: 88 101 242; /* indigo */
-      --brand-2: 157 78 221; /* purple */
-      --card: 255 255 255;
-      --ok: 16 185 129;
-      --warn: 245 158 11;
-      --danger: 239 68 68;
-      --ring: 59 130 246;
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0;height:100%;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:rgb(var(--text));}
-    body{background:linear-gradient(135deg, rgba(var(--brand)/0.06), rgba(var(--brand-2)/0.06)), rgb(var(--bg));}
-    .container{max-width:100%;margin-inline:auto;padding:24px;}
-    header{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:16px}
-    .brand{display:flex;gap:12px;align-items:center}
-    .logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(145deg, rgba(var(--brand)/.9), rgba(var(--brand-2)/.9));box-shadow:0 8px 30px rgba(0,0,0,.12)}
-    .title{font-weight:800;letter-spacing:.2px}
-    .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(0,0,0,.08);background:rgb(var(--card));padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600;transition:.15s;box-shadow:0 2px 10px rgba(0,0,0,.06)}
-    .btn:hover{transform:translateY(-1px)}
-    .btn.primary{background:linear-gradient(90deg, rgba(var(--brand)/.95), rgba(var(--brand-2)/.95));color:white;border-color:transparent}
-    .btn.ghost{background:transparent;border-color:rgba(0,0,0,.12)}
-    .grid{display:grid;grid-template-columns:1fr;gap:16px}
-    @media(min-width:1000px){.grid{grid-template-columns:50% 1fr}}
-    .card{background:rgb(var(--card));border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:16px;box-shadow:0 8px 30px rgba(0,0,0,.04);overflow: scroll;height: 90vh;}
-    .card h2{margin:0 0 8px;font-size:18px}
-    .sub{color:rgb(var(--muted));font-size:12px}
-    .row{display:flex;gap:8px;flex-wrap:wrap}
-    input,select,textarea{width:100%;padding:10px 12px;border:1px solid rgba(0,0,0,.12);border-radius:12px;background:#fff;outline:none}
-    input:focus,select:focus,textarea:focus{border-color:rgb(var(--ring));box-shadow:0 0 0 3px rgba(var(--ring)/.15)}
-    label{font-size:12px;color:rgb(var(--muted))}
-    .field{display:grid;gap:6px;flex:1;min-width:120px}
-    .list{display:grid;gap:10px}
-    .pill{padding:4px 10px;border-radius:999px;background:rgb(var(--bg));border:1px solid rgba(0,0,0,.08);font-size:12px}
-    .table{width:100%;border-collapse:collapse}
-    .table th,.table td{padding:10px;border-bottom:1px solid rgba(0,0,0,.06);text-align:left}
-    .sectionTitle{font-weight:700;margin:12px 0 4px}
-    .muted{color:rgb(var(--muted))}
-    .right{margin-left:auto}
-    .divider{height:1px;background:linear-gradient(90deg,rgba(0,0,0,.06),transparent)}
-    .chip{font-size:11px;padding:4px 8px;border-radius:999px;background:rgba(var(--brand)/.12);color:rgb(var(--brand));font-weight:700}
-    .badge{font-size:11px;padding:4px 8px;border-radius:999px;background:rgba(var(--ok)/.12);color:rgb(var(--ok));font-weight:700}
-    .stickyActions{position:sticky;bottom:0;display:flex;gap:8px;background:linear-gradient(180deg, transparent, rgba(255,255,255,.9));padding-top:12px}
-    .totals{display:grid;grid-template-columns:1fr auto; gap:8px;padding:8px;border-radius:12px;background:rgb(var(--bg));border:1px dashed rgba(0,0,0,.12)}
-    .kpi{display:grid;gap:4px;background:rgb(var(--bg));border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:10px;min-width:120px;align-content: space-between;}
-    .kpi b{font-size:20px}
-    .wrap{display:flex;flex-wrap:none;gap:8px;justify-content: space-between;align-items: stretch;}
-    .loc{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid rgba(0,0,0,.08);border-radius:12px;background:rgb(var(--bg));}
-    .loc input{width:76px}
-    .help{font-size:12px;color:rgb(var(--muted))}
-    .alert{padding:10px 12px;border-radius:12px;background:rgba(var(--warn)/.12);border:1px solid rgba(var(--warn)/.3)}
-    .hidden{display:none}
-    .accent{color:rgb(var(--brand))}
-    .kv{display:grid;grid-template-columns:140px 1fr;gap:6px;font-size:12px}
-    .kv div{padding:4px 8px;border:1px solid rgba(0,0,0,.06);border-radius:8px;background:rgb(var(--bg))}
-    #quoteLines{overflow:auto}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Apparel Quote Builder — S&S API Only</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:245 245 248;--text:20 23 28;--muted:110 115 125;--brand:88 101 242;--brand2:157 78 221;--card:255 255 255;--ok:16 185 129;--warn:245 158 11;--ring:59 130 246}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:rgb(var(--text))}
+body{background:linear-gradient(135deg,rgba(var(--brand)/.06),rgba(var(--brand2)/.06)),rgb(var(--bg))}
+.container{max-width:1200px;margin-inline:auto;padding:24px}
+header{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:16px}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(145deg,rgba(var(--brand)/.9),rgba(var(--brand2)/.9));box-shadow:0 8px 30px rgba(0,0,0,.12)}
+.title{font-weight:800;letter-spacing:.2px}
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(0,0,0,.08);background:rgb(var(--card));padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600;transition:.15s;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.btn:hover{transform:translateY(-1px)}
+.btn.primary{background:linear-gradient(90deg,rgba(var(--brand)/.95),rgba(var(--brand2)/.95));color:#fff;border-color:transparent}
+.btn.ghost{background:transparent;border-color:rgba(0,0,0,.12)}
+.grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:1000px){.grid{grid-template-columns:50% 1fr}}
+.card{background:rgb(var(--card));border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:16px;box-shadow:0 8px 30px rgba(0,0,0,.04)}
+.card h2{margin:0 0 8px;font-size:18px}
+.sub{color:rgb(var(--muted));font-size:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid rgba(0,0,0,.12);border-radius:12px;background:#fff;outline:none}
+input:focus,select:focus,textarea:focus{border-color:rgb(var(--ring));box-shadow:0 0 0 3px rgba(var(--ring)/.15)}
+label{font-size:12px;color:rgb(var(--muted))}
+.field{display:grid;gap:6px;flex:1;min-width:120px}
+.list{display:grid;gap:10px}
+.pill{padding:4px 10px;border-radius:999px;background:rgb(var(--bg));border:1px solid rgba(0,0,0,.08);font-size:12px}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{padding:10px;border-bottom:1px solid rgba(0,0,0,.06);text-align:left}
+.sectionTitle{font-weight:700;margin:12px 0 4px}
+.muted{color:rgb(var(--muted))}
+.right{margin-left:auto}
+.wrap{display:flex;flex-wrap:wrap;gap:8px}
+.kpi{display:grid;gap:4px;background:rgb(var(--bg));border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:10px;min-width:120px}
+.kpi b{font-size:20px}
+.loc{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid rgba(0,0,0,.08);border-radius:12px;background:rgb(var(--bg))}
+.loc input{width:76px}
+.alert{padding:10px 12px;border-radius:12px;background:rgba(var(--warn)/.12);border:1px solid rgba(0,0,0,.12)}
+.hidden{display:none}
+.accent{color:rgb(var(--brand))}
+.kv{display:grid;grid-template-columns:140px 1fr;gap:6px;font-size:12px}
+.kv div{padding:4px 8px;border:1px solid rgba(0,0,0,.06);border-radius:8px;background:rgb(var(--bg))}
+#quoteLines{overflow:auto}
+.totals{display:grid;grid-template-columns:1fr auto;gap:8px;padding:8px;border-radius:12px;background:rgb(var(--bg));border:1px dashed rgba(0,0,0,.12)}
+.iconBtn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:32px;border:1px solid rgba(0,0,0,.12);border-radius:10px;background:#fff;cursor:pointer}
+.iconBtn:hover{background:rgba(0,0,0,.04)}
+.icon{width:16px;height:16px;display:block}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#111;color:#fff;padding:10px 14px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.25);display:flex;gap:12px;align-items:center;z-index:1000}
+.toast.hidden{display:none}
+.stage{position:relative;background:rgba(0,0,0,.04);border:1px dashed rgba(0,0,0,.12);border-radius:14px;overflow:hidden;min-height:300px;display:grid;place-items:center}
+.canvas{width:100%;height:auto;display:block}
+.handle{position:absolute;width:16px;height:16px;border-radius:50%;border:2px solid #fff;background:#000;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.guide{position:absolute;background:rgba(88,101,242,.35)}
+.guide.v{width:1px;top:0;bottom:0}
+.guide.h{height:1px;left:0;right:0}
+</style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div class="brand">
-        <div class="logo"></div>
-        <div>
-          <div class="title">Anton v2.2</div>
-          <div class="sub">DTF & Screen Print • Catalog via S&S API</div>
-        </div>
-      </div>
-      <div class="row">
-        <button class="btn" id="btnNew">New Quote</button>
-        <button class="btn primary" id="btnExport">Generate PDF</button>
-      </div>
-    </header>
-
-    <div class="grid">
-      <!-- LEFT: Catalog -->
-      <section class="card">
-        <h2>Item Catalog</h2>
-        <div class="sub">Search live from Distributor APIs. Results populate filters automatically.</div>
-
-        <div class="row" style="margin-top:8px">
-          <span class="pill">Powered by Anton</span>
-          <!-- <span class="pill">Price: <b>customerPrice</b></span> -->
-          <!-- <span class="pill">Front: <b>colorFrontImage</b></span> -->
-          <!-- <span class="pill">Back: <b>colorBackImage</b></span> -->
-        </div>
-
-        <div class="row" style="margin-top:10px">
-          <div class="field" style="flex:2">
-            <label>Search catalog</label>
-            <input id="searchInput" placeholder="Search by brand, style, color, sku, etc." />
-          </div>
-          <div class="field" style="max-width:120px">
-            <label>&nbsp;</label>
-            <button class="btn" id="btnSearch">Search</button>
-          </div>
-        </div>
-
-        <!-- Filters & Sort -->
-        <div class="row" id="filtersRow" style="margin-top:8px">
-          <div class="field"><label>Brand</label>
-            <select id="brandFilter"><option value="">All</option></select>
-          </div>
-          <div class="field"><label>Style</label>
-            <select id="styleFilter"><option value="">All</option></select>
-          </div>
-          <div class="field"><label>Color</label>
-            <select id="colorFilter"><option value="">All</option></select>
-          </div>
-          <div class="field"><label>Size</label>
-            <select id="sizeFilter"><option value="">All</option></select>
-          </div>
-          <div class="field" style="max-width:220px"><label>Sort</label>
-            <div class="row">
-              <select id="sortField">
-                <option value="brandName">Brand</option>
-                <option value="styleName">Style</option>
-                <option value="colorName">Color</option>
-                <option value="sizeName">Size</option>
-                <option value="customerPrice">Price</option>
-              </select>
-              <select id="sortDir" style="max-width:100px">
-                <option value="asc">Asc</option>
-                <option value="desc">Desc</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div id="loadStatus" class="alert" style="margin-top:10px; display:none"></div>
-        <div id="results" class="list" style="margin-top:12px"></div>
-      </section>
-
-      <!-- RIGHT: Quote Builder & Preview -->
-      <section class="card">
-        <h2>Quote Builder</h2>
-        <div class="row" style="margin-top:8px">
-          <div class="field"><label>Client Name</label><input id="clientName" placeholder="Client / Organization"/></div>
-          <div class="field"><label>Client Email</label><input id="clientEmail" placeholder="name@email.com"/></div>
-          <div class="field"><label>PO / Ref (optional)</label><input id="clientPO" placeholder="Internal ref"/></div>
-        </div>
-        <br />
-        <hr>
-        <br />
-        <div class="sectionTitle">Artwork Placements</div>
-        <div class="help">Add decoration locations. DTF is priced by square‑foot of art. Screen print is per color per location with one‑time setup.</div>
-        <div id="placements" class="list" style="margin-top:8px"></div>
-        <div class="row stickyActions">
-          <button class="btn" id="btnAddPlacement">Add Placement</button>
-          <span class="right help">Common sizes: Left Chest ~ 4"×4" • Full Front ~ 12"×14" • Neck ~ 3"×3"</span>
-        </div>
-        <br />
-        <hr>
-        <br />
-        <div class="sectionTitle">Pricing</div>
-        <div class="row wrap">
-          <div class="kpi"><span class="muted">DTF $/sqft</span><b id="kpiDTF">$8.00</b></div>
-          <div class="kpi"><span class="muted">Screen: Setup /color</span><b id="kpiSetup">$20.00</b></div>
-          <div class="kpi"><span class="muted">Screen: Run /color</span><b id="kpiRun">$0.75</b></div>
-          <div class="kpi"><span class="muted">Garment Markup</span><b id="kpiMU">35%</b></div>
-        </div>
-        <div class="row" style="margin-top:10px">
-          <div class="field"><label>Business / Brand Name</label><input id="brandName" placeholder="Your shop name (for the quote)"/></div>
-          <div class="field"><label>Logo URL (optional)</label><input id="logoUrl" placeholder="https://..."/></div>
-        </div>
-        <div class="row" style="margin-top:10px">
-          <div class="field"><label>DTF Rate ($/sqft)</label><input type="number" id="dtfRate" step="0.5" value="8"/></div>
-          <div class="field"><label>Waste/Overage (%)</label><input type="number" id="wastePct" step="1" value="10"/></div>
-          <div class="field"><label>Screen Setup ($/color/location)</label><input type="number" id="spSetup" step="1" value="20"/></div>
-          <div class="field"><label>Screen Run ($/color)</label><input type="number" id="spRun" step="0.25" value="0.75"/></div>
-        </div>
-        <div class="row" style="margin-top:10px">
-          <div class="field"><label>Garment Markup (%)</label><input type="number" id="markupPct" step="5" value="100"/></div>
-          <div class="field"><label>Tax Rate (%)</label><input type="number" id="taxPct" step="0.01" value="0"/></div>
-          <div class="field"><label>Shipping ($)</label><input type="number" id="shipping" step="5" value="0"/></div>
-          <div class="field"><label>Terms / Notes</label><input id="terms" placeholder="Lead time, art approval, etc."/></div>
-        </div>
-        <br />
-        <hr>
-        <br />
-        <div class="sectionTitle">Items in Quote</div>
-        <div id="quoteLines" class="list"></div>
-        <br />
-        <hr>
-        <br />
-        <div class="sectionTitle">Totals</div>
-        <div id="totals" class="totals"></div>
-        <br />
-        <hr>
-        <br />
-        <div class="row" style="margin-top:10px">
-          <button class="btn" id="btnEmail">Compose Email</button>
-          <button class="btn" id="btnShare">Copy Shareable URL</button>
-          <span class="help right" id="saveInfo"></span>
-        </div>
-      </section>
+<div class="container">
+<header>
+  <div class="brand">
+    <div class="logo"></div>
+    <div>
+      <div class="title">Apparel Quote Builder</div>
+      <div class="sub">DTF & Screen Print • Catalog via S&S API</div>
     </div>
-
-    <!-- MOCKUP STUDIO (Two Stages) -->
-    <section class="card" id="mockSection" style="margin-top:16px">
-      <h2>Mockup Studio</h2>
-      <div class="sub">Create up to two previews. Each stage supports multiple overlays with rotate/scale handles and smart guides. Export PNGs individually and include both in the PDF.</div>
-
-      <div class="row" style="margin-top:10px; align-items:flex-end">
-        <div class="field" style="flex:1"><label>Stage A — Garment from Quote</label>
-          <select id="mockLineA"><option value="">— choose garment from quote —</option></select>
-        </div>
-        <div class="field" style="max-width:160px"><label>Side</label>
-          <select id="mockSideA"><option value="front">Front</option><option value="back">Back</option><option value="custom">Custom URL</option></select>
-        </div>
-        <div class="field" style="flex:1"><label>Custom URL (optional)</label>
-          <input id="mockGarmentUrlA" placeholder="https://..."/>
-        </div>
-        <div class="field" style="max-width:130px"><label>&nbsp;</label><button class="btn" id="btnExportPngA">Export PNG A</button></div>
-      </div>
-
-      <div class="row" style="align-items:flex-end">
-        <div class="field" style="flex:1"><label>Stage B — Garment from Quote</label>
-          <select id="mockLineB"><option value="">— choose garment from quote —</option></select>
-        </div>
-        <div class="field" style="max-width:160px"><label>Side</label>
-          <select id="mockSideB"><option value="front">Front</option><option value="back">Back</option><option value="custom">Custom URL</option></select>
-        </div>
-        <div class="field" style="flex:1"><label>Custom URL (optional)</label>
-          <input id="mockGarmentUrlB" placeholder="https://..."/>
-        </div>
-        <div class="field" style="max-width:130px"><label>&nbsp;</label><button class="btn" id="btnExportPngB">Export PNG B</button></div>
-      </div>
-
-      <!-- Add overlays -->
-      <div class="row" style="margin-top:6px">
-        <div class="field"><label>Add Design (Upload → A)</label><input id="ovFileA" type="file" accept="image/*"/></div>
-        <div class="field" style="flex:2"><label>Add Design (URL → A)</label><input id="ovUrlA" placeholder="https://..."/></div>
-        <div class="field" style="max-width:150px"><label>&nbsp;</label><button class="btn" id="btnAddUrlA">Add to A</button></div>
-        <div class="field" style="max-width:160px"><label>&nbsp;</label><button class="btn ghost" id="btnCenterAA">Center A</button></div>
-      </div>
-      <div class="row" style="margin-top:6px">
-        <div class="field"><label>Add Design (Upload → B)</label><input id="ovFileB" type="file" accept="image/*"/></div>
-        <div class="field" style="flex:2"><label>Add Design (URL → B)</label><input id="ovUrlB" placeholder="https://..."/></div>
-        <div class="field" style="max-width:150px"><label>&nbsp;</label><button class="btn" id="btnAddUrlB">Add to B</button></div>
-        <div class="field" style="max-width:160px"><label>&nbsp;</label><button class="btn ghost" id="btnCenterBB">Center B</button></div>
-      </div>
-
-      <!-- Stages side by side -->
-      <div class="row" style="margin-top:8px; align-items:flex-start">
-        <div class="field" style="flex:1">
-          <label>Stage A</label>
-          <div id="stageWrapA" style="position:relative;background:rgba(0,0,0,.04);border:1px dashed rgba(0,0,0,.12);border-radius:14px;overflow:hidden;min-height:300px;display:grid;place-items:center">
-            <canvas id="mockCanvasA" style="width:100%;height:auto;display:block"></canvas>
-          </div>
-          <div class="field" style="margin-top:8px"><label>Layers A</label>
-            <div id="ovListA" class="list" style="max-height:320px;overflow:auto;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:8px;background:rgb(var(--bg))"></div>
-          </div>
-        </div>
-        <div class="field" style="flex:1">
-          <label>Stage B</label>
-          <div id="stageWrapB" style="position:relative;background:rgba(0,0,0,.04);border:1px dashed rgba(0,0,0,.12);border-radius:14px;overflow:hidden;min-height:300px;display:grid;place-items:center">
-            <canvas id="mockCanvasB" style="width:100%;height:auto;display:block"></canvas>
-          </div>
-          <div class="field" style="margin-top:8px"><label>Layers B</label>
-            <div id="ovListB" class="list" style="max-height:320px;overflow:auto;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:8px;background:rgb(var(--bg))"></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <footer class="sub" style="margin-top:16px;text-align:center">S&S API only • Save/Share is encoded in the URL hash • PNG export may be limited by image host CORS.</footer>
   </div>
-
-  <!-- jsPDF (PDF export) -->
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-
-  <script>
-  'use strict';
-  // ---------- Config ----------
-  const PRICE_FIELD = 'customerPrice';
-  const IMAGE_FIELD_FRONT = 'colorFrontImage';
-  const IMAGE_FIELD_BACK = 'colorBackImage';
-
-  // ---------- State ----------
-  const state = {
-    settings: { dtfRate: 8, wastePct: 10, spSetup: 20, spRun: 0.75, markupPct: 35, taxPct: 0, shipping: 0 },
-    brand: { name: '', logo: '' },
-    client: { name: '', email: '', po: '' },
-    placements: [],
-    lines: [], // {id, styleName, brandName, colorName, image, images:{front,back}, units:[{size, qty, basePrice, unitPrice}], meta}
-    catalog: [], // parsed rows (current view)
-    columns: [],
-    catalogOriginal: [] // full base set for current search
-  };
-
-  const defaultLocations = ['Left Chest','Right Chest','Full Front','Full Back','Sleeve Left','Sleeve Right','Neck/Locker','Hood'];
-  const $ = sel => document.querySelector(sel);
-
-  // ---------- Status helper ----------
-  function setLoadStatus(msg, ok=false){ const el = $('#loadStatus'); if(!el) return; el.style.display='block'; el.style.borderColor = ok? 'rgba(16,185,129,.4)' : 'rgba(245,158,11,.3)'; el.style.background = ok? 'rgba(16,185,129,.12)' : 'rgba(245,158,11,.12)'; el.innerHTML = msg; }
-
-  // ---------- Utils ----------
-  function debounce(fn, delay=350){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),delay); }; }
-
-  // ---------- S&S API helper (requires /api/ssaw proxy) ----------
-  async function ssawFindByStyle(q, extra={}){
-    const params = new URLSearchParams({
-      path:'products',
-      style:q,
-      fields:[ 'sku','styleID','brandName','styleName','colorName','sizeName','qty', 'customerPrice','salePrice','piecePrice', IMAGE_FIELD_FRONT, IMAGE_FIELD_BACK ].join(',')
-    });
-    for (const [k,v] of Object.entries(extra||{})) params.set(k, v);
-    const r = await fetch(`/api/ssaw?${params}`);
-    if(!r.ok) throw new Error(`S&S error ${r.status}`);
-    return r.json();
-  }
-
-  // ---------- Pricing: quantity breaks ----------
-  function priceMultiplier(qty){
-    if(qty < 12) return 2.5;
-    if(qty <= 23) return 1.0;
-    if(qty <= 47) return 0.9;
-    if(qty <= 71) return 0.8;
-    if(qty <= 143) return 0.75;
-    if(qty <= 199) return 0.7;
-    return 0.65; // >200
-  }
-  function recalcLine(line){
-    const totalQty = line.units.reduce((a,b)=> a + Number(b.qty||0), 0);
-    const mult = priceMultiplier(totalQty);
-    line.units.forEach(u=>{ u.unitPrice = Number(u.basePrice||0) * mult; });
-  }
-
-  // ---------- Catalog UI ----------
-  function searchCatalog(){ onSearch(); }
-
-  // Build filters from current dataset and re-render
-  function updateFilterControls(base){
-    const uniq = (arr)=> Array.from(new Set(arr.filter(Boolean))).sort((a,b)=> String(a).localeCompare(String(b)));
-    const brands = uniq(base.map(r=>r.brandName));
-    const styles = uniq(base.map(r=>r.styleName));
-    const colors = uniq(base.map(r=>r.colorName));
-    const sizes  = uniq(base.map(r=>r.sizeName));
-    function fill(selId, values){ const sel=document.querySelector(selId); if(!sel) return; const prev=sel.value; sel.innerHTML = ['<option value="">All</option>'].concat(values.map(v=>`<option value="${v}">${v}</option>`)).join(''); if([...sel.options].some(o=>o.value===prev)) sel.value = prev; }
-    fill('#brandFilter', brands); fill('#styleFilter', styles); fill('#colorFilter', colors); fill('#sizeFilter', sizes);
-  }
-  function applyFiltersAndSort(items){
-    const bf=$('#brandFilter')?.value||''; const sf=$('#styleFilter')?.value||''; const cf=$('#colorFilter')?.value||''; const zf=$('#sizeFilter')?.value||''; const sfld=$('#sortField')?.value||'brandName'; const sdir=$('#sortDir')?.value||'asc';
-    let out = items.filter(r=> (!bf || r.brandName===bf) && (!sf || r.styleName===sf) && (!cf || r.colorName===cf) && (!zf || r.sizeName===zf));
-    const cmp = (a,b)=>{
-      let va=a[sfld], vb=b[sfld];
-      if(sfld===PRICE_FIELD){ va=parseFloat(String(va).replace(/[^0-9.\-]/g,''))||0; vb=parseFloat(String(vb).replace(/[^0-9.\-]/g,''))||0; return va-vb; }
-      va = String(va||'').toLowerCase(); vb=String(vb||'').toLowerCase(); if(va<vb) return -1; if(va>vb) return 1; return 0; };
-    out.sort(cmp); if(sdir==='desc') out.reverse();
-    return out;
-  }
-  function refreshCatalogDisplay(){
-    // Show all fetched results by default; do NOT re-filter by the search box text here,
-    // because the search box is used for the REMOTE lookup. (Previously this double-filter
-    // caused 0 results when the box contained tokens like "gildan 64000" that don't appear
-    // verbatim in any single field.)
-    const base = state.catalogOriginal || [];
-    const final = applyFiltersAndSort(base);
-    state.catalog = final; renderResults(final);
-    setLoadStatus(`Showing <b>${final.length}</b> item(s).`, true);
-  }
-
-  const onSearch = debounce(async function(){
-    const q = ($('#searchInput')?.value||'').trim();
-    if(!q){ setLoadStatus('Enter a brand, style, part number, or SKU to search S&S.'); document.querySelector('#results').innerHTML=''; return; }
-    setLoadStatus('Searching S&S…');
-    try{
-      const rows = await ssawFindByStyle(q);
-      state.catalogOriginal = rows.map(r=> ({ ...r }));
-      state.columns = Object.keys(rows[0]||{});
-      updateFilterControls(state.catalogOriginal);
-      setLoadStatus(`Found <b>${rows.length}</b> results from S&S.`, true);
-      refreshCatalogDisplay();
-    }catch(err){ setLoadStatus('Error: '+err.message); }
-  }, 400);
-
-  function getVal(row, key){ return row?.[key] ?? ''; }
-
-  function renderResults(items){
-    const host = $('#results'); host.innerHTML='';
-    if(!items.length){ host.innerHTML = '<div class="muted">No results. Try different keywords or filters.</div>'; return; }
-
-    items.slice(0, 200).forEach((row,i)=>{
-      const img = getVal(row, IMAGE_FIELD_FRONT) || 'https://via.placeholder.com/64x64?text=IMG';
-      const brand = getVal(row,'brandName');
-      const style = getVal(row,'styleName');
-      const color = getVal(row,'colorName');
-      const sku = getVal(row,'sku');
-      const size = getVal(row,'sizeName') || 'One Size';
-      const base = parseFloat(String(getVal(row, PRICE_FIELD)).replace(/[^0-9.\-]/g,'')) || 0;
-
-      const card = document.createElement('div');
-      card.className = 'list';
-      card.style.cssText='border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:10px;background:rgb(var(--bg));';
-      card.innerHTML = `
-        <div class=\"row\" style=\"align-items:center\">
-          <img src=\"${img}\" alt=\"\" style=\"width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid rgba(0,0,0,.06)\"/>
-          <div style=\"flex:1\">
-            <div style=\"font-weight:700\">${brand} ${style} <span class=\"muted\">• ${color}</span></div>
-            <div class=\"sub\">SKU: ${sku} <span class=\"pill\">Base: $${base.toFixed(2)}</span></div>
-          </div>
-          <div class=\"row\" style=\"gap:6px\">
-            <input type=\"text\" value=\"${size}\" id=\"size-${i}\" style=\"width:120px\"/>
-            <input type=\"number\" min=\"0\" value=\"12\" id=\"qty-${i}\" style=\"width:90px\"/>
-            <button class=\"btn\" data-idx=\"${i}\">Add</button>
-          </div>
+  <div class="row">
+    <button class="btn" id="btnNew">New Quote</button>
+    <button class="btn primary" id="btnExport">Generate PDF</button>
+  </div>
+</header>
+<div class="grid">
+  <section class="card">
+    <h2>Garment Catalog</h2>
+    <div class="sub">Search live from S&S. Results populate filters automatically.</div>
+    <div class="row" style="margin-top:8px">
+      <span class="pill">Powered by S&S API</span>
+      <span class="pill">Price: customerPrice</span>
+      <span class="pill">Front: colorFrontImage</span>
+      <span class="pill">Back: colorBackImage</span>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div class="field" style="flex:2">
+        <label>Search catalog</label>
+        <input id="searchInput" placeholder="Search by brand, style, color, sku, etc." />
+      </div>
+      <div class="field" style="max-width:120px">
+        <label>&nbsp;</label>
+        <button class="btn" id="btnSearch">Search</button>
+      </div>
+    </div>
+    <div class="row" id="filtersRow" style="margin-top:8px">
+      <div class="field"><label>Brand</label><select id="brandFilter"><option value="">All</option></select></div>
+      <div class="field"><label>Style</label><select id="styleFilter"><option value="">All</option></select></div>
+      <div class="field"><label>Color</label><select id="colorFilter"><option value="">All</option></select></div>
+      <div class="field"><label>Size</label><select id="sizeFilter"><option value="">All</option></select></div>
+      <div class="field" style="max-width:220px"><label>Sort</label>
+        <div class="row">
+          <select id="sortField">
+            <option value="brandName">Brand</option>
+            <option value="styleName">Style</option>
+            <option value="colorName">Color</option>
+            <option value="sizeName">Size</option>
+            <option value="customerPrice">Price</option>
+          </select>
+          <select id="sortDir" style="max-width:100px"><option value="asc">Asc</option><option value="desc">Desc</option></select>
         </div>
-        <details style=\"margin-top:8px\">
-          <summary>View row data</summary>
-          <div class=\"kv\" style=\"margin-top:8px\">${state.columns.map(c=>`<div>${c}</div><div>${row[c]??''}</div>`).join('')}</div>
-        </details>
-      `;
-      card.querySelector('button').onclick = () => {
-        const qty = Number(document.getElementById(`qty-${i}`).value||0);
-        const sizeInput = document.getElementById(`size-${i}`).value || 'One Size';
-        if(!qty) return;
-        addLineFromRow(row, sizeInput, qty, base, img, brand, style, color);
-      };
-      host.appendChild(card);
-    });
-  }
-
-  // ---------- Lines ----------
-  function addLineFromRow(row, size, qty, basePrice, image, brand, style, color){
-    let line = state.lines.find(l => l.brandName===brand && l.styleName===style && l.colorName===color);
-    if(!line){
-      line = { id: crypto.randomUUID(), styleName: style, brandName: brand, colorName: color, image, images: { front: getVal(row, IMAGE_FIELD_FRONT)||image, back: getVal(row, IMAGE_FIELD_BACK)||'' }, meta: row, units: [] };
-      state.lines.push(line);
-    }
-    const found = line.units.find(u=>u.size===size);
-    if(found){ found.qty += qty; found.basePrice = basePrice; }
-    else { line.units.push({ size, qty, basePrice, unitPrice: basePrice }); }
-    recalcLine(line);
-    renderLines(); calcTotals(); populateMockLineOptions();
-  }
-
-  function renderLines(){
-    const host = $('#quoteLines'); host.innerHTML='';
-    if(!state.lines.length){ host.innerHTML = '<div class="muted">No garments added yet. Use the catalog on the left.</div>'; return; }
-    state.lines.forEach(line =>{
-      const el = document.createElement('div'); el.className='list'; el.style.cssText='border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:10px;background:rgb(var(--bg));';
-      const totalQty = line.units.reduce((a,b)=>a+Number(b.qty||0),0);
-      const garmentSub = line.units.reduce((sum,u)=> sum + Number(u.qty||0) * Number(u.unitPrice||0), 0);
-      el.innerHTML = `
-        <div class=\"row\" style=\"align-items:center\">
-          <img src=\"${line.images?.front || line.image || 'https://via.placeholder.com/56x56?text=IMG'}\" style=\"width:56px;height:56px;border-radius:10px;border:1px solid rgba(0,0,0,.06);object-fit:cover\"/>
-          <div style=\"flex:1\">
-            <div style=\"font-weight:700\">${line.brandName} ${line.styleName} • ${line.colorName}</div>
-            <div class=\"sub\">Qty: <b>${totalQty}</b> • Break: x${priceMultiplier(totalQty)}</div>
-          </div>
-          <button class=\"btn ghost\" data-del=\"${line.id}\">Remove</button>
-        </div>
-        <table class=\"table\">
-          <thead><tr><th>Size</th><th>Qty</th><th>Base $</th><th>Unit $ (tiered)</th><th>Ext $</th></tr></thead>
-          <tbody>
-            ${line.units.map(u=>`<tr>
-              <td>${u.size}</td>
-              <td><input type=\"number\" min=\"0\" value=\"${u.qty}\" data-line=\"${line.id}\" data-size=\"${u.size}\" class=\"sizeQty\"/></td>
-              <td>$${Number(u.basePrice).toFixed(2)}</td>
-              <td>$${Number(u.unitPrice).toFixed(2)}</td>
-              <td>$${(Number(u.qty)*Number(u.unitPrice)).toFixed(2)}</td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
-        <details><summary>Show all item fields</summary>
-          <div class=\"kv\" style=\"margin-top:8px\">${state.columns.map(c=>`<div>${c}</div><div>${line.meta?.[c]??''}</div>`).join('')}</div>
-        </details>
-        <div class=\"row\"><span class=\"muted\">Garment subtotal (before markup):</span><b class=\"right\">$${garmentSub.toFixed(2)}</b></div>
-      `;
-      el.querySelector('[data-del]').onclick = ()=>{ state.lines = state.lines.filter(x=>x.id!==line.id); renderLines(); calcTotals(); populateMockLineOptions(); };
-      el.querySelectorAll('.sizeQty').forEach(inp=>{
-        inp.oninput = ()=>{
-          const L = state.lines.find(x=>x.id===inp.dataset.line);
-          const unit = L.units.find(u=>u.size===inp.dataset.size);
-          unit.qty = Number(inp.value||0);
-          recalcLine(L);
-          renderLines(); calcTotals(); populateMockLineOptions();
-        };
-      })
-      host.appendChild(el);
-    })
-  }
-
-  // ---------- Placements ----------
-  function addPlacement(){
-    state.placements.push({ id: crypto.randomUUID(), location: defaultLocations[Math.min(state.placements.length, defaultLocations.length-1)] || 'Custom', technique: 'DTF', width: 4, height: 4, colors: 1 });
-    renderPlacements(); calcTotals();
-  }
-  function renderPlacements(){
-    const host = $('#placements'); host.innerHTML='';
-    if(!state.placements.length){ host.innerHTML = '<div class="muted">No placements yet.</div>'; return; }
-    state.placements.forEach(p=>{
-      const row = document.createElement('div'); row.className = 'loc';
-      row.innerHTML = `
-        <select data-id=\"${p.id}\" data-key=\"location\"> 
-          ${defaultLocations.concat(['Custom']).map(loc=>`<option ${p.location===loc?'selected':''}>${loc}</option>`).join('')}
-        </select>
-        <select data-id=\"${p.id}\" data-key=\"technique\">
-          ${['DTF','Screen Print'].map(t=>`<option ${p.technique===t?'selected':''}>${t}</option>`).join('')}
-        </select>
-        <label>W (in)</label><input type=\"number\" min=\"1\" step=\"0.1\" value=\"${p.width}\" data-id=\"${p.id}\" data-key=\"width\" />
-        <label>H (in)</label><input type=\"number\" min=\"1\" step=\"0.1\" value=\"${p.height}\" data-id=\"${p.id}\" data-key=\"height\" />
-        <label class=\"colorsLab ${p.technique==='Screen Print'?'':'hidden'}\">Colors</label>
-        <input class=\"colorsInp ${p.technique==='Screen Print'?'':'hidden'}\" type=\"number\" min=\"1\" step=\"1\" value=\"${p.colors}\" data-id=\"${p.id}\" data-key=\"colors\" />
-        <button class=\"btn ghost right\" data-remove=\"${p.id}\">Remove</button>
-      `;
-      row.querySelectorAll('select,input').forEach(el=>{
-        el.oninput = ()=>{
-          const pl = state.placements.find(x=>x.id===el.dataset.id);
-          const key = el.dataset.key; let val = el.value;
-          if(['width','height','colors'].includes(key)) val = Number(val);
-          if(key==='technique'){
-            row.querySelector('.colorsLab').classList.toggle('hidden', val!=='Screen Print');
-            row.querySelector('.colorsInp').classList.toggle('hidden', val!=='Screen Print');
-          }
-          pl[key] = val; calcTotals();
-        }
-      });
-      row.querySelector('[data-remove]').onclick = ()=>{ state.placements = state.placements.filter(x=>x.id!==p.id); renderPlacements(); calcTotals(); };
-      host.appendChild(row);
-    });
-  }
-
-  // ---------- Totals ----------
-  function perPieceDecoration(){
-    let setup = 0; let perPiece = 0;
-    state.placements.forEach(p=>{
-      if(p.technique==='DTF'){
-        const sqft = (Number(p.width)||0) * (Number(p.height)||0) / 144;
-        const base = sqft * Number($('#dtfRate').value||state.settings.dtfRate);
-        const withWaste = base * (1 + (Number($('#wastePct').value||state.settings.wastePct)/100));
-        perPiece += withWaste;
-      } else {
-        const colors = Math.max(1, Number(p.colors)||1);
-        perPiece += colors * Number($('#spRun').value||state.settings.spRun);
-        setup += colors * Number($('#spSetup').value||state.settings.spSetup);
-      }
-    });
-    return { perPiece, setup };
-  }
-
-  function calcTotals(){
-    $('#kpiDTF').textContent = `$${Number($('#dtfRate').value||state.settings.dtfRate).toFixed(2)}`;
-    $('#kpiSetup').textContent = `$${Number($('#spSetup').value||state.settings.spSetup).toFixed(2)}`;
-    $('#kpiRun').textContent = `$${Number($('#spRun').value||state.settings.spRun).toFixed(2)}`;
-    $('#kpiMU').textContent = `${Number($('#markupPct').value||state.settings.markupPct)}%`;
-
-    const totals = { qty:0, garmentCost:0, garmentSell:0, decoPerPiece:0, setup:0, decoTotal:0, shipping: Number($('#shipping').value||0), tax:0, grand:0 };
-    const deco = perPieceDecoration();
-    totals.decoPerPiece = deco.perPiece; totals.setup = deco.setup;
-
-    state.lines.forEach(line=>{
-      const lineQty = line.units.reduce((a,b)=>a+Number(b.qty||0),0);
-      const lineCost = line.units.reduce((sum,u)=> sum + Number(u.qty||0)*Number(u.unitPrice||0), 0);
-      totals.qty += lineQty; totals.garmentCost += lineCost;
-    });
-
-    const markup = 1 + (Number($('#markupPct').value||state.settings.markupPct)/100);
-    totals.garmentSell = totals.garmentCost * markup;
-    const garmentPerPiece = totals.qty ? (totals.garmentSell / totals.qty) : 0;
-    const pricePerPiece = garmentPerPiece + totals.decoPerPiece;
-
-    totals.decoTotal = (totals.qty * totals.decoPerPiece) + totals.setup;
-    const sub = totals.garmentSell + totals.decoTotal + totals.shipping;
-    totals.tax = sub * (Number($('#taxPct').value||state.settings.taxPct)/100);
-    totals.grand = sub + totals.tax;
-
-    function money(n){ return `$${Number(n||0).toFixed(2)}`; }
-    let html = '';
-    html += `<div class="muted">Pieces</div><div><b>${totals.qty}</b></div>`;
-    html += `<div class="muted">Garment $/ea</div><div><b>${money(garmentPerPiece)}</b></div>`;
-    html += `<div class="muted">Decoration $/ea</div><div><b>${money(totals.decoPerPiece)}</b></div>`;
-    html += `<div class="muted">Price per piece</div><div><b class="accent">${money(pricePerPiece)}</b></div>`;
-    if(totals.setup>0) html += `<div class="muted">Screen setups</div><div><b>${money(totals.setup)}</b></div>`;
-    if(totals.shipping>0) html += `<div class="muted">Shipping</div><div><b>${money(totals.shipping)}</b></div>`;
-    if(totals.tax>0) html += `<div class="muted">Tax</div><div><b>${money(totals.tax)}</b></div>`;
-    html += `<div class="muted">Grand Total</div><div><b class="accent">${money(totals.grand)}</b></div>`;
-    $('#totals').innerHTML = html;
-  }
-
-  // ---------- Mockup Studio (Factory for A & B) ----------
-  function populateMockLineOptions(){
-    ['A','B'].forEach(S=>{
-      const sel = document.getElementById('mockLine'+S); if(!sel) return;
-      const prev = sel.value;
-      const opts = (state.lines||[]).map(l=>`<option value="${l.id}">${(l.brandName||'')} ${(l.styleName||'')} • ${(l.colorName||'')}</option>`).join('');
-      sel.innerHTML = `<option value="">— choose garment from quote —</option>${opts}`;
-      if(prev && [...sel.options].some(o=>o.value===prev)) sel.value = prev;
-    });
-  }
-
-  function createStudio(S){
-    const canvas = document.getElementById('mockCanvas'+S);
-    const stageWrap = document.getElementById('stageWrap'+S);
-    const selLine = document.getElementById('mockLine'+S);
-    const selSide = document.getElementById('mockSide'+S);
-    const garmentUrlInput = document.getElementById('mockGarmentUrl'+S);
-    const fileInp = document.getElementById('ovFile'+S);
-    const urlInp = document.getElementById('ovUrl'+S);
-    const btnAddUrl = document.getElementById('btnAddUrl'+S);
-    const btnCenter = document.getElementById('btnCenter'+S+S);
-    const btnExport = document.getElementById('btnExportPng'+S);
-    if(!canvas || !stageWrap) return null;
-    const ctx = canvas.getContext('2d');
-
-    const M = { garmentUrl:'', garmentImg:new Image(), gRect:null, overlays:[], active:null, dragging:false, dragOffX:0, dragOffY:0, mode:null, handle:null, guides:[] };
-
-    // ---- drawing helpers ----
-    function fitCanvasToWidth(targetW){
-      const w = Math.max(1, Math.round(targetW||stageWrap.clientWidth||600));
-      const ar = (M.garmentImg.naturalWidth||1)/(M.garmentImg.naturalHeight||1);
-      const h = Math.max(300, Math.round(w / ar));
-      if(canvas.width !== w || canvas.height !== h){
-        canvas.width = w; canvas.height = h;
-      }
-    }
-    function draw(){
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      let dx=0,dy=0,dw=canvas.width,dh=canvas.height;
-      if(M.garmentImg && M.garmentImg.naturalWidth){
-        const gw=M.garmentImg.naturalWidth, gh=M.garmentImg.naturalHeight;
-        const s=Math.max(canvas.width/gw, canvas.height/gh);
-        dw=gw*s; dh=gh*s; dx=(canvas.width-dw)/2; dy=(canvas.height-dh)/2;
-        ctx.drawImage(M.garmentImg, dx, dy, dw, dh);
-      }
-      M.gRect = { x:dx, y:dy, w:dw, h:dh };
-      M.overlays.forEach(o=>{ if(!o.visible) return; drawOverlay(o); });
-      if(M.guides.length){
-        ctx.save(); ctx.strokeStyle='rgba(88,101,242,0.9)'; ctx.setLineDash([6,6]);
-        M.guides.forEach(g=>{ ctx.beginPath(); if(g.type==='v'){ ctx.moveTo(g.x,0); ctx.lineTo(g.x,canvas.height);} else { ctx.moveTo(0,g.y); ctx.lineTo(canvas.width,g.y);} ctx.stroke();});
-        ctx.restore();
-      }
-    }
-    function drawOverlay(o){
-      const dw=o.w*o.scale, dh=o.h*o.scale;
-      ctx.save(); ctx.translate(o.x,o.y); ctx.rotate(o.rot*Math.PI/180); ctx.globalAlpha=o.opacity;
-      ctx.drawImage(o.img, -dw/2, -dh/2, dw, dh); ctx.globalAlpha=1;
-      if(M.active===o.id){
-        ctx.strokeStyle='rgba(0,0,0,.7)'; ctx.lineWidth=1; ctx.setLineDash([4,3]);
-        ctx.strokeRect(-dw/2,-dh/2,dw,dh); ctx.setLineDash([]);
-        const hs=8; const pts=[{n:'tl',x:-dw/2,y:-dh/2},{n:'tr',x:dw/2,y:-dh/2},{n:'br',x:dw/2,y:dh/2},{n:'bl',x:-dw/2,y:dh/2}];
-        ctx.fillStyle='white'; ctx.strokeStyle='black';
-        pts.forEach(p=>{ ctx.beginPath(); ctx.rect(p.x-hs,p.y-hs,hs*2,hs*2); ctx.fill(); ctx.stroke(); });
-        const ry=-dh/2-26; ctx.beginPath(); ctx.moveTo(0,-dh/2); ctx.lineTo(0,ry); ctx.stroke(); ctx.beginPath(); ctx.arc(0,ry,7,0,Math.PI*2); ctx.fill(); ctx.stroke();
-      }
-      ctx.restore();
-    }
-
-    function localCoords(o,mx,my){ const rad=o.rot*Math.PI/180; const dx=mx-o.x, dy=my-o.y; return { x: Math.cos(rad)*dx + Math.sin(rad)*dy, y: -Math.sin(rad)*dx + Math.cos(rad)*dy }; }
-    function hitTest(o,mx,my){ const dw=o.w*o.scale, dh=o.h*o.scale; const p=localCoords(o,mx,my); const inside=Math.abs(p.x)<=dw/2 && Math.abs(p.y)<=dh/2; const hs=8; const handles=[{name:'tl',x:-dw/2,y:-dh/2},{name:'tr',x:dw/2,y:-dh/2},{name:'br',x:dw/2,y:dh/2},{name:'bl',x:-dw/2,y:dh/2}]; const onHandle=handles.find(h=> Math.abs(p.x-h.x)<=hs && Math.abs(p.y-h.y)<=hs ); const ry=-dh/2-26; const rotHit=Math.hypot(p.x-0,p.y-ry)<=10; return { inside, handle:onHandle?.name||null, rot:rotHit }; }
-    function selectTopmost(mx,my){ for(let i=M.overlays.length-1;i>=0;i--){ const o=M.overlays[i]; if(!o.visible) continue; if(hitTest(o,mx,my).inside){ M.active=o.id; rebuildList(); draw(); return true; } } return false; }
-
-    function applySnapping(o,nx,ny){ const snapT=8; const guides=[]; const dw=o.w*o.scale, dh=o.h*o.scale; if(Math.abs(nx-canvas.width/2)<snapT){ nx=canvas.width/2; guides.push({type:'v',x:canvas.width/2}); } if(Math.abs(ny-canvas.height/2)<snapT){ ny=canvas.height/2; guides.push({type:'h',y:canvas.height/2}); } if(M.gRect){ const g=M.gRect; const gx=g.x+g.w/2, gy=g.y+g.h/2; if(Math.abs(nx-gx)<snapT){ nx=gx; guides.push({type:'v',x:gx}); } if(Math.abs(ny-gy)<snapT){ ny=gy; guides.push({type:'h',y:gy}); } const leftX=g.x+dw/2, rightX=g.x+g.w-dw/2; const topY=g.y+dh/2, bottomY=g.y+g.h-dh/2; if(Math.abs(nx-leftX)<snapT){ nx=leftX; guides.push({type:'v',x:g.x}); } if(Math.abs(nx-rightX)<snapT){ nx=rightX; guides.push({type:'v',x:g.x+g.w}); } if(Math.abs(ny-topY)<snapT){ ny=topY; guides.push({type:'h',y:g.y}); } if(Math.abs(ny-bottomY)<snapT){ ny=bottomY; guides.push({type:'h',y:g.y+g.h}); } } M.guides=guides; return { x:nx, y:ny }; }
-
-    function loadGarment(){
-      const line=(state.lines||[]).find(l=>l.id===selLine.value);
-      if(!line){ M.garmentUrl=''; M.garmentImg=new Image(); scheduleFit(); draw(); return; }
-      let url=''; const side=selSide.value;
-      if(side==='custom') url=garmentUrlInput.value.trim();
-      else if(side==='back') url=(line.images&&line.images.back)||(line.meta&&line.meta[IMAGE_FIELD_BACK])||'';
-      else url=(line.images&&line.images.front)||line.image||'';
-      const img=new Image(); img.crossOrigin='anonymous';
-      img.onload=()=>{ M.garmentImg=img; scheduleFit(true); draw(); };
-      img.onerror=()=>{ M.garmentImg=img; scheduleFit(true); draw(); };
-      M.garmentUrl=url; img.src=url||'https://via.placeholder.com/800x1000?text=Garment+Image';
-    }
-    function addOverlayFromUrl(u){ if(!u) return; const img=new Image(); img.crossOrigin='anonymous'; img.onload=()=>{ const id=crypto.randomUUID(); const o={ id, url:u, img, x:canvas.width/2, y:canvas.height/2, scale: Math.min(0.6, canvas.width/(img.naturalWidth||1)), rot:0, opacity:1, visible:true, locked:false, w:img.naturalWidth||500, h:img.naturalHeight||500 }; M.overlays.push(o); M.active=id; rebuildList(); draw(); }; img.onerror=()=>alert('Could not load design URL'); img.src=u; }
-    function fileToUrl(file){ return new Promise((res)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(file); }); }
-
-    const list = document.getElementById('ovList'+S);
-    function rebuildList(){ list.innerHTML = M.overlays.map(o=>`<div class="row" data-id="${o.id}" style="align-items:center;border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:6px;background:${M.active===o.id?'#eef2ff':'rgb(var(--bg))'}">
-        <span style=\"font-size:12px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">${(o.url||'upload').split('/').pop()}</span>
-        <button class=\"btn ghost\" data-vis=\"${o.id}\">${o.visible?'👁️':'🚫'}</button>
-        <button class=\"btn ghost\" data-lock=\"${o.id}\">${o.locked?'🔒':'🔓'}</button>
-        <button class=\"btn ghost\" data-up=\"${o.id}\">⬆️</button>
-        <button class=\"btn ghost\" data-down=\"${o.id}\">⬇️</button>
-        <button class=\"btn\" data-del=\"${o.id}\">✖</button>
-      </div>`).join('');
-      [...list.querySelectorAll('[data-id]')].forEach(el=> el.onclick = (e)=>{ if(e.target.closest('button')) return; M.active = el.getAttribute('data-id'); rebuildList(); draw(); });
-      list.querySelectorAll('[data-vis]').forEach(b=> b.onclick = ()=>{ const id=b.getAttribute('data-vis'); const o = M.overlays.find(x=>x.id===id); o.visible=!o.visible; rebuildList(); draw(); });
-      list.querySelectorAll('[data-lock]').forEach(b=> b.onclick = ()=>{ const id=b.getAttribute('data-lock'); const o = M.overlays.find(x=>x.id===id); o.locked=!o.locked; rebuildList(); draw(); });
-      list.querySelectorAll('[data-del]').forEach(b=> b.onclick = ()=>{ const id=b.getAttribute('data-del'); M.overlays = M.overlays.filter(x=>x.id!==id); if(M.active===id) M.active=null; rebuildList(); draw(); });
-      list.querySelectorAll('[data-up]').forEach(b=> b.onclick = ()=>{ const id=b.getAttribute('data-up'); const i=M.overlays.findIndex(x=>x.id===id); if(i>0){ const t=M.overlays[i]; M.overlays[i]=M.overlays[i-1]; M.overlays[i-1]=t; rebuildList(); draw(); }});
-      list.querySelectorAll('[data-down]').forEach(b=> b.onclick = ()=>{ const id=b.getAttribute('data-down'); const i=M.overlays.findIndex(x=>x.id===id); if(i>=0 && i<M.overlays.length-1){ const t=M.overlays[i]; M.overlays[i]=M.overlays[i+1]; M.overlays[i+1]=t; rebuildList(); draw(); }});
-    }
-
-    function onDown(e){ const r=canvas.getBoundingClientRect(); const mx=e.clientX-r.left, my=e.clientY-r.top; if(!M.active){ if(!selectTopmost(mx,my)) return; } const o=M.overlays.find(x=>x.id===M.active); if(!o || o.locked) return; const h=hitTest(o,mx,my); if(h.rot){ M.mode='rotate'; } else if(h.handle){ M.mode='scale'; M.handle=h.handle; } else if(h.inside){ M.mode='move'; const p=localCoords(o,mx,my); M.dragOffX=p.x; M.dragOffY=p.y; } else { M.mode=null; return; } M.dragging=true; e.preventDefault(); }
-    function onMove(e){ if(!M.dragging || !M.active) return; const o=M.overlays.find(x=>x.id===M.active); const r=canvas.getBoundingClientRect(); const mx=e.clientX-r.left, my=e.clientY-r.top; if(M.mode==='move'){ const dx = mx - (o.x + Math.cos(o.rot*Math.PI/180)*M.dragOffX - Math.sin(o.rot*Math.PI/180)*M.dragOffY); const dy = my - (o.y + Math.sin(o.rot*Math.PI/180)*M.dragOffX + Math.cos(o.rot*Math.PI/180)*M.dragOffY); let nx=o.x+dx, ny=o.y+dy; const s=applySnapping(o,nx,ny); o.x=s.x; o.y=s.y; draw(); } else if(M.mode==='rotate'){ const ang=Math.atan2(my-o.y, mx-o.x); o.rot=(ang*180/Math.PI) + 90; M.guides=[]; draw(); } else if(M.mode==='scale'){ const lp=localCoords(o,mx,my); const hx=Math.abs(lp.x)*2/(o.w||1); const hy=Math.abs(lp.y)*2/(o.h||1); o.scale=Math.max(0.05, Math.min(5, Math.max(hx,hy))); M.guides=[]; draw(); } }
-    function onUp(){ M.dragging=false; M.mode=null; M.guides=[]; draw(); }
-
-    canvas.addEventListener('mousedown', onDown);
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-    canvas.addEventListener('wheel', (e)=>{ const o=M.overlays.find(x=>x.id===M.active); if(!o) return; e.preventDefault(); const d=e.deltaY>0?-0.05:0.05; o.scale=Math.max(0.05, Math.min(5, o.scale+d)); draw(); }, { passive:false });
-
-    window.addEventListener('keydown', (e)=>{ const o=M.overlays.find(x=>x.id===M.active); if(!o) return; const step=e.shiftKey?10:1; if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){ if(e.key==='ArrowLeft') o.x -= step; if(e.key==='ArrowRight') o.x += step; if(e.key==='ArrowUp') o.y -= step; if(e.key==='ArrowDown') o.y += step; draw(); e.preventDefault(); } if(e.key==='Delete' || e.key==='Backspace'){ M.overlays = M.overlays.filter(x=>x.id!==o.id); M.active=null; rebuildList(); draw(); e.preventDefault(); } });
-
-    // ---- Resize handling (fixes ResizeObserver loop) ----
-    let roRAF = 0; let roBusy = false; let lastW = 0; let lastH = 0;
-    function scheduleFit(force=false){
-      if(roBusy && !force) return;
-      roBusy = true; cancelAnimationFrame(roRAF);
-      roRAF = requestAnimationFrame(()=>{
-        roBusy = false;
-        const w = stageWrap.clientWidth || 600;
-        const ar = (M.garmentImg.naturalWidth||1)/(M.garmentImg.naturalHeight||1);
-        const h = Math.max(300, Math.round(w / ar));
-        if(Math.abs(w-lastW) > 0.5 || Math.abs(h-lastH) > 0.5){
-          lastW = w; lastH = h; fitCanvasToWidth(w); draw();
-        }
-      });
-    }
-    // Use window resize instead of observing the same element we mutate
-    window.addEventListener('resize', () => scheduleFit());
-
-    // Initial fit/draw
-    scheduleFit(true); draw();
-
-    // UI bindings
-    selLine && selLine.addEventListener('change', loadGarment);
-    selSide && selSide.addEventListener('change', loadGarment);
-    garmentUrlInput && garmentUrlInput.addEventListener('change', ()=>{ if(selSide.value==='custom') loadGarment(); });
-    fileInp && fileInp.addEventListener('change', async ()=>{ const f=fileInp.files&&fileInp.files[0]; if(!f) return; const u=await fileToUrl(f); addOverlayFromUrl(u); fileInp.value=''; });
-    btnAddUrl && btnAddUrl.addEventListener('click', ()=> addOverlayFromUrl((urlInp.value||'').trim()));
-    btnCenter && btnCenter.addEventListener('click', ()=>{ const o=M.overlays.find(x=>x.id===M.active); if(!o) return; o.x=canvas.width/2; o.y=canvas.height/2; draw(); });
-    btnExport && btnExport.addEventListener('click', ()=>{ try{ const url=canvas.toDataURL('image/png'); const a=document.createElement('a'); a.href=url; a.download='mockup_'+S+'.png'; a.click(); }catch(e){ alert('Export blocked by image host (CORS). You can still screenshot this preview.'); } });
-
-    return { getCanvas: ()=>canvas };
-  }
-
-  // ---------- PDF (uses both mockups if present) ----------
-  async function generatePDF(){
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ unit:'pt', format:'letter' });
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
-    const M = 40; let y = M;
-
-    const brand = ($('#brandName').value || 'Your Business').trim();
-    const logoUrl = ($('#logoUrl').value || '').trim();
-    const fmt = (n)=> '$' + Number(n||0).toFixed(2);
-    const dateStr = new Date().toLocaleDateString();
-    const quoteNo = 'Q' + Math.random().toString(36).slice(2, 8).toUpperCase();
-
-    async function toDataURL(url){ try{ const r = await fetch(url, { mode:'cors' }); const b = await r.blob(); return await new Promise(res=>{ const fr = new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(b); }); }catch(_){ return null; } }
-    function hr(yy){ doc.setDrawColor(230); doc.line(M, yy, pageW - M, yy); }
-    function ensure(h=0){ if(y + h > pageH - M){ addFooter(); doc.addPage(); y = M; addHeader(); } }
-
-    function addHeader(){
-      doc.setFillColor(88,101,242); doc.rect(0, 0, pageW, 64, 'F');
-      doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.text(brand, M + 60, 38);
-      doc.setFontSize(22); doc.text('ESTIMATE', pageW - M - 140, 40);
-      doc.setFillColor(255,255,255); doc.circle(M+30, 34, 18, 'F');
-    }
-    function addFooter(){ const n = doc.internal.getNumberOfPages(); const p = n; doc.setFontSize(9); doc.setTextColor(140); doc.text('Page ' + p, pageW - M, pageH - 12, { align:'right' }); }
-
-    addHeader();
-    if(logoUrl){ const logoData = await toDataURL(logoUrl); if(logoData){ try{ doc.addImage(logoData, (logoData.startsWith('data:image/jpeg')||logoData.startsWith('data:image/jpg')) ? 'JPEG' : 'PNG', M+12, 16, 36, 36); }catch(_){ } } }
-    y = 64 + 18;
-
-    doc.setTextColor(30); doc.setFont('helvetica','normal'); doc.setFontSize(10);
-    doc.text('Date: ' + dateStr, M, y); doc.text('Quote #: ' + quoteNo, M+180, y); y += 20;
-
-    const cName = $('#clientName').value || ''; const cEmail = $('#clientEmail').value || ''; const cPO = $('#clientPO').value || '';
-    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('Bill To', M, y); y += 14;
-    doc.setFont('helvetica','normal'); doc.setFontSize(10);
-    if(cName){ doc.text(cName, M, y); y += 12; }
-    if(cEmail){ doc.text(cEmail, M, y); y += 12; }
-    if(cPO){ doc.text('PO: ' + cPO, M, y); y += 14; }
-
-    // Placements
-    if(state.placements.length){ ensure(80); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(30); doc.text('Placements', M, y); y += 10; hr(y); y += 12; doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(80);
-      const colX = { loc:M, tech:M+170, size:M+280, colors:M+420 };
-      doc.text('Location', colX.loc, y); doc.text('Technique', colX.tech, y); doc.text('Size (W×H in)', colX.size, y); doc.text('Colors', colX.colors, y); y += 8; hr(y); y += 8; doc.setFont('helvetica','normal'); doc.setTextColor(30);
-      state.placements.forEach(p=>{ ensure(18); const sizeStr = (p.width||0) + ' × ' + (p.height||0); doc.text(String(p.location||''), colX.loc, y); doc.text(String(p.technique||''), colX.tech, y); doc.text(sizeStr, colX.size, y); doc.text(p.technique==='Screen Print' ? String(p.colors||1) : '-', colX.colors, y); y += 16; }); y += 6; }
-
-    // Items
-    ensure(40); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(30); doc.text('Items', M, y); y += 10; hr(y); y += 12; const IX = { item:M, size:M+260, qty:M+360, unit:M+420, ext:M+500 };
-    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(80); doc.text('Item', IX.item, y); doc.text('Size', IX.size, y); doc.text('Qty', IX.qty, y); doc.text('Unit', IX.unit, y); doc.text('Ext', IX.ext, y);
-    y += 8; hr(y); y += 8; doc.setFont('helvetica','normal'); doc.setTextColor(30);
-
-    state.lines.forEach(line=>{ const name = (line.brandName||'') + ' ' + (line.styleName||'') + ' • ' + (line.colorName||''); const units = line.units||[]; units.forEach((u, idx)=>{ ensure(18); if(idx===0){ doc.text(name, IX.item, y); } doc.text(String(u.size||''), IX.size, y); doc.text(String(u.qty||0), IX.qty, y); doc.text(fmt(u.unitPrice||0), IX.unit, y); doc.text(fmt((Number(u.qty)||0)*(Number(u.unitPrice)||0)), IX.ext, y); y += 16; }); y += 4; });
-
-    // Totals
-    const deco = perPieceDecoration(); const totals = { qty:0, garmentCost:0 };
-    state.lines.forEach(line=>{ const lineQty = (line.units||[]).reduce((a,b)=> a + Number(b.qty||0), 0); const lineCost = (line.units||[]).reduce((s,u)=> s + Number(u.qty||0)*Number(u.unitPrice||0), 0); totals.qty += lineQty; totals.garmentCost += lineCost; });
-    const markup = 1 + (Number($('#markupPct').value||state.settings.markupPct)/100);
-    const garmentSell = totals.garmentCost * markup; const decoTotal = (totals.qty * (deco.perPiece||0)) + (deco.setup||0); const shipping = Number($('#shipping').value||0); const sub = garmentSell + decoTotal + shipping; const taxRate = Number($('#taxPct').value||0)/100; const tax = sub * taxRate; const grand = sub + tax;
-
-    ensure(120); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('Totals', M, y); y += 10; hr(y); y += 12; const boxW = (pageW - M*2 - 16)/2;
-    function totalRow(x,y,label,val,accent=false){ if(accent){ doc.setFillColor(232,235,255); } else { doc.setFillColor(247,248,251); } doc.roundedRect(x, y, boxW, 28, 6, 6, 'F'); doc.setFont('helvetica','normal'); doc.setTextColor(90); doc.setFontSize(10); doc.text(label, x+10, y+18); doc.setFont('helvetica','bold'); if (accent) { doc.setTextColor(88, 101, 242); } else { doc.setTextColor(20); } doc.setFontSize(accent?14:11); doc.text(val, x+boxW-10, y+18, { align:'right' }); }
-    totalRow(M, y, 'Total Pieces', String(totals.qty));
-    totalRow(M, y+34, 'Garments (w/ markup)', fmt(garmentSell));
-    totalRow(M, y+68, 'Decoration per piece', fmt(deco.perPiece||0));
-    totalRow(M, y+102, 'Screen setups', fmt(deco.setup||0));
-    totalRow(M+boxW+16, y, 'Shipping', fmt(shipping));
-    totalRow(M+boxW+16, y+34, 'Tax', fmt(tax));
-    totalRow(M+boxW+16, y+68, 'Grand Total', fmt(grand), true);
-    y += 140;
-
-    // Mockups (A & B)
-    try{
-      const mockA = document.getElementById('mockCanvasA');
-      const mockB = document.getElementById('mockCanvasB');
-      const haveA = mockA && mockA.width && mockA.height;
-      const haveB = mockB && mockB.width && mockB.height;
-      if(haveA || haveB){ ensure(240); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(30);
-        if(haveA && haveB){ const colW = (pageW - M*2 - 16)/2; doc.text('Mockup A', M, y); doc.text('Mockup B', M+colW+16, y); y += 10; const addMock = (canvas, x) => { const url = canvas.toDataURL('image/png'); const scale = Math.min(1, colW / canvas.width); const h = canvas.height * scale; doc.addImage(url, 'PNG', x, y, colW, h); return h; }; const hA = haveA ? addMock(mockA, M) : 0; const hB = haveB ? addMock(mockB, M+colW+16) : 0; y += Math.max(hA, hB) + 10; }
-        else { const canvas = haveA ? mockA : mockB; const tag = haveA ? 'Mockup A' : 'Mockup B'; doc.text(tag, M, y); y += 10; const w = pageW - M*2; const scale = Math.min(1, w / canvas.width); const h = canvas.height * scale; doc.addImage(canvas.toDataURL('image/png'), 'PNG', M, y, w, h); y += h + 10; }
-      }
-    }catch(_){ }
-
-    const terms = ($('#terms').value||'').trim();
-    if(terms){ ensure(50); doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(30); doc.text('Notes / Terms', M, y); y += 14; doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(60); const wrapped = doc.splitTextToSize(terms, pageW - M*2); wrapped.forEach(t=>{ ensure(14); doc.text(t, M, y); y += 14; }); }
-
-    addFooter();
-    const safeBrand = brand.toUpperCase().replace(/[^A-Z0-9]+/g,'_').slice(0,18);
-    doc.save(`${safeBrand}_QUOTE_${quoteNo}.pdf`);
-  }
-
-  // ---------- Init ----------
-  function populateMockDefaults(){ populateMockLineOptions(); }
-
-  window.addEventListener('DOMContentLoaded', ()=>{
-    // Search & filters
-    document.getElementById('btnSearch')?.addEventListener('click', searchCatalog);
-    const si = document.getElementById('searchInput'); if(si){ si.addEventListener('input', onSearch); si.addEventListener('keydown', e=>{ if(e.key==='Enter') searchCatalog(); }); }
-    ;['brandFilter','styleFilter','colorFilter','sizeFilter','sortField','sortDir'].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('change', refreshCatalogDisplay); });
-
-    // Quote / totals
-    document.getElementById('btnAddPlacement')?.addEventListener('click', addPlacement);
-    ;['dtfRate','wastePct','spSetup','spRun','markupPct','taxPct','shipping'].forEach(id=>{ const el=document.getElementById(id); if(el) el.oninput = calcTotals; });
-
-    // Mockup studios
-    const studioA = createStudio('A');
-    const studioB = createStudio('B');
-
-    document.getElementById('btnExport')?.addEventListener('click', generatePDF);
-
-    setLoadStatus('Enter a search and press “Search” to load products from S&S.');
-
-    // ---- Dev sanity tests (non-blocking) ----
-    try{
-      console.groupCollapsed('Dev tests');
-      // Tier break coverage
-      console.assert(priceMultiplier(0) === 2.5, 'tier <12');
-      console.assert(priceMultiplier(11) === 2.5, 'tier 11');
-      console.assert(priceMultiplier(12) === 1.0, 'tier 12-23');
-      console.assert(priceMultiplier(23) === 1.0, 'tier 23');
-      console.assert(priceMultiplier(24) === 0.9, 'tier 24-47');
-      console.assert(priceMultiplier(47) === 0.9, 'tier 47');
-      console.assert(priceMultiplier(48) === 0.8, 'tier 48-71');
-      console.assert(priceMultiplier(71) === 0.8, 'tier 71');
-      console.assert(priceMultiplier(72) === 0.75, 'tier 72-143');
-      console.assert(priceMultiplier(143) === 0.75, 'tier 143');
-      console.assert(priceMultiplier(144) === 0.7, 'tier 144-199');
-      console.assert(priceMultiplier(199) === 0.7, 'tier 199');
-      console.assert(priceMultiplier(200) === 0.65, 'tier >=200');
-      // recalcLine sanity
-      const testLine={ units:[{qty:24, basePrice:10, unitPrice:0}] }; recalcLine(testLine); console.assert(Math.abs(testLine.units[0].unitPrice-9) < 1e-6, 'recalcLine tiered unit');
-      // perPieceDecoration should be stable and non-negative
-      const savedPlacements = JSON.parse(JSON.stringify(state.placements));
-      state.placements = [{technique:'DTF', width:12, height:12},{technique:'Screen Print', colors:2}];
-      const before = perPieceDecoration();
-      console.assert(typeof before.perPiece === 'number' && before.perPiece > 0, 'perPieceDecoration returns positive perPiece');
-      console.assert(typeof before.setup === 'number' && before.setup >= 0, 'perPieceDecoration returns setup');
-      state.placements = savedPlacements;
-      // addLineFromRow merges sizes under same style/color
-      const fakeRow={ brandName:'BrandX', styleName:'Tee', colorName:'Black', sku:'BX-1', [PRICE_FIELD]:10, [IMAGE_FIELD_FRONT]:'', [IMAGE_FIELD_BACK]:'' };
-      addLineFromRow(fakeRow,'L',6,10,'', 'BrandX','Tee','Black');
-      addLineFromRow(fakeRow,'L',6,10,'', 'BrandX','Tee','Black');
-      const merged = state.lines.find(l=>l.brandName==='BrandX'&&l.styleName==='Tee'&&l.colorName==='Black');
-      console.assert(merged && merged.units.find(u=>u.size==='L')?.qty === 12, 'addLineFromRow merges quantities');
-      console.groupEnd();
-    }catch(e){ console.warn('Dev tests error', e); }
-  });
-  </script>
+      </div>
+    </div>
+    <div id="loadStatus" class="alert" style="margin-top:10px;display:none"></div>
+    <div id="results" class="list" style="margin-top:12px"></div>
+  </section>
+  <section class="card">
+    <h2>Quote Builder</h2>
+    <div class="row" style="margin-top:8px">
+      <div class="field"><label>Client Name</label><input id="clientName"/></div>
+      <div class="field"><label>Client Email</label><input id="clientEmail"/></div>
+      <div class="field"><label>PO / Ref</label><input id="clientPO"/></div>
+    </div>
+    <div class="sectionTitle">Placements</div>
+    <div class="sub">Add decoration locations.</div>
+    <div id="placements" class="list" style="margin-top:8px"></div>
+    <div class="row" style="position:sticky;bottom:0;gap:8px;background:linear-gradient(180deg,transparent,rgba(255,255,255,.9));padding-top:12px">
+      <button class="btn" id="btnAddPlacement">Add Placement</button>
+      <span class="right sub">Left Chest 4×4 • Full Front 12×14 • Neck 3×3</span>
+    </div>
+    <div class="sectionTitle">Settings</div>
+    <div class="row wrap">
+      <div class="kpi"><span class="muted">DTF $/sqft</span><b id="kpiDTF">$8.00</b></div>
+      <div class="kpi"><span class="muted">Screen: Setup /color</span><b id="kpiSetup">$20.00</b></div>
+      <div class="kpi"><span class="muted">Screen: Run /color</span><b id="kpiRun">$0.75</b></div>
+      <div class="kpi"><span class="muted">Garment Markup</span><b id="kpiMU">35%</b></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div class="field"><label>Business / Brand Name</label><input id="brandName"/></div>
+      <div class="field"><label>Logo URL</label><input id="logoUrl"/></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div class="field"><label>DTF Rate ($/sqft)</label><input type="number" id="dtfRate" step="0.25" value="8"/></div>
+      <div class="field"><label>Waste/Overage (%)</label><input type="number" id="wastePct" step="1" value="10"/></div>
+      <div class="field"><label>Screen Setup ($/color/location)</label><input type="number" id="spSetup" step="0.25" value="20"/></div>
+      <div class="field"><label>Screen Run ($/color)</label><input type="number" id="spRun" step="0.25" value="0.75"/></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div class="field"><label>Garment Markup (%)</label><input type="number" id="markupPct" step="1" value="35"/></div>
+      <div class="field"><label>Tax Rate (%)</label><input type="number" id="taxPct" step="0.01" value="0"/></div>
+      <div class="field"><label>Shipping ($)</label><input type="number" id="shipping" step="0.25" value="0"/></div>
+      <div class="field"><label>Terms / Notes</label><input id="terms"/></div>
+    </div>
+    <div class="sectionTitle">Garments in Quote</div>
+    <div id="quoteLines" class="list"></div>
+    <div class="sectionTitle">Totals</div>
+    <div id="totals" class="totals"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="btnEmail">Compose Email</button>
+      <button class="btn" id="btnShare">Copy Shareable URL</button>
+      <span class="sub right" id="saveInfo"></span>
+    </div>
+  </section>
+</div>
+<section class="card" id="mockSection" style="margin-top:16px">
+  <h2>Mockup Studio</h2>
+  <div class="sub">Two stages, multiple overlays, rotate and scale.</div>
+  <div class="row" style="margin-top:10px;align-items:flex-end">
+    <div class="field" style="flex:1"><label>Stage A — Garment</label><select id="mockLineA"><option value="">— choose —</option></select></div>
+    <div class="field" style="max-width:160px"><label>Side</label><select id="mockSideA"><option value="front">Front</option><option value="back">Back</option><option value="custom">Custom URL</option></select></div>
+    <div class="field" style="flex:1"><label>Custom URL</label><input id="mockGarmentUrlA"/></div>
+    <div class="field" style="max-width:130px"><label>&nbsp;</label><button class="btn" id="btnExportPngA">Export PNG A</button></div>
+  </div>
+  <div class="row" style="align-items:flex-end">
+    <div class="field" style="flex:1"><label>Stage B — Garment</label><select id="mockLineB"><option value="">— choose —</option></select></div>
+    <div class="field" style="max-width:160px"><label>Side</label><select id="mockSideB"><option value="front">Front</option><option value="back">Back</option><option value="custom">Custom URL</option></select></div>
+    <div class="field" style="flex:1"><label>Custom URL</label><input id="mockGarmentUrlB"/></div>
+    <div class="field" style="max-width:130px"><label>&nbsp;</label><button class="btn" id="btnExportPngB">Export PNG B</button></div>
+  </div>
+  <div class="row" style="margin-top:6px">
+    <div class="field"><label>Add Design (Upload → A)</label><input id="ovFileA" type="file" accept="image/*"/></div>
+    <div class="field" style="flex:2"><label>Add Design (URL → A)</label><input id="ovUrlA"/></div>
+    <div class="field" style="max-width:150px"><label>&nbsp;</label><button class="btn" id="btnAddUrlA">Add to A</button></div>
+    <div class="field" style="max-width:160px"><label>&nbsp;</label><button class="btn ghost" id="btnCenterAA">Center A</button></div>
+  </div>
+  <div class="row" style="margin-top:6px">
+    <div class="field"><label>Add Design (Upload → B)</label><input id="ovFileB" type="file" accept="image/*"/></div>
+    <div class="field" style="flex:2"><label>Add Design (URL → B)</label><input id="ovUrlB"/></div>
+    <div class="field" style="max-width:150px"><label>&nbsp;</label><button class="btn" id="btnAddUrlB">Add to B</button></div>
+    <div class="field" style="max-width:160px"><label>&nbsp;</label><button class="btn ghost" id="btnCenterBB">Center B</button></div>
+  </div>
+  <div class="row" style="margin-top:8px;align-items:flex-start">
+    <div class="field" style="flex:1"><label>Stage A</label><div id="stageWrapA" class="stage"><canvas id="mockCanvasA" class="canvas"></canvas></div><div class="field" style="margin-top:8px"><label>Layers A</label><div id="ovListA" class="list" style="max-height:320px;overflow:auto;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:8px;background:rgb(var(--bg))"></div></div></div>
+    <div class="field" style="flex:1"><label>Stage B</label><div id="stageWrapB" class="stage"><canvas id="mockCanvasB" class="canvas"></canvas></div><div class="field" style="margin-top:8px"><label>Layers B</label><div id="ovListB" class="list" style="max-height:320px;overflow:auto;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:8px;background:rgb(var(--bg))"></div></div></div>
+  </div>
+</section>
+<footer class="sub" style="margin-top:16px;text-align:center">S&S API only • Save/Share is encoded in the URL hash • PNG export may be limited by image host CORS.</footer>
+</div>
+<div id="toast" class="toast hidden"><span id="toastMsg"></span><button class="btn" id="toastUndo" style="padding:6px 10px;border-radius:10px">Undo</button></div>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script>
+'use strict';
+const PRICE_FIELD='customerPrice';
+const IMAGE_FIELD_FRONT='colorFrontImage';
+const IMAGE_FIELD_BACK='colorBackImage';
+const $=s=>document.querySelector(s);
+const $$=s=>Array.from(document.querySelectorAll(s));
+function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms)}}
+function roundInc(n,inc=0.25){n=Number(n)||0;return Math.round(n/inc)*inc}
+const state={settings:{dtfRate:8,wastePct:10,spSetup:20,spRun:0.75,markupPct:35,taxPct:0,shipping:0},brand:{name:'',logo:''},client:{name:'',email:'',po:''},placements:[],lines:[],catalog:[],columns:[],catalogOriginal:[],mock:{A:{base:null,overlays:[],img:null},B:{base:null,overlays:[],img:null}}};
+const defaultLocations=['Left Chest','Right Chest','Full Front','Full Back','Sleeve Left','Sleeve Right','Neck/Locker','Hood'];
+function setLoadStatus(msg,ok=false){const el=$('#loadStatus');if(!el)return;el.style.display='block';el.style.borderColor=ok?'rgba(16,185,129,.4)':'rgba(245,158,11,.3)';el.style.background=ok?'rgba(16,185,129,.12)':'rgba(245,158,11,.12)';el.innerHTML=msg}
+let toastTimer=null;function showToast(message,onUndo){const t=document.getElementById('toast');if(!t)return;const msgEl=document.getElementById('toastMsg');const undoBtn=document.getElementById('toastUndo');msgEl.textContent=message;t.classList.remove('hidden');clearTimeout(toastTimer);undoBtn.onclick=()=>{t.classList.add('hidden');onUndo&&onUndo()};toastTimer=setTimeout(()=>{t.classList.add('hidden');undoBtn.onclick=null},6000)}
+async function ssawFindByStyle(q,extra={}){const params=new URLSearchParams({path:'products',style:q,fields:['sku','styleID','brandName','styleName','colorName','sizeName','qty','customerPrice','salePrice','piecePrice',IMAGE_FIELD_FRONT,IMAGE_FIELD_BACK].join(',')});for(const[k,v]of Object.entries(extra||{}))params.set(k,v);const r=await fetch(`/api/ssaw?${params}`);if(!r.ok)throw new Error(`S&S error ${r.status}`);return r.json()}
+function priceMultiplier(q){if(q<12)return 2.5; if(q<=23)return 1.0; if(q<=47)return 0.9; if(q<=71)return 0.8; if(q<=143)return 0.75; if(q<=199)return 0.7; return 0.65}
+function recalcLine(line){const total=line.units.reduce((a,b)=>a+Number(b.qty||0),0);const m=priceMultiplier(total);line.units.forEach(u=>u.unitPrice=Number(u.basePrice||0)*m)}
+function updateFilterControls(base){const uniq=a=>Array.from(new Set(a.filter(Boolean))).sort((x,y)=>String(x).localeCompare(String(y)));const brands=uniq(base.map(r=>r.brandName));const styles=uniq(base.map(r=>r.styleName));const colors=uniq(base.map(r=>r.colorName));const sizes=uniq(base.map(r=>r.sizeName));function fill(id,vals){const sel=$(id);if(!sel)return;const prev=sel.value;sel.innerHTML=['<option value="">All</option>'].concat(vals.map(v=>`<option value="${v}">${v}</option>`)).join('');if([...sel.options].some(o=>o.value===prev))sel.value=prev}
+fill('#brandFilter',brands);fill('#styleFilter',styles);fill('#colorFilter',colors);fill('#sizeFilter',sizes)}
+function applyFiltersAndSort(items){const bf=$('#brandFilter')?.value||'';const sf=$('#styleFilter')?.value||'';const cf=$('#colorFilter')?.value||'';const zf=$('#sizeFilter')?.value||'';const sfld=$('#sortField')?.value||'brandName';const sdir=$('#sortDir')?.value||'asc';let out=items.filter(r=>(!bf||r.brandName===bf)&&(!sf||r.styleName===sf)&&(!cf||r.colorName===cf)&&(!zf||r.sizeName===zf));const cmp=(a,b)=>{let va=a[sfld],vb=b[sfld];if(sfld===PRICE_FIELD){va=parseFloat(String(va).replace(/[^0-9.\-]/g,''))||0;vb=parseFloat(String(vb).replace(/[^0-9.\-]/g,''))||0;return va-vb}va=String(va||'').toLowerCase();vb=String(vb||'').toLowerCase();if(va<vb)return -1;if(va>vb)return 1;return 0};out.sort(cmp);if(sdir==='desc')out.reverse();return out}
+function refreshCatalogDisplay(){const base=state.catalogOriginal||[];const final=applyFiltersAndSort(base);state.catalog=final;renderResults(final);setLoadStatus(`Showing <b>${final.length}</b> item(s).`,true)}
+const onSearch=debounce(async function(){const q=($('#searchInput')?.value||'').trim();if(!q){setLoadStatus('Enter a brand, style, part number, or SKU to search S&S.');$('#results').innerHTML='';return}setLoadStatus('Searching S&S…');try{const rows=await ssawFindByStyle(q);state.catalogOriginal=rows.map(r=>({...r}));state.columns=Object.keys(rows[0]||{});updateFilterControls(state.catalogOriginal);setLoadStatus(`Found <b>${rows.length}</b> results from S&S.`,true);refreshCatalogDisplay()}catch(err){setLoadStatus('Error: '+err.message)}},400)
+function getVal(row,key){return row?.[key]??''}
+function renderResults(items){const host=$('#results');host.innerHTML='';if(!items.length){host.innerHTML='<div class="muted">No results. Try different keywords or filters.</div>';return}items.slice(0,200).forEach((row,i)=>{const img=getVal(row,IMAGE_FIELD_FRONT)||'https://via.placeholder.com/64x64?text=IMG';const brand=getVal(row,'brandName');const style=getVal(row,'styleName');const color=getVal(row,'colorName');const sku=getVal(row,'sku');const size=getVal(row,'sizeName')||'One Size';const base=parseFloat(String(getVal(row,PRICE_FIELD)).replace(/[^0-9.\-]/g,''))||0;const card=document.createElement('div');card.className='list';card.style.cssText='border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:10px;background:rgb(var(--bg));';card.innerHTML=`
+<div class="row" style="align-items:center">
+<img src="${img}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid rgba(0,0,0,.06)"/>
+<div style="flex:1">
+  <div style="font-weight:700">${brand} ${style} <span class="muted">• ${color}</span></div>
+  <div class="sub">SKU: ${sku} <span class="pill">Base: $${base.toFixed(2)}</span></div>
+</div>
+<div class="row" style="gap:6px">
+  <input type="text" value="${size}" id="size-${i}" style="width:120px"/>
+  <input type="number" min="0" value="12" id="qty-${i}" style="width:90px"/>
+  <button class="btn" data-idx="${i}">Add</button>
+</div>
+</div>
+<details style="margin-top:8px"><summary>View row data</summary><div class="kv" style="margin-top:8px">${state.columns.map(c=>`<div>${c}</div><div>${row[c]??''}</div>`).join('')}</div></details>`;card.querySelector('button').onclick=()=>{const qty=Number(document.getElementById(`qty-${i}`).value||0);const sizeInput=document.getElementById(`size-${i}`).value||'One Size';if(!qty)return;addLineFromRow(row,sizeInput,qty,base,img,brand,style,color)};host.appendChild(card)})}
+function addLineFromRow(row,size,qty,basePrice,image,brand,style,color){let line=state.lines.find(l=>l.brandName===brand&&l.styleName===style&&l.colorName===color);if(!line){line={id:crypto.randomUUID(),styleName:style,brandName:brand,colorName:color,image,images:{front:getVal(row,IMAGE_FIELD_FRONT)||image,back:getVal(row,IMAGE_FIELD_BACK)||''},meta:row,units:[]};state.lines.push(line)}const found=line.units.find(u=>u.size===size);if(found){found.qty+=qty;found.basePrice=basePrice}else{line.units.push({size,qty,basePrice,unitPrice:basePrice})}recalcLine(line);renderLines();calcTotals();populateMockLineOptions()}
+function renderLines(){const host=$('#quoteLines');host.innerHTML='';if(!state.lines.length){host.innerHTML='<div class="muted">No garments added yet. Use the catalog on the left.</div>';return}state.lines.forEach(line=>{const el=document.createElement('div');el.className='list';el.style.cssText='border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:10px;background:rgb(var(--bg));';const totalQty=line.units.reduce((a,b)=>a+Number(b.qty||0),0);const garmentSub=line.units.reduce((s,u)=>s+Number(u.qty||0)*Number(u.unitPrice||0),0);el.innerHTML=`
+<div class="row" style="align-items:center">
+<img src="${line.images?.front||line.image||'https://via.placeholder.com/56x56?text=IMG'}" style="width:56px;height:56px;border-radius:10px;border:1px solid rgba(0,0,0,.06);object-fit:cover"/>
+<div style="flex:1">
+  <div style="font-weight:700">${line.brandName} ${line.styleName} • ${line.colorName}</div>
+  <div class="sub">Qty: <b>${totalQty}</b> • Break: x${priceMultiplier(totalQty)}</div>
+</div>
+<button class="btn ghost" data-del="${line.id}">Remove Item</button>
+</div>
+<table class="table"><thead><tr><th>Size</th><th>Qty</th><th>Base $</th><th>Unit $ (tiered)</th><th>Ext $</th><th></th></tr></thead><tbody>
+${line.units.map(u=>`<tr data-line="${line.id}" data-size="${u.size}">
+<td>${u.size}</td>
+<td><input type="number" min="0" value="${u.qty}" class="sizeQty"/></td>
+<td>$${Number(u.basePrice).toFixed(2)}</td>
+<td>$${Number(u.unitPrice).toFixed(2)}</td>
+<td>$${(Number(u.qty)*Number(u.unitPrice)).toFixed(2)}</td>
+<td><button type="button" class="iconBtn" data-size-remove="${line.id}|${u.size}" title="Remove size"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td>
+</tr>`).join('')}
+</tbody></table>
+<details><summary>Show all item fields</summary><div class="kv" style="margin-top:8px">${state.columns.map(c=>`<div>${c}</div><div>${line.meta?.[c]??''}</div>`).join('')}</div></details>
+<div class="row"><span class="muted">Garment subtotal (before markup):</span><b class="right">$${garmentSub.toFixed(2)}</b></div>`;el.querySelector('[data-del]').onclick=()=>{if(!confirm(`Remove item ${line.brandName} ${line.styleName} • ${line.colorName}?`))return;const snapshot=JSON.parse(JSON.stringify(line));state.lines=state.lines.filter(x=>x.id!==line.id);renderLines();calcTotals();populateMockLineOptions();showToast(`Removed item ${line.brandName} ${line.styleName} • ${line.colorName}`,()=>{state.lines.push(snapshot);renderLines();calcTotals();populateMockLineOptions()})};el.querySelectorAll('.sizeQty').forEach(inp=>{const tr=inp.closest('tr');const lid=tr.getAttribute('data-line');const size=tr.getAttribute('data-size');inp.oninput=()=>{const L=state.lines.find(x=>x.id===lid);const unit=L?.units.find(u=>u.size===size);if(!L||!unit)return;unit.qty=Number(inp.value||0);recalcLine(L);renderLines();calcTotals();populateMockLineOptions()}});el.querySelectorAll('[data-size-remove]').forEach(btn=>{btn.onclick=()=>{const[lid,size]=btn.getAttribute('data-size-remove').split('|');const L=state.lines.find(x=>x.id===lid);if(!L)return;if(!confirm(`Remove size ${size} from ${L.brandName} ${L.styleName} • ${L.colorName}?`))return;const idx=L.units.findIndex(u=>u.size===size);if(idx===-1)return;const removedUnit=JSON.parse(JSON.stringify(L.units[idx]));const removedWholeLine=(L.units.length===1);const lineSnapshot=JSON.parse(JSON.stringify(L));if(removedWholeLine){state.lines=state.lines.filter(x=>x.id!==lid)}else{L.units.splice(idx,1);recalcLine(L)}renderLines();calcTotals();populateMockLineOptions();showToast(`Removed ${size} from ${line.brandName} ${line.styleName} • ${line.colorName}`,()=>{const i=state.lines.findIndex(x=>x.id===lid);if(removedWholeLine||i===-1){state.lines.push(lineSnapshot)}else{const units=state.lines[i].units;if(!units.find(u=>u.size===removedUnit.size)){units.splice(Math.min(idx,units.length),0,removedUnit)}recalcLine(state.lines[i])}renderLines();calcTotals();populateMockLineOptions()})}});host.appendChild(el)})}
+function perPieceDecoration(){let perPiece=0,setup=0;state.placements.forEach(p=>{if(p.technique==='DTF'){const w=Number(p.width||0),h=Number(p.height||0);const sqft=(w*h)/144;const over=1+Number($('#wastePct').value||state.settings.wastePct)/100;perPiece+=sqft*Number($('#dtfRate').value||state.settings.dtfRate)*over}else if(p.technique==='Screen Print'){const colors=Number(p.colors||1);perPiece+=colors*Number($('#spRun').value||state.settings.spRun);setup+=colors*Number($('#spSetup').value||state.settings.spSetup)}});return{perPiece,setup}}
+function calcTotals(){$('#kpiDTF').textContent=`$${Number($('#dtfRate').value||state.settings.dtfRate).toFixed(2)}`;$('#kpiSetup').textContent=`$${Number($('#spSetup').value||state.settings.spSetup).toFixed(2)}`;$('#kpiRun').textContent=`$${Number($('#spRun').value||state.settings.spRun).toFixed(2)}`;$('#kpiMU').textContent=`${Number($('#markupPct').value||state.settings.markupPct)}%`;const totals={qty:0,garmentCost:0,garmentSell:0,decoPerPiece:0,setup:0,decoTotal:0,shipping:Number($('#shipping').value||0),tax:0,grand:0};const deco=perPieceDecoration();totals.decoPerPiece=deco.perPiece;totals.setup=deco.setup;state.lines.forEach(line=>{const lineQty=line.units.reduce((a,b)=>a+Number(b.qty||0),0);const lineCost=line.units.reduce((s,u)=>s+Number(u.qty||0)*Number(u.unitPrice||0),0);totals.qty+=lineQty;totals.garmentCost+=lineCost});const markup=1+(Number($('#markupPct').value||state.settings.markupPct)/100);totals.garmentSell=totals.garmentCost*markup;const garmentEaRaw=totals.qty?(totals.garmentSell/totals.qty):0;const priceEaRaw=garmentEaRaw+totals.decoPerPiece;const rGarmentEa=roundInc(garmentEaRaw,0.25);const rDecoEa=roundInc(totals.decoPerPiece,0.25);const rPPE=roundInc(priceEaRaw,0.25);totals.decoTotal=(totals.qty*totals.decoPerPiece)+totals.setup;const sub=totals.garmentSell+totals.decoTotal+totals.shipping;totals.tax=sub*(Number($('#taxPct').value||state.settings.taxPct)/100);totals.grand=sub+totals.tax;const rSetup=roundInc(totals.setup,0.25);const rShip=roundInc(totals.shipping,0.25);const rTax=roundInc(totals.tax,0.25);const rGrand=roundInc(totals.grand,0.25);const money=n=>`$${Number(n||0).toFixed(2)}`;let html='';html+=`<div class="muted">Pieces</div><div><b>${totals.qty}</b></div>`;html+=`<div class="muted">Garment $/ea</div><div><b>${money(rGarmentEa)}</b></div>`;html+=`<div class="muted">Decoration $/ea</div><div><b>${money(rDecoEa)}</b></div>`;html+=`<div class="muted">Price per piece</div><div><b class="accent">${money(rPPE)}</b></div>`;if(totals.setup>0)html+=`<div class="muted">Screen setups</div><div><b>${money(rSetup)}</b></div>`;if(totals.shipping>0)html+=`<div class="muted">Shipping</div><div><b>${money(rShip)}</b></div>`;if(totals.tax>0)html+=`<div class="muted">Tax</div><div><b>${money(rTax)}</b></div>`;html+=`<div class="muted">Grand Total</div><div><b class="accent">${money(rGrand)}</b></div>`;$('#totals').innerHTML=html}
+function renderPlacements(){const host=$('#placements');host.innerHTML='';state.placements.forEach((p,i)=>{const row=document.createElement('div');row.className='loc';row.innerHTML=`
+<select data-k="location">${defaultLocations.map(x=>`<option ${x===p.location?'selected':''}>${x}</option>`).join('')}<option ${p.location&& !defaultLocations.includes(p.location)?'selected':''}>${p.location||'Custom'}</option></select>
+<select data-k="technique"><option ${p.technique==='DTF'?'selected':''}>DTF</option><option ${p.technique==='Screen Print'?'selected':''}>Screen Print</option></select>
+<input data-k="width" type="number" step="0.5" value="${p.width||10}" placeholder="W"/>
+<input data-k="height" type="number" step="0.5" value="${p.height||10}" placeholder="H"/>
+<input data-k="colors" type="number" step="1" value="${p.colors||1}" placeholder="Colors"/>
+<button class="btn ghost" data-del="${i}">Remove</button>`;row.querySelectorAll('[data-k]').forEach(inp=>{inp.oninput=()=>{const k=inp.getAttribute('data-k');let v=inp.value;if(['width','height','colors'].includes(k))v=Number(v||0);state.placements[i][k]=v;calcTotals()}});row.querySelector('[data-del]').onclick=()=>{state.placements.splice(i,1);renderPlacements();calcTotals()};host.appendChild(row)});calcTotals()}
+function addPlacement(){state.placements.push({location:'Left Chest',technique:'DTF',width:4,height:4,colors:1});renderPlacements()}
+function populateMockLineOptions(){const opts=['<option value="">— choose —</option>'].concat(state.lines.map(l=>`<option value="${l.id}">${l.brandName} ${l.styleName} • ${l.colorName}</option>`)).join('');$('#mockLineA').innerHTML=opts;$('#mockLineB').innerHTML=opts}
+function loadImage(url){return new Promise((res,rej)=>{const img=new Image();img.crossOrigin='anonymous';img.onload=()=>res(img);img.onerror=rej;img.src=url})}
+function drawStage(which){const canvas=$(`#mockCanvas${which}`);const ctx=canvas.getContext('2d');const wrap=$(`#stageWrap${which}`);const st=state.mock[which];const w=wrap.clientWidth;const base=st.img;const ratio=base?base.naturalWidth/base.naturalHeight:1;const cw=w;const ch=base?Math.round(cw/ratio):Math.max(300,wrap.clientHeight);canvas.width=cw;canvas.height=ch;ctx.clearRect(0,0,cw,ch);if(base){const scale=Math.min(cw/base.naturalWidth,ch/base.naturalHeight);const bw=base.naturalWidth*scale;const bh=base.naturalHeight*scale;const bx=(cw-bw)/2;const by=(ch-bh)/2;ctx.drawImage(base,bx,by,bw,bh);st.base={x:bx,y:by,w:bw,h:bh}}else{st.base=null}st.overlays.forEach(o=>{ctx.save();ctx.translate(o.x,o.y);ctx.rotate(o.r);ctx.scale(o.s,o.s);ctx.drawImage(o.img,-o.img.width/2,-o.img.height/2);ctx.restore()});let gv=$(`#guideV${which}`),gh=$(`#guideH${which}`);if(!gv){gv=document.createElement('div');gv.id=`guideV${which}`;gv.className='guide v';$(`#stageWrap${which}`).appendChild(gv)}if(!gh){gh=document.createElement('div');gh.id=`guideH${which}`;gh.className='guide h';$(`#stageWrap${which}`).appendChild(gh)}gv.style.left='-1000px';gh.style.top='-1000px'}
+async function setStageBase(which){const side=$(`#mockSide${which}`).value;const lineId=$(`#mockLine${which}`).value;let url='';if(side==='custom'){url=$(`#mockGarmentUrl${which}`).value.trim()}else if(lineId){const line=state.lines.find(l=>l.id===lineId);url=(side==='front'?line?.images?.front:line?.images?.back)||line?.image||''}if(!url)return;try{const img=await loadImage(url);state.mock[which].img=img;drawStage(which)}catch(e){}}
+function centerOverlays(which){const st=state.mock[which];const base=st.base;if(!base)return;st.overlays.forEach(o=>{o.x=base.x+base.w/2;o.y=base.y+base.h/2});drawStage(which)}
+function addOverlayUrl(which,url){loadImage(url).then(img=>{const st=state.mock[which];const base=st.base||{x:0,y:0,w:$('#mockCanvas'+which).width,h:$('#mockCanvas'+which).height};const o={img,x:base.x+base.w/2,y:base.y+base.h/2,r:0,s:Math.min(1,Math.max(0.1,Math.min(base.w,base.h)/(img.width*2))),id:crypto.randomUUID()};st.overlays.push(o);renderOverlayList(which);drawStage(which)})}
+function addOverlayFile(which,file){const fr=new FileReader();fr.onload=()=>addOverlayUrl(which,fr.result);fr.readAsDataURL(file)}
+function renderOverlayList(which){const list=$('#ovList'+which);const st=state.mock[which];list.innerHTML='';st.overlays.forEach(o=>{const row=document.createElement('div');row.className='row';row.innerHTML=`<span class="pill" style="min-width:60px">Layer</span><button class="btn ghost" data-del="${o.id}">Remove</button>`;row.querySelector('[data-del]').onclick=()=>{st.overlays=st.overlays.filter(x=>x.id!==o.id);renderOverlayList(which);drawStage(which)};list.appendChild(row)});attachOverlayInteraction(which)}
+function attachOverlayInteraction(which){const canvas=$('#mockCanvas'+which);const st=state.mock[which];let active=null,mode=null,start={x:0,y:0,r:0,s:1};function pick(x,y){for(let i=st.overlays.length-1;i>=0;i--){const o=st.overlays[i];const dx=x-o.x,dy=y-o.y;const dist=Math.hypot(dx,dy);const imgw=o.img.width*o.s,imgh=o.img.height*o.s;const hit=dist<Math.max(imgw,imgh)/2;if(hit)return o}return null}
+function near(a,b,th=8){return Math.abs(a-b)<=th}
+canvas.onpointerdown=e=>{const rect=canvas.getBoundingClientRect();const x=e.clientX-rect.left;const y=e.clientY-rect.top;const o=pick(x,y);if(!o)return;active=o;mode='move';start={x,y,ox:o.x,oy:o.y,r:o.r,s:o.s};canvas.setPointerCapture(e.pointerId)}
+canvas.onpointermove=e=>{if(!active)return;const rect=canvas.getBoundingClientRect();const x=e.clientX-rect.left;const y=e.clientY-rect.top;if(mode==='move'){active.x=start.ox+(x-start.x);active.y=start.oy+(y-start.y)}drawStage(which);const base=state.mock[which].base;if(base){const gv=$('#guideV'+which),gh=$('#guideH'+which);if(near(active.x,base.x+base.w/2)){gv.style.left=(base.x+base.w/2)+'px'}else{gv.style.left='-1000px'}if(near(active.y,base.y+base.h/2)){gh.style.top=(base.y+base.h/2)+'px'}else{gh.style.top='-1000px'}}}
+canvas.onpointerup=e=>{if(active){active=null;mode=null}}
+canvas.onwheel=e=>{const rect=canvas.getBoundingClientRect();const x=e.clientX-rect.left;const y=e.clientY-rect.top;const o=pick(x,y);if(!o)return;e.preventDefault();o.s=Math.min(3,Math.max(0.1,o.s*(e.deltaY<0?1.05:0.95)));drawStage(which)}
+canvas.oncontextmenu=e=>{const rect=canvas.getBoundingClientRect();const x=e.clientX-rect.left;const y=e.clientY-rect.top;const o=pick(x,y);if(!o)return e.preventDefault();o.r+=Math.PI/16;drawStage(which);e.preventDefault()}
+}
+async function generatePDF(){const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:'pt',format:'letter'});const W=doc.internal.pageSize.getWidth();const H=doc.internal.pageSize.getHeight();let y=40;const brand=($('#brandName').value||'').trim()||'Your Business';const logoUrl=($('#logoUrl').value||'').trim();async function toDataURL(url){try{const r=await fetch(url,{mode:'cors'});const b=await r.blob();return await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.readAsDataURL(b)})}catch(_){return null}}doc.setFillColor(88,101,242);doc.rect(0,0,W,64,'F');doc.setTextColor(255);doc.setFont('helvetica','bold');doc.setFontSize(14);doc.text(brand,60,38);doc.setFontSize(22);doc.text('ESTIMATE',W-140,40);doc.setFillColor(255,255,255);doc.circle(30,34,18,'F');if(logoUrl){const logo=await toDataURL(logoUrl);if(logo){try{doc.addImage(logo,'PNG',12,16,36,36)}catch(_){}}}y=64+18;doc.setTextColor(30);doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text('Date: '+new Date().toLocaleDateString(),40,y);doc.text('Quote #: Q'+Math.random().toString(36).slice(2,8).toUpperCase(),220,y);y+=20;const cName=$('#clientName').value||'';const cEmail=$('#clientEmail').value||'';const cPO=$('#clientPO').value||'';doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('Bill To',40,y);y+=14;doc.setFont('helvetica','normal');doc.setFontSize(10);if(cName){doc.text(cName,40,y);y+=12}if(cEmail){doc.text(cEmail,40,y);y+=12}if(cPO){doc.text('PO: '+cPO,40,y);y+=14}if(state.placements.length){doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('Placements',40,y);y+=10;doc.setDrawColor(230);doc.line(40,y, W-40,y);y+=12;doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(80);const colX={loc:40,tech:210,size:320,colors:460};doc.text('Location',colX.loc,y);doc.text('Technique',colX.tech,y);doc.text('Size (W×H in)',colX.size,y);doc.text('Colors',colX.colors,y);y+=8;doc.setDrawColor(230);doc.line(40,y, W-40,y);y+=8;doc.setFont('helvetica','normal');doc.setTextColor(30);state.placements.forEach(p=>{const sizeStr=(p.width||0)+' × '+(p.height||0);doc.text(String(p.location||''),colX.loc,y);doc.text(String(p.technique||''),colX.tech,y);doc.text(sizeStr,colX.size,y);doc.text(p.technique==='Screen Print'?String(p.colors||1):'-',colX.colors,y);y+=16});y+=6}
+const IX={item:40,size:300,qty:380,unit:440,ext:520};doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(30);doc.text('Items',40,y);y+=10;doc.setDrawColor(230);doc.line(40,y, W-40,y);y+=12;doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(80);doc.text('Item',IX.item,y);doc.text('Size',IX.size,y);doc.text('Qty',IX.qty,y);doc.text('Unit',IX.unit,y);doc.text('Ext',IX.ext,y);y+=8;doc.setDrawColor(230);doc.line(40,y, W-40,y);y+=8;doc.setFont('helvetica','normal');doc.setTextColor(30);state.lines.forEach(line=>{const name=(line.brandName||'')+' '+(line.styleName||'')+' • '+(line.colorName||'');(line.units||[]).forEach((u,idx)=>{if(idx===0){doc.text(name,IX.item,y)}doc.text(String(u.size||''),IX.size,y);doc.text(String(u.qty||0),IX.qty,y);doc.text('$'+Number(u.unitPrice||0).toFixed(2),IX.unit,y);doc.text('$'+(Number(u.qty||0)*Number(u.unitPrice||0)).toFixed(2),IX.ext,y);y+=16});y+=4});const deco=perPieceDecoration();const totals={qty:0,garmentCost:0};state.lines.forEach(line=>{const lineQty=(line.units||[]).reduce((a,b)=>a+Number(b.qty||0),0);const lineCost=(line.units||[]).reduce((s,u)=>s+Number(u.qty||0)*Number(u.unitPrice||0),0);totals.qty+=lineQty;totals.garmentCost+=lineCost});const markup=1+(Number($('#markupPct').value||state.settings.markupPct)/100);const garmentSell=totals.garmentCost*markup;const shipping=Number($('#shipping').value||0);const sub=garmentSell+((totals.qty*(deco.perPiece||0))+(deco.setup||0))+shipping;const tax=sub*(Number($('#taxPct').value||0)/100);const grand=sub+tax;const rGarmentSell=roundInc(garmentSell,0.25);const rDecoPer=roundInc(deco.perPiece||0,0.25);const rSetup=roundInc(deco.setup||0,0.25);const rShipping=roundInc(shipping,0.25);const rTax=roundInc(tax,0.25);const rGrand=roundInc(grand,0.25);doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(30);doc.text('Totals',40,y);y+=10;const boxW=(W-80-16)/2;function totalRow(x,yy,label,val,accent){if(accent){doc.setFillColor(232,235,255)}else{doc.setFillColor(247,248,251)}doc.roundedRect(x,yy,boxW,28,6,6,'F');doc.setFont('helvetica','normal');doc.setTextColor(90);doc.setFontSize(10);doc.text(label,x+10,yy+18);doc.setFont('helvetica','bold');doc.setTextColor(accent? [88,101,242]:[20,20,20]);doc.setFontSize(accent?14:11);doc.text(val,x+boxW-10,yy+18,{align:'right'})}
+function fmt(n){return '$'+Number(n||0).toFixed(2)}
+totalRow(40,y,'Total Pieces',String(totals.qty));
+totalRow(40,y+34,'Garments (w/ markup)',fmt(rGarmentSell));
+totalRow(40,y+68,'Decoration per piece',fmt(rDecoPer));
+totalRow(40,y+102,'Screen setups',fmt(rSetup));
+totalRow(40+boxW+16,y,'Shipping',fmt(rShipping));
+totalRow(40+boxW+16,y+34,'Tax',fmt(rTax));
+totalRow(40+boxW+16,y+68,'Grand Total',fmt(rGrand),true);y+=140;const addMock=(canvas,x,label)=>{if(!canvas||!canvas.width||!canvas.height)return 0;doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(30);doc.text(label,x,y);y+=10;const w=W-80;if(x>40){const colW=(W-80-16)/2;const scale=Math.min(1,colW/canvas.width);const h=canvas.height*scale;doc.addImage(canvas.toDataURL('image/png'),'PNG',x,y,colW,h);y+=h+10;return h}else{const scale=Math.min(1,w/canvas.width);const h=canvas.height*scale;doc.addImage(canvas.toDataURL('image/png'),'PNG',40,y,w,h);y+=h+10;return h}};const haveA=$('#mockCanvasA').width>0&&$('#mockCanvasA').height>0;const haveB=$('#mockCanvasB').width>0&&$('#mockCanvasB').height>0;if(haveA&&haveB){const colW=(W-80-16)/2;doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(30);doc.text('Mockup A',40,y);doc.text('Mockup B',40+colW+16,y);y+=10;const hA=addMock($('#mockCanvasA'),40,'');const hB=addMock($('#mockCanvasB'),40+colW+16,'');y+=Math.max(hA,hB)}else{if(haveA)addMock($('#mockCanvasA'),40,'Mockup A');if(haveB)addMock($('#mockCanvasB'),40,'Mockup B')}
+doc.save(`${brand.toUpperCase().replace(/[^A-Z0-9]+/g,'_').slice(0,18)}_QUOTE_${(''+Date.now()).slice(-6)}.pdf`)}
+function composeEmail(){const brand=($('#brandName').value||'').trim()||'Your Business';const to=($('#clientEmail').value||'').trim();const subject=encodeURIComponent(`${brand} estimate`);const body=encodeURIComponent('Hi, attaching your quote.');window.location.href=`mailto:${to}?subject=${subject}&body=${body}`}
+function shareUrl(){const payload={settings:state.settings,client:state.client,brand:state.brand,placements:state.placements,lines:state.lines};const s=btoa(unescape(encodeURIComponent(JSON.stringify(payload))));const url=location.origin+location.pathname+'#'+s;navigator.clipboard.writeText(url);$('#saveInfo').textContent='Copied link to clipboard'}
+function restoreFromHash(){if(location.hash.length>1){try{const s=location.hash.slice(1);const obj=JSON.parse(decodeURIComponent(escape(atob(s))));Object.assign(state.settings,obj.settings||{});state.client=obj.client||state.client;state.brand=obj.brand||state.brand;state.placements=obj.placements||[];state.lines=obj.lines||[];$('#brandName').value=state.brand.name||'';$('#logoUrl').value=state.brand.logo||'';renderPlacements();renderLines();calcTotals();populateMockLineOptions()}catch(_){}}}
+function bind(){$('#btnSearch').onclick=onSearch;$('#searchInput').onkeydown=e=>{if(e.key==='Enter')onSearch()};['#brandFilter','#styleFilter','#colorFilter','#sizeFilter','#sortField','#sortDir'].forEach(id=>$(id).onchange=refreshCatalogDisplay);['#dtfRate','#wastePct','#spSetup','#spRun','#markupPct','#taxPct','#shipping'].forEach(id=>$(id).oninput=calcTotals);$('#btnAddPlacement').onclick=addPlacement;$('#btnExport').onclick=generatePDF;$('#btnEmail').onclick=composeEmail;$('#btnShare').onclick=shareUrl;$('#btnNew').onclick=()=>{state.lines=[];state.placements=[];renderLines();renderPlacements();calcTotals();populateMockLineOptions()};['A','B'].forEach(which=>{$('#mockLine'+which).onchange=()=>setStageBase(which);$('#mockSide'+which).onchange=()=>setStageBase(which);$('#mockGarmentUrl'+which).onchange=()=>setStageBase(which);$('#btnCenter'+which+which).onclick=()=>centerOverlays(which);$('#btnExportPng'+which).onclick=()=>{const c=$('#mockCanvas'+which);if(!c.width)return;const a=document.createElement('a');a.download=`mock_${which}.png`;a.href=c.toDataURL('image/png');a.click()};$('#ovFile'+which).onchange=e=>{const f=e.target.files?.[0];if(f) addOverlayFile(which,f)};$('#btnAddUrl'+which).onclick=()=>{const url=$('#ovUrl'+which).value.trim();if(url) addOverlayUrl(which,url)}});window.addEventListener('resize',debounce(()=>{drawStage('A');drawStage('B')},150))}
+document.addEventListener('DOMContentLoaded',()=>{bind();restoreFromHash();calcTotals()});
+console.groupCollapsed('Dev tests');
+console.assert(priceMultiplier(11)===2.5,'tier 11');
+console.assert(priceMultiplier(12)===1.0,'tier 12');
+console.assert(priceMultiplier(24)===0.9,'tier 24');
+console.assert(roundInc(6.29,0.25)===6.25,'round .25 a');
+console.assert(roundInc(10.97,0.25)===11.0,'round .25 b');
+console.groupEnd();
+</script>
 </body>
 </html>
