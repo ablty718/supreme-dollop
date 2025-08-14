@@ -85,64 +85,71 @@
       </div>
     </header>
 
-<div class="grid">
-  <!-- LEFT: Catalog -->
-  <section class="card">
-    <h2>Garment Catalog</h2>
-    <div class="sub">Search live from SS. Results populate filters automatically.</div>
+    <div class="grid">
+      <!-- LEFT: Catalog -->
+      <section class="card">
+        <h2>Garment Catalog</h2>
+        <div class="sub">Search live from SS Activewear. Results populate filters automatically.</div>
 
-    <div class="row" style="margin-top:8px">
-      <span class="pill">Powered by SS API</span>
-      <span class="pill">Price: <b>customerPrice</b></span>
-      <span class="pill">Front: <b>colorFrontImage</b></span>
-      <span class="pill">Back: <b>colorBackImage</b></span>
-    </div>
-
-    <div class="row" style="margin-top:10px">
-      <div class="field" style="flex:2">
-        <label>Search catalog</label>
-        <input id="searchInput" placeholder="Search by brand, style, color, sku, etc." />
-      </div>
-      <div class="field" style="max-width:120px">
-        <label>&nbsp;</label>
-        <button class="btn" id="btnSearch">Search</button>
-      </div>
-    </div>
-
-    <!-- Filters & Sort -->
-    <div class="row" id="filtersRow" style="margin-top:8px">
-      <div class="field"><label>Brand</label>
-        <select id="brandFilter"><option value="">All</option></select>
-      </div>
-      <div class="field"><label>Style</label>
-        <select id="styleFilter"><option value="">All</option></select>
-      </div>
-      <div class="field"><label>Color</label>
-        <select id="colorFilter"><option value="">All</option></select>
-      </div>
-      <div class="field"><label>Size</label>
-        <select id="sizeFilter"><option value="">All</option></select>
-      </div>
-      <div class="field" style="max-width:220px"><label>Sort</label>
-        <div class="row">
-          <select id="sortField">
-            <option value="brandName">Brand</option>
-            <option value="styleName">Style</option>
-            <option value="colorName">Color</option>
-            <option value="sizeName">Size</option>
-            <option value="customerPrice">Price</option>
-          </select>
-          <select id="sortDir" style="max-width:100px">
-            <option value="asc">Asc</option>
-            <option value="desc">Desc</option>
-          </select>
+        <div class="row" style="margin-top:8px">
+          <label class="pill" style="display:inline-flex;align-items:center;gap:8px">
+            Source:
+            <select id="sourceSelect">
+              <option value="ssaw" selected>SS API</option>
+              <option value="sheet">Google Sheet</option>
+            </select>
+          </label>
+          <span class="pill">Price column: <b>customerPrice</b></span>
+          <span class="pill">Front: <b>colorFrontImage</b></span>
+          <span class="pill">Back: <b>colorBackImage</b></span>
         </div>
-      </div>
-    </div>
 
-    <div id="loadStatus" class="alert" style="margin-top:10px; display:none"></div>
-    <div id="results" class="list" style="margin-top:12px"></div>
-  </section>
+        <div class="row" style="margin-top:10px">
+          <div class="field" style="flex:2">
+            <label>Search catalog</label>
+            <input id="searchInput" placeholder="Search by brand, style, color, sku, etc." />
+          </div>
+          <div class="field" style="max-width:120px">
+            <label>&nbsp;</label>
+            <button class="btn" id="btnSearch">Search</button>
+          </div>
+        </div>
+
+        <!-- Filters & Sort -->
+        <div class="row" id="filtersRow" style="margin-top:8px">
+          <div class="field"><label>Brand</label>
+            <select id="brandFilter"><option value="">All</option></select>
+          </div>
+          <div class="field"><label>Style</label>
+            <select id="styleFilter"><option value="">All</option></select>
+          </div>
+          <div class="field"><label>Color</label>
+            <select id="colorFilter"><option value="">All</option></select>
+          </div>
+          <div class="field"><label>Size</label>
+            <select id="sizeFilter"><option value="">All</option></select>
+          </div>
+          <div class="field" style="max-width:220px"><label>Sort</label>
+            <div class="row">
+              <select id="sortField">
+                <option value="brandName">Brand</option>
+                <option value="styleName">Style</option>
+                <option value="colorName">Color</option>
+                <option value="sizeName">Size</option>
+                <option value="customerPrice">Price</option>
+              </select>
+              <select id="sortDir" style="max-width:100px">
+                <option value="asc">Asc</option>
+                <option value="desc">Desc</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div id="loadStatus" class="alert" style="margin-top:10px; display:none"></div>
+
+        <div id="results" class="list" style="margin-top:12px"></div>
+      </section>
 
       <!-- RIGHT: Quote Builder & Preview -->
       <section class="card">
@@ -296,7 +303,7 @@
   const defaultLocations = ['Left Chest','Right Chest','Full Front','Full Back','Sleeve Left','Sleeve Right','Neck/Locker','Hood'];
   const $ = sel => document.querySelector(sel);
 
-  // ---------- Google Sheet helpers ----------
+  /* ---------- Google Sheet helpers ----------
   function sheetCsvUrl(id){ return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv`; }
   async function fetchCsv(url){
     const r = await fetch(url, { cache: 'no-store' });
@@ -320,7 +327,7 @@
       updateFilterControls(state.catalogOriginal);
       refreshCatalogDisplay();
     }catch(err){ setLoadStatus('Error: '+ err.message, false); }
-  }
+  }*/
 
   // ---------- S&S API helper (optional; requires /api/ssaw) ----------
   function debounce(fn, delay=350){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),delay); } }
