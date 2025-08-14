@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Apparel Quote Builder — S&S API Only</title>
+  <title>Anton v2.2</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -36,7 +36,7 @@
     .card{background:rgb(var(--card));border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:16px;box-shadow:0 8px 30px rgba(0,0,0,.04);overflow: scroll;height: 90vh;}
     .card h2{margin:0 0 8px;font-size:18px}
     .sub{color:rgb(var(--muted));font-size:12px}
-    .row{display:flex;gap:8px;flex-wrap:none;align-items:flex-start}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start}
     input,select,textarea{width:100%;padding:10px 12px;border:1px solid rgba(0,0,0,.12);border-radius:12px;background:#fff;outline:none}
     input:focus,select:focus,textarea:focus{border-color:rgb(var(--ring));box-shadow:0 0 0 3px rgba(var(--ring)/.15)}
     label{font-size:12px;color:rgb(var(--muted))}
@@ -73,7 +73,7 @@
       <div class="brand">
         <div class="logo"></div>
         <div>
-          <div class="title">Apparel Quote Builder</div>
+          <div class="title">Anton v2.2</div>
           <div class="sub">DTF & Screen Print • Catalog via S&S API</div>
         </div>
       </div>
@@ -87,13 +87,13 @@
       <!-- LEFT: Catalog -->
       <section class="card">
         <h2>Item Catalog</h2>
-        <div class="sub">Search live from S&S. Results populate filters automatically.</div>
+        <div class="sub">Search live from Distributor APIs. Results populate filters automatically.</div>
 
         <div class="row" style="margin-top:8px">
-          <span class="pill">Powered by S&S API</span>
-          <span class="pill">Price: <b>customerPrice</b></span>
-          <span class="pill">Front: <b>colorFrontImage</b></span>
-          <span class="pill">Back: <b>colorBackImage</b></span>
+          <span class="pill">Powered by Anton</span>
+          <!-- <span class="pill">Price: <b>customerPrice</b></span> -->
+          <!-- <span class="pill">Front: <b>colorFrontImage</b></span> -->
+          <!-- <span class="pill">Back: <b>colorBackImage</b></span> -->
         </div>
 
         <div class="row" style="margin-top:10px">
@@ -177,7 +177,7 @@
           <div class="field"><label>Screen Run ($/color)</label><input type="number" id="spRun" step="0.25" value="0.75"/></div>
         </div>
         <div class="row" style="margin-top:10px">
-          <div class="field"><label>Garment Markup (%)</label><input type="number" id="markupPct" step="5" value="35"/></div>
+          <div class="field"><label>Garment Markup (%)</label><input type="number" id="markupPct" step="5" value="100"/></div>
           <div class="field"><label>Tax Rate (%)</label><input type="number" id="taxPct" step="0.01" value="0"/></div>
           <div class="field"><label>Shipping ($)</label><input type="number" id="shipping" step="5" value="0"/></div>
           <div class="field"><label>Terms / Notes</label><input id="terms" placeholder="Lead time, art approval, etc."/></div>
