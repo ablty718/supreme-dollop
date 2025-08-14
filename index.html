@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Apparel Quote Builder — DTF & Screen Print (Sheet + S&S)</title>
+  <title>ANTON v1</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -65,7 +65,7 @@
     .accent{color:rgb(var(--brand))}
     .kv{display:grid;grid-template-columns:140px 1fr;gap:6px;font-size:12px}
     .kv div{padding:4px 8px;border:1px solid rgba(0,0,0,.06);border-radius:8px;background:rgb(var(--bg))}
-    #results{overflow:scroll}
+    /*#results{overflow:scroll}*/
     #quoteLines{overflow:scroll}
   </style>
 </head>
@@ -75,8 +75,8 @@
       <div class="brand">
         <div class="logo"></div>
         <div>
-          <div class="title">Apparel Quote Builder</div>
-          <div class="sub">DTF & Screen Print • Catalog from Google Sheet (S&S optional)</div>
+          <div class="title">ANTON v01</div>
+          <div class="sub">DTF & Screen Print | Order Sheet</div>
         </div>
       </div>
       <div class="row">
@@ -112,6 +112,37 @@
           <div class="field" style="max-width:120px">
             <label>&nbsp;</label>
             <button class="btn" id="btnSearch">Search</button>
+          </div>
+        </div>
+
+        <!-- Filters & Sort -->
+        <div class="row" id="filtersRow" style="margin-top:8px">
+          <div class="field"><label>Brand</label>
+            <select id="brandFilter"><option value="">All</option></select>
+          </div>
+          <div class="field"><label>Style</label>
+            <select id="styleFilter"><option value="">All</option></select>
+          </div>
+          <div class="field"><label>Color</label>
+            <select id="colorFilter"><option value="">All</option></select>
+          </div>
+          <div class="field"><label>Size</label>
+            <select id="sizeFilter"><option value="">All</option></select>
+          </div>
+          <div class="field" style="max-width:220px"><label>Sort</label>
+            <div class="row">
+              <select id="sortField">
+                <option value="brandName">Brand</option>
+                <option value="styleName">Style</option>
+                <option value="colorName">Color</option>
+                <option value="sizeName">Size</option>
+                <option value="customerPrice">Price</option>
+              </select>
+              <select id="sortDir" style="max-width:100px">
+                <option value="asc">Asc</option>
+                <option value="desc">Desc</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -175,41 +206,70 @@
       </section>
     </div>
 
-    <!-- MOCKUP STUDIO -->
+    <!-- MOCKUP STUDIO (Two Stages) -->
     <section class="card" id="mockSection" style="margin-top:16px">
       <h2>Mockup Studio</h2>
-      <div class="sub">Choose a garment from the quote (front/back) and overlay one or more designs. Drag to move, use handles to scale/rotate, and snap to smart guides. Export as PNG.</div>
+      <div class="sub">Create up to two previews. Each stage supports multiple overlays with rotate/scale handles and smart guides. Export PNGs individually and include both in the PDF.</div>
 
-      <div class="row" style="margin-top:10px">
-        <div class="field" style="flex:2"><label>Garment from Quote</label>
-          <select id="mockLine"><option value="">— choose garment from quote —</option></select>
+      <div class="row" style="margin-top:10px; align-items:flex-end">
+        <div class="field" style="flex:1"><label>Stage A — Garment from Quote</label>
+          <select id="mockLineA"><option value="">— choose garment from quote —</option></select>
         </div>
-        <div class="field" style="max-width:160px"><label>Image Side</label>
-          <select id="mockSide"><option value="front">Front</option><option value="back">Back</option><option value="custom">Custom URL</option></select>
+        <div class="field" style="max-width:160px"><label>Side</label>
+          <select id="mockSideA"><option value="front">Front</option><option value="back">Back</option><option value="custom">Custom URL</option></select>
         </div>
-        <div class="field" style="flex:2"><label>Custom Garment URL</label>
-          <input id="mockGarmentUrl" placeholder="https://... (optional when Side=Custom)"/>
+        <div class="field" style="flex:1"><label>Custom URL (optional)</label>
+          <input id="mockGarmentUrlA" placeholder="https://..."/>
         </div>
+        <div class="field" style="max-width:130px"><label>&nbsp;</label><button class="btn" id="btnExportPngA">Export PNG A</button></div>
       </div>
 
+      <div class="row" style="align-items:flex-end">
+        <div class="field" style="flex:1"><label>Stage B — Garment from Quote</label>
+          <select id="mockLineB"><option value="">— choose garment from quote —</option></select>
+        </div>
+        <div class="field" style="max-width:160px"><label>Side</label>
+          <select id="mockSideB"><option value="front">Front</option><option value="back">Back</option><option value="custom">Custom URL</option></select>
+        </div>
+        <div class="field" style="flex:1"><label>Custom URL (optional)</label>
+          <input id="mockGarmentUrlB" placeholder="https://..."/>
+        </div>
+        <div class="field" style="max-width:130px"><label>&nbsp;</label><button class="btn" id="btnExportPngB">Export PNG B</button></div>
+      </div>
+
+      <!-- Add overlays -->
       <div class="row" style="margin-top:6px">
-        <div class="field"><label>Add Design (Upload)</label><input id="ovFile" type="file" accept="image/*"/></div>
-        <div class="field" style="flex:2"><label>Add Design (URL)</label><input id="ovUrl" placeholder="https://..."/></div>
-        <div class="field" style="max-width:160px"><label>&nbsp;</label><button class="btn" id="btnAddUrl">Add Overlay</button></div>
-        <div class="field" style="max-width:170px"><label>&nbsp;</label><button class="btn ghost" id="btnCenter">Center Active</button></div>
-        <div class="field" style="max-width:150px"><label>&nbsp;</label><button class="btn" id="btnExportPng">Export PNG</button></div>
+        <div class="field"><label>Add Design (Upload → A)</label><input id="ovFileA" type="file" accept="image/*"/></div>
+        <div class="field" style="flex:2"><label>Add Design (URL → A)</label><input id="ovUrlA" placeholder="https://..."/></div>
+        <div class="field" style="max-width:150px"><label>&nbsp;</label><button class="btn" id="btnAddUrlA">Add to A</button></div>
+        <div class="field" style="max-width:160px"><label>&nbsp;</label><button class="btn ghost" id="btnCenterAA">Center A</button></div>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <div class="field"><label>Add Design (Upload → B)</label><input id="ovFileB" type="file" accept="image/*"/></div>
+        <div class="field" style="flex:2"><label>Add Design (URL → B)</label><input id="ovUrlB" placeholder="https://..."/></div>
+        <div class="field" style="max-width:150px"><label>&nbsp;</label><button class="btn" id="btnAddUrlB">Add to B</button></div>
+        <div class="field" style="max-width:160px"><label>&nbsp;</label><button class="btn ghost" id="btnCenterBB">Center B</button></div>
       </div>
 
-      <div class="row" style="margin-top:8px">
+      <!-- Stages side by side -->
+      <div class="row" style="margin-top:8px; align-items:flex-start">
         <div class="field" style="flex:1">
-          <label>Stage</label>
-          <div id="stageWrap" style="position:relative;background:rgba(0,0,0,.04);border:1px dashed rgba(0,0,0,.12);border-radius:14px;overflow:hidden;min-height:300px;display:grid;place-items:center">
-            <canvas id="mockCanvas" style="width:60%;height:auto;display:block"></canvas>
+          <label>Stage A</label>
+          <div id="stageWrapA" style="position:relative;background:rgba(0,0,0,.04);border:1px dashed rgba(0,0,0,.12);border-radius:14px;overflow:hidden;min-height:300px;display:grid;place-items:center">
+            <canvas id="mockCanvasA" style="width:100%;height:auto;display:block"></canvas>
+          </div>
+          <div class="field" style="margin-top:8px"><label>Layers A</label>
+            <div id="ovListA" class="list" style="max-height:320px;overflow:auto;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:8px;background:rgb(var(--bg))"></div>
           </div>
         </div>
-        <div class="field" style="flex:1;min-width:260px">
-          <label>Layers</label>
-          <div id="ovList" class="list" style="max-height:320px;overflow:auto;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:8px;background:rgb(var(--bg))"></div>
+        <div class="field" style="flex:1">
+          <label>Stage B</label>
+          <div id="stageWrapB" style="position:relative;background:rgba(0,0,0,.04);border:1px dashed rgba(0,0,0,.12);border-radius:14px;overflow:hidden;min-height:300px;display:grid;place-items:center">
+            <canvas id="mockCanvasB" style="width:100%;height:auto;display:block"></canvas>
+          </div>
+          <div class="field" style="margin-top:8px"><label>Layers B</label>
+            <div id="ovListB" class="list" style="max-height:320px;overflow:auto;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:8px;background:rgb(var(--bg))"></div>
+          </div>
         </div>
       </div>
     </section>
@@ -235,8 +295,9 @@
     client: { name: '', email: '', po: '' },
     placements: [],
     lines: [], // {id, styleName, brandName, colorName, image, images:{front,back}, units:[{size, qty, basePrice, unitPrice}], meta}
-    catalog: [], // parsed rows
-    columns: []
+    catalog: [], // parsed rows (current view)
+    columns: [],
+    catalogOriginal: [] // full base set for current source
   };
 
   const defaultLocations = ['Left Chest','Right Chest','Full Front','Full Back','Sleeve Left','Sleeve Right','Neck/Locker','Hood'];
@@ -260,9 +321,11 @@
       const rows = await fetchCsv(sheetCsvUrl(SHEET_ID));
       if(!rows || !rows.length){ setLoadStatus('Loaded but found no rows. Make sure the sheet is shareable/public or published to the web as CSV.', false); return; }
       state.catalog = rows.map(r=> Object.fromEntries(Object.entries(r).map(([k,v])=>[String(k).trim(), String(v??'').trim()])) );
+      state.catalogOriginal = state.catalog.slice();
       state.columns = Object.keys(state.catalog[0]||{});
       setLoadStatus(`Loaded <b>${state.catalog.length}</b> rows with <b>${state.columns.length}</b> columns.`, true);
-      renderResults(state.catalog);
+      updateFilterControls(state.catalogOriginal);
+      refreshCatalogDisplay();
     }catch(err){ setLoadStatus('Error: '+ err.message, false); }
   }
 
@@ -297,31 +360,62 @@
 
   // ---------- Catalog UI ----------
   function searchCatalog(){ onSearch(); }
+
+  // Build filters from current dataset and re-render
+  function updateFilterControls(base){
+    const uniq = (arr)=> Array.from(new Set(arr.filter(Boolean))).sort((a,b)=> String(a).localeCompare(String(b)));
+    const brands = uniq(base.map(r=>r.brandName));
+    const styles = uniq(base.map(r=>r.styleName));
+    const colors = uniq(base.map(r=>r.colorName));
+    const sizes  = uniq(base.map(r=>r.sizeName));
+    function fill(selId, values){ const sel=document.querySelector(selId); if(!sel) return; const prev=sel.value; sel.innerHTML = ['<option value="">All</option>'].concat(values.map(v=>`<option value="${v}">${v}</option>`)).join(''); if([...sel.options].some(o=>o.value===prev)) sel.value = prev; }
+    fill('#brandFilter', brands); fill('#styleFilter', styles); fill('#colorFilter', colors); fill('#sizeFilter', sizes);
+  }
+  function applyFiltersAndSort(items){
+    const bf=$('#brandFilter')?.value||''; const sf=$('#styleFilter')?.value||''; const cf=$('#colorFilter')?.value||''; const zf=$('#sizeFilter')?.value||''; const sfld=$('#sortField')?.value||'brandName'; const sdir=$('#sortDir')?.value||'asc';
+    let out = items.filter(r=> (!bf || r.brandName===bf) && (!sf || r.styleName===sf) && (!cf || r.colorName===cf) && (!zf || r.sizeName===zf));
+    const cmp = (a,b)=>{
+      let va=a[sfld], vb=b[sfld];
+      if(sfld===PRICE_FIELD){ va=parseFloat(String(va).replace(/[^0-9.\-]/g,''))||0; vb=parseFloat(String(vb).replace(/[^0-9.\-]/g,''))||0; return va-vb; }
+      va = String(va||'').toLowerCase(); vb=String(vb||'').toLowerCase(); if(va<vb) return -1; if(va>vb) return 1; return 0; };
+    out.sort(cmp); if(sdir==='desc') out.reverse();
+    return out;
+  }
+  function refreshCatalogDisplay(){
+    const base = state.catalogOriginal || [];
+    const q = ($('#searchInput')?.value||'').trim().toLowerCase();
+    let filtered = base;
+    if(q){ filtered = base.filter(r=> [r.brandName,r.styleName,r.colorName,r.sizeName,r.sku].some(v=> String(v||'').toLowerCase().includes(q)) ); }
+    const final = applyFiltersAndSort(filtered);
+    state.catalog = final; renderResults(final);
+    setLoadStatus(`Showing <b>${final.length}</b> item(s).`, true);
+  }
+
   const onSearch = debounce(async function(){
     const src = $('#sourceSelect')?.value || 'sheet';
     const q = ($('#searchInput')?.value||'').trim();
-    if(!q){ renderResults(state.catalog); return; }
-    setLoadStatus(src==='ssaw' ? 'Searching S&S…' : 'Searching Sheet…');
-    try{
-      if(src==='ssaw'){
+    if(src==='ssaw'){
+      if(!q){ setLoadStatus('Enter a style, SKU, or brand to search S&S.'); return; }
+      setLoadStatus('Searching S&S…');
+      try{
         const rows = await ssawFindByStyle(q);
-        state.catalog = rows.map(r=> ({ ...r }));
+        state.catalogOriginal = rows.map(r=>({ ...r }));
         state.columns = Object.keys(rows[0]||{});
+        updateFilterControls(state.catalogOriginal);
         setLoadStatus(`Found <b>${rows.length}</b> results from S&S.`, true);
-        renderResults(rows);
-      } else {
-        const filtered = state.catalog.filter(row=> Object.values(row).some(v => String(v).toLowerCase().includes(q.toLowerCase())) );
-        setLoadStatus(`Filtered to <b>${filtered.length}</b> rows from Sheet.`, true);
-        renderResults(filtered);
-      }
-    }catch(err){ setLoadStatus('Error: '+err.message); }
+        refreshCatalogDisplay();
+      }catch(err){ setLoadStatus('Error: '+err.message); }
+    } else {
+      setLoadStatus('Filtering Sheet…');
+      refreshCatalogDisplay();
+    }
   }, 400);
 
   function getVal(row, key){ return row?.[key] ?? ''; }
 
   function renderResults(items){
     const host = $('#results'); host.innerHTML='';
-    if(!items.length){ host.innerHTML = '<div class="muted">No results. Try different keywords.</div>'; return; }
+    if(!items.length){ host.innerHTML = '<div class="muted">No results. Try different keywords or filters.</div>'; return; }
 
     items.slice(0, 200).forEach((row,i)=>{
       const img = getVal(row, IMAGE_FIELD_FRONT) || 'https://via.placeholder.com/64x64?text=IMG';
@@ -344,7 +438,7 @@
           </div>
           <div class="row" style="gap:6px">
             <input type="text" value="${size}" id="size-${i}" style="width:120px"/>
-            <input type="number" min="0" value="1" id="qty-${i}" style="width:90px"/>
+            <input type="number" min="0" value="12" id="qty-${i}" style="width:90px"/>
             <button class="btn" data-idx="${i}">Add</button>
           </div>
         </div>
@@ -514,91 +608,49 @@
       <div class="muted">Grand Total</div><div><b class="accent">$${totals.grand.toFixed(2)}</b></div>`;
   }
 
-  // ---------- Mockup Studio ----------
+  // ---------- Mockup Studio (Factory for A & B) ----------
   function populateMockLineOptions(){
-    const sel = $('#mockLine'); if(!sel) return; const prev=sel.value;
-    const opts = (state.lines||[]).map(l=>`<option value="${l.id}">${(l.brandName||'')} ${(l.styleName||'')} • ${(l.colorName||'')}</option>`).join('');
-    sel.innerHTML = `<option value="">— choose garment from quote —</option>${opts}`;
-    if(prev && [...sel.options].some(o=>o.value===prev)) sel.value = prev;
+    ['A','B'].forEach(S=>{
+      const sel = document.getElementById('mockLine'+S); if(!sel) return;
+      const prev = sel.value;
+      const opts = (state.lines||[]).map(l=>`<option value="${l.id}">${(l.brandName||'')} ${(l.styleName||'')} • ${(l.colorName||'')}</option>`).join('');
+      sel.innerHTML = `<option value="">— choose garment from quote —</option>${opts}`;
+      if(prev && [...sel.options].some(o=>o.value===prev)) sel.value = prev;
+    });
   }
 
-  ;(function(){
-    const canvas = document.getElementById('mockCanvas');
-    const stageWrap = document.getElementById('stageWrap');
-    const selLine = document.getElementById('mockLine');
-    const selSide = document.getElementById('mockSide');
-    const garmentUrlInput = document.getElementById('mockGarmentUrl');
-    const fileInp = document.getElementById('ovFile');
-    const urlInp = document.getElementById('ovUrl');
-    const btnAddUrl = document.getElementById('btnAddUrl');
-    const btnCenter = document.getElementById('btnCenter');
-    const btnExport = document.getElementById('btnExportPng');
-    if(!canvas || !stageWrap || !selLine) return;
+  function createStudio(S){
+    const canvas = document.getElementById('mockCanvas'+S);
+    const stageWrap = document.getElementById('stageWrap'+S);
+    const selLine = document.getElementById('mockLine'+S);
+    const selSide = document.getElementById('mockSide'+S);
+    const garmentUrlInput = document.getElementById('mockGarmentUrl'+S);
+    const fileInp = document.getElementById('ovFile'+S);
+    const urlInp = document.getElementById('ovUrl'+S);
+    const btnAddUrl = document.getElementById('btnAddUrl'+S);
+    const btnCenter = document.getElementById('btnCenter'+S+S);
+    const btnExport = document.getElementById('btnExportPng'+S);
+    if(!canvas || !stageWrap) return null;
     const ctx = canvas.getContext('2d');
 
-    const M = {
-      garmentUrl:'', garmentImg:new Image(), gRect:null,
-      overlays:[], // {id,url,img,x,y,scale,rot,opacity,visible,locked,w,h}
-      active:null, dragging:false, dragOffX:0, dragOffY:0, mode:null, handle:null,
-      guides:[]
-    };
+    const M = { garmentUrl:'', garmentImg:new Image(), gRect:null, overlays:[], active:null, dragging:false, dragOffX:0, dragOffY:0, mode:null, handle:null, guides:[] };
 
-    function fitCanvas(){
-      const w = stageWrap.clientWidth || 600;
-      const ar = (M.garmentImg.naturalWidth||1)/(M.garmentImg.naturalHeight||1);
-      const h = Math.max(300, Math.round(w / ar));
-      canvas.width = w; canvas.height = h;
-    }
+    function fitCanvas(){ const w = stageWrap.clientWidth || 600; const ar = (M.garmentImg.naturalWidth||1)/(M.garmentImg.naturalHeight||1); const h = Math.max(300, Math.round(w / ar)); canvas.width = w; canvas.height = h; }
+    function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height); let dx=0,dy=0,dw=canvas.width,dh=canvas.height; if(M.garmentImg && M.garmentImg.naturalWidth){ const gw=M.garmentImg.naturalWidth, gh=M.garmentImg.naturalHeight; const s=Math.max(canvas.width/gw, canvas.height/gh); dw=gw*s; dh=gh*s; dx=(canvas.width-dw)/2; dy=(canvas.height-dh)/2; ctx.drawImage(M.garmentImg, dx, dy, dw, dh);} M.gRect = { x:dx, y:dy, w:dw, h:dh }; M.overlays.forEach(o=>{ if(!o.visible) return; drawOverlay(o); }); if(M.guides.length){ ctx.save(); ctx.strokeStyle='rgba(88,101,242,0.9)'; ctx.setLineDash([6,6]); M.guides.forEach(g=>{ ctx.beginPath(); if(g.type==='v'){ ctx.moveTo(g.x,0); ctx.lineTo(g.x,canvas.height);} else { ctx.moveTo(0,g.y); ctx.lineTo(canvas.width,g.y);} ctx.stroke();}); ctx.restore(); } }
+    function drawOverlay(o){ const dw=o.w*o.scale, dh=o.h*o.scale; ctx.save(); ctx.translate(o.x,o.y); ctx.rotate(o.rot*Math.PI/180); ctx.globalAlpha=o.opacity; ctx.drawImage(o.img, -dw/2, -dh/2, dw, dh); ctx.globalAlpha=1; if(M.active===o.id){ ctx.strokeStyle='rgba(0,0,0,.7)'; ctx.lineWidth=1; ctx.setLineDash([4,3]); ctx.strokeRect(-dw/2,-dh/2,dw,dh); ctx.setLineDash([]); const hs=8; const pts=[{n:'tl',x:-dw/2,y:-dh/2},{n:'tr',x:dw/2,y:-dh/2},{n:'br',x:dw/2,y:dh/2},{n:'bl',x:-dw/2,y:dh/2}]; ctx.fillStyle='white'; ctx.strokeStyle='black'; pts.forEach(p=>{ ctx.beginPath(); ctx.rect(p.x-hs,p.y-hs,hs*2,hs*2); ctx.fill(); ctx.stroke(); }); const ry=-dh/2-26; ctx.beginPath(); ctx.moveTo(0,-dh/2); ctx.lineTo(0,ry); ctx.stroke(); ctx.beginPath(); ctx.arc(0,ry,7,0,Math.PI*2); ctx.fill(); ctx.stroke(); } ctx.restore(); }
 
-    function draw(){
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      let dx=0,dy=0,dw=canvas.width,dh=canvas.height;
-      if(M.garmentImg && M.garmentImg.naturalWidth){
-        const gw = M.garmentImg.naturalWidth, gh = M.garmentImg.naturalHeight;
-        const s = Math.max(canvas.width/gw, canvas.height/gh);
-        dw = gw*s; dh = gh*s; dx = (canvas.width-dw)/2; dy = (canvas.height-dh)/2;
-        ctx.drawImage(M.garmentImg, dx, dy, dw, dh);
-      }
-      M.gRect = { x:dx, y:dy, w:dw, h:dh };
+    function localCoords(o,mx,my){ const rad=o.rot*Math.PI/180; const dx=mx-o.x, dy=my-o.y; return { x: Math.cos(rad)*dx + Math.sin(rad)*dy, y: -Math.sin(rad)*dx + Math.cos(rad)*dy }; }
+    function hitTest(o,mx,my){ const dw=o.w*o.scale, dh=o.h*o.scale; const p=localCoords(o,mx,my); const inside=Math.abs(p.x)<=dw/2 && Math.abs(p.y)<=dh/2; const hs=8; const handles=[{name:'tl',x:-dw/2,y:-dh/2},{name:'tr',x:dw/2,y:-dh/2},{name:'br',x:dw/2,y:dh/2},{name:'bl',x:-dw/2,y:dh/2}]; const onHandle=handles.find(h=> Math.abs(p.x-h.x)<=hs && Math.abs(p.y-h.y)<=hs ); const ry=-dh/2-26; const rotHit=Math.hypot(p.x-0,p.y-ry)<=10; return { inside, handle:onHandle?.name||null, rot:rotHit }; }
+    function selectTopmost(mx,my){ for(let i=M.overlays.length-1;i>=0;i--){ const o=M.overlays[i]; if(!o.visible) continue; if(hitTest(o,mx,my).inside){ M.active=o.id; rebuildList(); draw(); return true; } } return false; }
 
-      M.overlays.forEach(o=>{ if(!o.visible) return; drawOverlay(o); });
+    function applySnapping(o,nx,ny){ const snapT=8; const guides=[]; const dw=o.w*o.scale, dh=o.h*o.scale; if(Math.abs(nx-canvas.width/2)<snapT){ nx=canvas.width/2; guides.push({type:'v',x:canvas.width/2}); } if(Math.abs(ny-canvas.height/2)<snapT){ ny=canvas.height/2; guides.push({type:'h',y:canvas.height/2}); } if(M.gRect){ const g=M.gRect; const gx=g.x+g.w/2, gy=g.y+g.h/2; if(Math.abs(nx-gx)<snapT){ nx=gx; guides.push({type:'v',x:gx}); } if(Math.abs(ny-gy)<snapT){ ny=gy; guides.push({type:'h',y:gy}); } const leftX=g.x+dw/2, rightX=g.x+g.w-dw/2; const topY=g.y+dh/2, bottomY=g.y+g.h-dh/2; if(Math.abs(nx-leftX)<snapT){ nx=leftX; guides.push({type:'v',x:g.x}); } if(Math.abs(nx-rightX)<snapT){ nx=rightX; guides.push({type:'v',x:g.x+g.w}); } if(Math.abs(ny-topY)<snapT){ ny=topY; guides.push({type:'h',y:g.y}); } if(Math.abs(ny-bottomY)<snapT){ ny=bottomY; guides.push({type:'h',y:g.y+g.h}); } } M.guides=guides; return { x:nx, y:ny }; }
 
-      if(M.guides.length){ ctx.save(); ctx.strokeStyle='rgba(88,101,242,0.9)'; ctx.setLineDash([6,6]); M.guides.forEach(g=>{ ctx.beginPath(); if(g.type==='v'){ ctx.moveTo(g.x,0); ctx.lineTo(g.x,canvas.height); } else { ctx.moveTo(0,g.y); ctx.lineTo(canvas.width,g.y); } ctx.stroke();}); ctx.restore(); }
-    }
-
-    function drawOverlay(o){
-      const dw = o.w * o.scale; const dh = o.h * o.scale;
-      ctx.save(); ctx.translate(o.x, o.y); ctx.rotate(o.rot*Math.PI/180);
-      ctx.globalAlpha = o.opacity; ctx.drawImage(o.img, -dw/2, -dh/2, dw, dh); ctx.globalAlpha = 1;
-      if(M.active===o.id){
-        ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.lineWidth = 1; ctx.setLineDash([4,3]); ctx.strokeRect(-dw/2, -dh/2, dw, dh); ctx.setLineDash([]);
-        const hs = 8; const pts = [ {n:'tl',x:-dw/2,y:-dh/2},{n:'tr',x:dw/2,y:-dh/2},{n:'br',x:dw/2,y:dh/2},{n:'bl',x:-dw/2,y:dh/2} ];
-        ctx.fillStyle='white'; ctx.strokeStyle='black'; pts.forEach(p=>{ ctx.beginPath(); ctx.rect(p.x-hs, p.y-hs, hs*2, hs*2); ctx.fill(); ctx.stroke(); });
-        const ry = -dh/2 - 26; ctx.beginPath(); ctx.moveTo(0,-dh/2); ctx.lineTo(0,ry); ctx.stroke(); ctx.beginPath(); ctx.arc(0, ry, 7, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-      }
-      ctx.restore();
-    }
-
-    function loadGarment(){
-      const line = (state.lines||[]).find(l=>l.id===selLine.value);
-      if(!line){ M.garmentUrl=''; M.garmentImg=new Image(); draw(); return; }
-      let url = '';
-      const side = selSide.value;
-      if(side==='custom') url = garmentUrlInput.value.trim();
-      else if(side==='back') url = (line.images && line.images.back) || (line.meta && line.meta[IMAGE_FIELD_BACK]) || '';
-      else url = (line.images && line.images.front) || line.image || '';
-      const img = new Image(); img.crossOrigin='anonymous';
-      img.onload = ()=>{ M.garmentImg = img; fitCanvas(); draw(); };
-      img.onerror = ()=>{ M.garmentImg = img; fitCanvas(); draw(); };
-      M.garmentUrl = url; img.src = url || 'https://via.placeholder.com/800x1000?text=Garment+Image';
-    }
-
-    function addOverlayFromUrl(u){ if(!u) return; const img = new Image(); img.crossOrigin='anonymous'; img.onload=()=>{ const id=crypto.randomUUID(); const o={ id, url:u, img, x:canvas.width/2, y:canvas.height/2, scale: Math.min(0.6, canvas.width/(img.naturalWidth||1)), rot:0, opacity:1, visible:true, locked:false, w:img.naturalWidth||500, h:img.naturalHeight||500 }; M.overlays.push(o); M.active=id; rebuildList(); draw(); }; img.onerror=()=>alert('Could not load design URL'); img.src=u; }
+    function loadGarment(){ const line=(state.lines||[]).find(l=>l.id===selLine.value); if(!line){ M.garmentUrl=''; M.garmentImg=new Image(); draw(); return; } let url=''; const side=selSide.value; if(side==='custom') url=garmentUrlInput.value.trim(); else if(side==='back') url=(line.images&&line.images.back)||(line.meta&&line.meta[IMAGE_FIELD_BACK])||''; else url=(line.images&&line.images.front)||line.image||''; const img=new Image(); img.crossOrigin='anonymous'; img.onload=()=>{ M.garmentImg=img; fitCanvas(); draw(); }; img.onerror=()=>{ M.garmentImg=img; fitCanvas(); draw(); }; M.garmentUrl=url; img.src=url||'https://via.placeholder.com/800x1000?text=Garment+Image'; }
+    function addOverlayFromUrl(u){ if(!u) return; const img=new Image(); img.crossOrigin='anonymous'; img.onload=()=>{ const id=crypto.randomUUID(); const o={ id, url:u, img, x:canvas.width/2, y:canvas.height/2, scale: Math.min(0.6, canvas.width/(img.naturalWidth||1)), rot:0, opacity:1, visible:true, locked:false, w:img.naturalWidth||500, h:img.naturalHeight||500 }; M.overlays.push(o); M.active=id; rebuildList(); draw(); }; img.onerror=()=>alert('Could not load design URL'); img.src=u; }
     function fileToUrl(file){ return new Promise((res)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(file); }); }
 
-    const list = document.getElementById('ovList');
-    function rebuildList(){
-      list.innerHTML = M.overlays.map(o=>`<div class="row" data-id="${o.id}" style="align-items:center;border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:6px;background:${M.active===o.id?'#eef2ff':'rgb(var(--bg))'}">
+    const list = document.getElementById('ovList'+S);
+    function rebuildList(){ list.innerHTML = M.overlays.map(o=>`<div class="row" data-id="${o.id}" style="align-items:center;border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:6px;background:${M.active===o.id?'#eef2ff':'rgb(var(--bg))'}">
         <span style=\"font-size:12px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">${o.url.split('/').pop()}</span>
         <button class=\"btn ghost\" data-vis=\"${o.id}\">${o.visible?'👁️':'🚫'}</button>
         <button class=\"btn ghost\" data-lock=\"${o.id}\">${o.locked?'🔒':'🔓'}</button>
@@ -614,36 +666,32 @@
       list.querySelectorAll('[data-down]').forEach(b=> b.onclick = ()=>{ const id=b.getAttribute('data-down'); const i=M.overlays.findIndex(x=>x.id===id); if(i>=0 && i<M.overlays.length-1){ const t=M.overlays[i]; M.overlays[i]=M.overlays[i+1]; M.overlays[i+1]=t; rebuildList(); draw(); }});
     }
 
-    function localCoords(o, mx,my){ const rad = o.rot*Math.PI/180; const dx = mx - o.x, dy = my - o.y; return { x: Math.cos(rad)*dx + Math.sin(rad)*dy, y: -Math.sin(rad)*dx + Math.cos(rad)*dy }; }
-    function hitTest(o, mx,my){ const dw=o.w*o.scale, dh=o.h*o.scale; const p = localCoords(o,mx,my); const inside = Math.abs(p.x) <= dw/2 && Math.abs(p.y) <= dh/2; const hs=8; const handles=[{name:'tl',x:-dw/2,y:-dh/2},{name:'tr',x:dw/2,y:-dh/2},{name:'br',x:dw/2,y:dh/2},{name:'bl',x:-dw/2,y:dh/2}]; const onHandle = handles.find(h=> Math.abs(p.x-h.x)<=hs && Math.abs(p.y-h.y)<=hs ); const ry = -dh/2 - 26; const rotHit = Math.hypot(p.x-0, p.y-ry) <= 10; return { inside, handle:onHandle?.name||null, rot:rotHit }; }
-    function selectTopmost(mx,my){ for(let i=M.overlays.length-1;i>=0;i--){ const o=M.overlays[i]; if(!o.visible) continue; if(hitTest(o,mx,my).inside){ M.active=o.id; rebuildList(); draw(); return true; } } return false; }
-
-    function applySnapping(o, nx, ny){ const snapT = 8; const guides = []; const dw=o.w*o.scale, dh=o.h*o.scale; if(Math.abs(nx - canvas.width/2) < snapT){ nx = canvas.width/2; guides.push({type:'v', x:canvas.width/2}); } if(Math.abs(ny - canvas.height/2) < snapT){ ny = canvas.height/2; guides.push({type:'h', y:canvas.height/2}); } if(M.gRect){ const g=M.gRect; const gx=g.x+g.w/2, gy=g.y+g.h/2; if(Math.abs(nx - gx) < snapT){ nx=gx; guides.push({type:'v', x:gx}); } if(Math.abs(ny - gy) < snapT){ ny=gy; guides.push({type:'h', y:gy}); } const leftX = g.x + dw/2, rightX = g.x + g.w - dw/2; const topY = g.y + dh/2, bottomY = g.y + g.h - dh/2; if(Math.abs(nx - leftX) < snapT){ nx=leftX; guides.push({type:'v', x:g.x}); } if(Math.abs(nx - rightX) < snapT){ nx=rightX; guides.push({type:'v', x:g.x+g.w}); } if(Math.abs(ny - topY) < snapT){ ny=topY; guides.push({type:'h', y:g.y}); } if(Math.abs(ny - bottomY) < snapT){ ny=bottomY; guides.push({type:'h', y:g.y+g.h}); } } M.guides = guides; return { x:nx, y:ny }; }
-
-    function onDown(e){ const r = canvas.getBoundingClientRect(); const mx = e.clientX - r.left, my = e.clientY - r.top; if(!M.active){ if(!selectTopmost(mx,my)) return; } const o = M.overlays.find(x=>x.id===M.active); if(!o || o.locked) return; const h = hitTest(o,mx,my); if(h.rot){ M.mode='rotate'; } else if(h.handle){ M.mode='scale'; M.handle=h.handle; } else if(h.inside){ M.mode='move'; const p = localCoords(o,mx,my); M.dragOffX=p.x; M.dragOffY=p.y; } else { M.mode=null; return; } M.dragging=true; e.preventDefault(); }
-    function onMove(e){ if(!M.dragging || !M.active) return; const o = M.overlays.find(x=>x.id===M.active); const r = canvas.getBoundingClientRect(); const mx = e.clientX - r.left, my = e.clientY - r.top; if(M.mode==='move'){ const dx = mx - (o.x + Math.cos(o.rot*Math.PI/180)*M.dragOffX - Math.sin(o.rot*Math.PI/180)*M.dragOffY); const dy = my - (o.y + Math.sin(o.rot*Math.PI/180)*M.dragOffX + Math.cos(o.rot*Math.PI/180)*M.dragOffY); let nx = o.x + dx, ny = o.y + dy; const s = applySnapping(o, nx, ny); o.x = s.x; o.y = s.y; draw(); } else if(M.mode==='rotate'){ const ang = Math.atan2(my - o.y, mx - o.x); o.rot = (ang*180/Math.PI) + 90; M.guides=[]; draw(); } else if(M.mode==='scale'){ const lp = localCoords(o,mx,my); const hx=Math.abs(lp.x)*2/(o.w||1); const hy=Math.abs(lp.y)*2/(o.h||1); o.scale = Math.max(0.05, Math.min(5, Math.max(hx,hy))); M.guides=[]; draw(); } }
+    function localCoords(o,mx,my){ const rad=o.rot*Math.PI/180; const dx=mx-o.x, dy=my-o.y; return { x: Math.cos(rad)*dx + Math.sin(rad)*dy, y: -Math.sin(rad)*dx + Math.cos(rad)*dy }; }
+    function onDown(e){ const r=canvas.getBoundingClientRect(); const mx=e.clientX-r.left, my=e.clientY-r.top; if(!M.active){ if(!selectTopmost(mx,my)) return; } const o=M.overlays.find(x=>x.id===M.active); if(!o || o.locked) return; const h=hitTest(o,mx,my); if(h.rot){ M.mode='rotate'; } else if(h.handle){ M.mode='scale'; M.handle=h.handle; } else if(h.inside){ M.mode='move'; const p=localCoords(o,mx,my); M.dragOffX=p.x; M.dragOffY=p.y; } else { M.mode=null; return; } M.dragging=true; e.preventDefault(); }
+    function onMove(e){ if(!M.dragging || !M.active) return; const o=M.overlays.find(x=>x.id===M.active); const r=canvas.getBoundingClientRect(); const mx=e.clientX-r.left, my=e.clientY-r.top; if(M.mode==='move'){ const dx = mx - (o.x + Math.cos(o.rot*Math.PI/180)*M.dragOffX - Math.sin(o.rot*Math.PI/180)*M.dragOffY); const dy = my - (o.y + Math.sin(o.rot*Math.PI/180)*M.dragOffX + Math.cos(o.rot*Math.PI/180)*M.dragOffY); let nx=o.x+dx, ny=o.y+dy; const s=applySnapping(o,nx,ny); o.x=s.x; o.y=s.y; draw(); } else if(M.mode==='rotate'){ const ang=Math.atan2(my-o.y, mx-o.x); o.rot=(ang*180/Math.PI) + 90; M.guides=[]; draw(); } else if(M.mode==='scale'){ const lp=localCoords(o,mx,my); const hx=Math.abs(lp.x)*2/(o.w||1); const hy=Math.abs(lp.y)*2/(o.h||1); o.scale=Math.max(0.05, Math.min(5, Math.max(hx,hy))); M.guides=[]; draw(); } }
     function onUp(){ M.dragging=false; M.mode=null; M.guides=[]; draw(); }
 
     canvas.addEventListener('mousedown', onDown);
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
-    canvas.addEventListener('wheel', (e)=>{ const o = M.overlays.find(x=>x.id===M.active); if(!o) return; e.preventDefault(); const d = e.deltaY>0?-0.05:0.05; o.scale = Math.max(0.05, Math.min(5, o.scale+d)); draw(); }, { passive:false });
+    canvas.addEventListener('wheel', (e)=>{ const o=M.overlays.find(x=>x.id===M.active); if(!o) return; e.preventDefault(); const d=e.deltaY>0?-0.05:0.05; o.scale=Math.max(0.05, Math.min(5, o.scale+d)); draw(); }, { passive:false });
 
-    window.addEventListener('keydown', (e)=>{ const o = M.overlays.find(x=>x.id===M.active); if(!o) return; const step = e.shiftKey ? 10 : 1; if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){ if(e.key==='ArrowLeft') o.x -= step; if(e.key==='ArrowRight') o.x += step; if(e.key==='ArrowUp') o.y -= step; if(e.key==='ArrowDown') o.y += step; draw(); e.preventDefault(); } if(e.key==='Delete' || e.key==='Backspace'){ M.overlays = M.overlays.filter(x=>x.id!==o.id); M.active=null; rebuildList(); draw(); e.preventDefault(); } });
+    window.addEventListener('keydown', (e)=>{ const o=M.overlays.find(x=>x.id===M.active); if(!o) return; const step=e.shiftKey?10:1; if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){ if(e.key==='ArrowLeft') o.x -= step; if(e.key==='ArrowRight') o.x += step; if(e.key==='ArrowUp') o.y -= step; if(e.key==='ArrowDown') o.y += step; draw(); e.preventDefault(); } if(e.key==='Delete' || e.key==='Backspace'){ M.overlays = M.overlays.filter(x=>x.id!==o.id); M.active=null; rebuildList(); draw(); e.preventDefault(); } });
 
-    selLine.addEventListener('change', loadGarment);
-    selSide.addEventListener('change', loadGarment);
-    garmentUrlInput.addEventListener('change', ()=>{ if(selSide.value==='custom') loadGarment(); });
-    fileInp && fileInp.addEventListener('change', async ()=>{ const f=fileInp.files&&fileInp.files[0]; if(!f) return; const u = await fileToUrl(f); addOverlayFromUrl(u); fileInp.value=''; });
-    btnAddUrl.addEventListener('click', ()=> addOverlayFromUrl((urlInp.value||'').trim()));
-    btnCenter.addEventListener('click', ()=>{ const o = M.overlays.find(x=>x.id===M.active); if(!o) return; o.x = canvas.width/2; o.y = canvas.height/2; draw(); });
-    btnExport.addEventListener('click', ()=>{ try{ const url = canvas.toDataURL('image/png'); const a=document.createElement('a'); a.href=url; a.download='mockup.png'; a.click(); }catch(e){ alert('Export blocked by image host (CORS). You can still screenshot this preview.'); } });
+    selLine && selLine.addEventListener('change', loadGarment);
+    selSide && selSide.addEventListener('change', loadGarment);
+    garmentUrlInput && garmentUrlInput.addEventListener('change', ()=>{ if(selSide.value==='custom') loadGarment(); });
+    fileInp && fileInp.addEventListener('change', async ()=>{ const f=fileInp.files&&fileInp.files[0]; if(!f) return; const u=await fileToUrl(f); addOverlayFromUrl(u); fileInp.value=''; });
+    btnAddUrl && btnAddUrl.addEventListener('click', ()=> addOverlayFromUrl((urlInp.value||'').trim()));
+    btnCenter && btnCenter.addEventListener('click', ()=>{ const o=M.overlays.find(x=>x.id===M.active); if(!o) return; o.x=canvas.width/2; o.y=canvas.height/2; draw(); });
+    btnExport && btnExport.addEventListener('click', ()=>{ try{ const url=canvas.toDataURL('image/png'); const a=document.createElement('a'); a.href=url; a.download='mockup_'+S+'.png'; a.click(); }catch(e){ alert('Export blocked by image host (CORS). You can still screenshot this preview.'); } });
 
     new ResizeObserver(()=>{ fitCanvas(); draw(); }).observe(stageWrap);
-    populateMockLineOptions(); fitCanvas(); draw();
-  })();
+    fitCanvas(); draw();
+    return { getCanvas: ()=>canvas };
+  }
 
-  // ---------- PDF & Email & Share ----------
+  // ---------- PDF, Email & Share ----------
   async function generatePDF(){
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ unit:'pt', format:'letter' });
@@ -663,11 +711,7 @@
 
     // Helpers
     async function toDataURL(url){
-      try{
-        const r = await fetch(url, { mode:'cors' });
-        const b = await r.blob();
-        return await new Promise(res=>{ const fr = new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(b); });
-      }catch(_){ return null; }
+      try{ const r = await fetch(url, { mode:'cors' }); const b = await r.blob(); return await new Promise(res=>{ const fr = new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(b); }); }catch(_){ return null; }
     }
     function hr(yy){ doc.setDrawColor(230); doc.line(M, yy, pageW - M, yy); }
     function ensure(h=0){ if(y + h > pageH - M){ addFooter(); doc.addPage(); y = M; addHeader(); } }
@@ -805,18 +849,31 @@
     totalRow(M+boxW+16, y+68, 'Grand Total', fmt(grand), true);
     y += 140;
 
-    // Mockup (optional)
+    // Mockups (optional — up to two)
     try{
-      const mock = document.getElementById('mockCanvas');
-      if(mock && mock.width && mock.height){
-        const url = mock.toDataURL('image/png'); // may fail if CORS-tainted
-        ensure(220);
+      const mockA = document.getElementById('mockCanvasA');
+      const mockB = document.getElementById('mockCanvasB');
+      const haveA = mockA && mockA.width && mockA.height;
+      const haveB = mockB && mockB.width && mockB.height;
+      if(haveA || haveB){
+        ensure(240);
         doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(30);
-        doc.text('Mockup Preview', M, y); y += 10;
-        const w = pageW - M*2; const scale = Math.min(1, w / mock.width); const h = mock.height * scale;
-        doc.addImage(url, 'PNG', M, y, w, h); y += h + 10;
+        if(haveA && haveB){
+          const colW = (pageW - M*2 - 16)/2;
+          doc.text('Mockup A', M, y);
+          doc.text('Mockup B', M+colW+16, y);
+          y += 10;
+          const addMock = (canvas, x) => { const url = canvas.toDataURL('image/png'); const scale = Math.min(1, colW / canvas.width); const h = canvas.height * scale; doc.addImage(url, 'PNG', x, y, colW, h); return h; };
+          const hA = haveA ? addMock(mockA, M) : 0;
+          const hB = haveB ? addMock(mockB, M+colW+16) : 0;
+          y += Math.max(hA, hB) + 10;
+        } else {
+          const canvas = haveA ? mockA : mockB; const tag = haveA ? 'Mockup A' : 'Mockup B';
+          doc.text(tag, M, y); y += 10;
+          const w = pageW - M*2; const scale = Math.min(1, w / canvas.width); const h = canvas.height * scale; doc.addImage(canvas.toDataURL('image/png'), 'PNG', M, y, w, h); y += h + 10;
+        }
       }
-    }catch(_){}
+    }catch(_){ }
 
     // Terms / Notes
     const terms = ($('#terms').value||'').trim();
@@ -852,15 +909,28 @@
   window.addEventListener('DOMContentLoaded', ()=>{
     // Load sheet immediately
     loadSheet();
+
     // UI handlers
     $('#btnSearch').onclick = searchCatalog;
+    $('#searchInput').addEventListener('input', onSearch);
     $('#searchInput').addEventListener('keydown', e=>{ if(e.key==='Enter') searchCatalog(); });
+    $('#sourceSelect').addEventListener('change', ()=>{ refreshCatalogDisplay(); });
+
+    // Filters & sort
+    ['brandFilter','styleFilter','colorFilter','sizeFilter','sortField','sortDir'].forEach(id=>{
+      const el = document.getElementById(id); if(el) el.addEventListener('change', refreshCatalogDisplay);
+    });
+
     $('#btnAddPlacement').onclick = addPlacement;
     $('#dtfRate').oninput = $('#wastePct').oninput = $('#spSetup').oninput = $('#spRun').oninput = $('#markupPct').oninput = $('#taxPct').oninput = $('#shipping').oninput = calcTotals;
     $('#btnExport').onclick = generatePDF;
     $('#btnEmail').onclick = composeEmail;
     $('#btnShare').onclick = ()=>{ saveToHash(); navigator.clipboard.writeText(location.href).then(()=> $('#saveInfo').textContent='URL copied'); };
     $('#btnNew').onclick = ()=>{ if(confirm('Clear current quote?')){ state.lines=[]; state.placements=[]; renderLines(); renderPlacements(); calcTotals(); populateMockLineOptions(); location.hash=''; $('#saveInfo').textContent=''; } };
+
+    // Build studios
+    createStudio('A');
+    createStudio('B');
 
     // Initial
     addPlacement();
