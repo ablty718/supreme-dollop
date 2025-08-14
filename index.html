@@ -352,11 +352,12 @@
     return out;
   }
   function refreshCatalogDisplay(){
+    // Show all fetched results by default; do NOT re-filter by the search box text here,
+    // because the search box is used for the REMOTE lookup. (Previously this double-filter
+    // caused 0 results when the box contained tokens like "gildan 64000" that don't appear
+    // verbatim in any single field.)
     const base = state.catalogOriginal || [];
-    const q = ($('#searchInput')?.value||'').trim().toLowerCase();
-    let filtered = base;
-    if(q){ filtered = base.filter(r=> [r.brandName,r.styleName,r.colorName,r.sizeName,r.sku].some(v=> String(v||'').toLowerCase().includes(q)) ); }
-    const final = applyFiltersAndSort(filtered);
+    const final = applyFiltersAndSort(base);
     state.catalog = final; renderResults(final);
     setLoadStatus(`Showing <b>${final.length}</b> item(s).`, true);
   }
@@ -843,16 +844,35 @@
     // ---- Dev sanity tests (non-blocking) ----
     try{
       console.groupCollapsed('Dev tests');
+      // Tier break coverage
       console.assert(priceMultiplier(0) === 2.5, 'tier <12');
+      console.assert(priceMultiplier(11) === 2.5, 'tier 11');
       console.assert(priceMultiplier(12) === 1.0, 'tier 12-23');
+      console.assert(priceMultiplier(23) === 1.0, 'tier 23');
       console.assert(priceMultiplier(24) === 0.9, 'tier 24-47');
+      console.assert(priceMultiplier(47) === 0.9, 'tier 47');
       console.assert(priceMultiplier(48) === 0.8, 'tier 48-71');
+      console.assert(priceMultiplier(71) === 0.8, 'tier 71');
       console.assert(priceMultiplier(72) === 0.75, 'tier 72-143');
+      console.assert(priceMultiplier(143) === 0.75, 'tier 143');
       console.assert(priceMultiplier(144) === 0.7, 'tier 144-199');
-      console.assert(priceMultiplier(250) === 0.65, 'tier >200');
+      console.assert(priceMultiplier(199) === 0.7, 'tier 199');
+      console.assert(priceMultiplier(200) === 0.65, 'tier >=200');
+      // recalcLine sanity
       const testLine={ units:[{qty:24, basePrice:10, unitPrice:0}] }; recalcLine(testLine); console.assert(Math.abs(testLine.units[0].unitPrice-9) < 1e-6, 'recalcLine tiered unit');
-      const before = perPieceDecoration(); // uses defaults
-      console.assert(typeof before.perPiece === 'number' && before.perPiece >= 0, 'perPieceDecoration returns number');
+      // perPieceDecoration should be stable and non-negative
+      const savedPlacements = JSON.parse(JSON.stringify(state.placements));
+      state.placements = [{technique:'DTF', width:12, height:12},{technique:'Screen Print', colors:2}];
+      const before = perPieceDecoration();
+      console.assert(typeof before.perPiece === 'number' && before.perPiece > 0, 'perPieceDecoration returns positive perPiece');
+      console.assert(typeof before.setup === 'number' && before.setup >= 0, 'perPieceDecoration returns setup');
+      state.placements = savedPlacements;
+      // addLineFromRow merges sizes under same style/color
+      const fakeRow={ brandName:'BrandX', styleName:'Tee', colorName:'Black', sku:'BX-1', [PRICE_FIELD]:10, [IMAGE_FIELD_FRONT]:'', [IMAGE_FIELD_BACK]:'' };
+      addLineFromRow(fakeRow,'L',6,10,'', 'BrandX','Tee','Black');
+      addLineFromRow(fakeRow,'L',6,10,'', 'BrandX','Tee','Black');
+      const merged = state.lines.find(l=>l.brandName==='BrandX'&&l.styleName==='Tee'&&l.colorName==='Black');
+      console.assert(merged && merged.units.find(u=>u.size==='L')?.qty === 12, 'addLineFromRow merges quantities');
       console.groupEnd();
     }catch(e){ console.warn('Dev tests error', e); }
   });
