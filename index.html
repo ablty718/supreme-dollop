@@ -95,6 +95,7 @@ label{font-size:12px;color:rgb(var(--muted))}
       <div class="field" style="max-width:120px">
         <label>&nbsp;</label>
         <button class="btn" id="btnSearch">Search</button>
+        <button class="btn ghost" id="btnReset">Clear</button>
       </div>
     </div>
     <div class="row" id="filtersRow" style="margin-top:8px">
@@ -117,6 +118,19 @@ label{font-size:12px;color:rgb(var(--muted))}
     </div>
     <div id="loadStatus" class="alert" style="margin-top:10px;display:none"></div>
     <div id="results" class="list" style="margin-top:12px"></div>
+    <div class="row" id="pager" style="margin-top:8px;align-items:center;justify-content:space-between;display:none">
+      <div id="pagerInfo" class="sub"></div>
+      <div class="row">
+        <button class="btn ghost" id="btnPrevPage">Prev</button>
+        <button class="btn ghost" id="btnNextPage">Next</button>
+        <select id="pageSize">
+          <option value="10">10</option>
+          <option value="20" selected>20</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </select>
+      </div>
+    </div>
   </section>
   <section class="card">
     <h2>Quote Builder</h2>
@@ -211,7 +225,7 @@ const $=s=>document.querySelector(s);
 const $$=s=>Array.from(document.querySelectorAll(s));
 function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms)}}
 function roundInc(n,inc=0.25){n=Number(n)||0;return Math.round(n/inc)*inc}
-const state={settings:{dtfRate:8,wastePct:10,spSetup:20,spRun:0.75,markupPct:35,taxPct:0,shipping:0},brand:{name:'',logo:''},client:{name:'',email:'',po:''},placements:[],lines:[],catalog:[],columns:[],catalogOriginal:[],mock:{A:{base:null,overlays:[],img:null},B:{base:null,overlays:[],img:null}}};
+const state={settings:{dtfRate:8,wastePct:10,spSetup:20,spRun:0.75,markupPct:35,taxPct:0,shipping:0},brand:{name:'',logo:''},client:{name:'',email:'',po:''},placements:[],lines:[],catalog:[],columns:[],catalogOriginal:[],catalogFiltered:[],catalogPage:{page:1,size:20,total:0},mock:{A:{base:null,overlays:[],img:null},B:{base:null,overlays:[],img:null}}};
 const defaultLocations=['Left Chest','Right Chest','Full Front','Full Back','Sleeve Left','Sleeve Right','Neck/Locker','Hood'];
 function setLoadStatus(msg,ok=false){const el=$('#loadStatus');if(!el)return;el.style.display='block';el.style.borderColor=ok?'rgba(16,185,129,.4)':'rgba(245,158,11,.3)';el.style.background=ok?'rgba(16,185,129,.12)':'rgba(245,158,11,.12)';el.innerHTML=msg}
 let toastTimer=null;function showToast(message,onUndo){const t=document.getElementById('toast');if(!t)return;const msgEl=document.getElementById('toastMsg');const undoBtn=document.getElementById('toastUndo');msgEl.textContent=message;t.classList.remove('hidden');clearTimeout(toastTimer);undoBtn.onclick=()=>{t.classList.add('hidden');onUndo&&onUndo()};toastTimer=setTimeout(()=>{t.classList.add('hidden');undoBtn.onclick=null},6000)}
@@ -222,8 +236,49 @@ function recalcLine(line){const total=line.units.reduce((a,b)=>a+Number(b.qty||0
 function updateFilterControls(base){const uniq=a=>Array.from(new Set(a.filter(Boolean))).sort((x,y)=>String(x).localeCompare(String(y)));const brands=uniq(base.map(r=>r.brandName));const styles=uniq(base.map(r=>r.styleName));const colors=uniq(base.map(r=>r.colorName));const sizes=uniq(base.map(r=>r.sizeName));function fill(id,vals){const sel=$(id);if(!sel)return;const prev=sel.value;sel.innerHTML=['<option value="">All</option>'].concat(vals.map(v=>`<option value="${v}">${v}</option>`)).join('');if([...sel.options].some(o=>o.value===prev))sel.value=prev}
 fill('#brandFilter',brands);fill('#styleFilter',styles);fill('#colorFilter',colors);fill('#sizeFilter',sizes)}
 function applyFiltersAndSort(items){const bf=$('#brandFilter')?.value||'';const sf=$('#styleFilter')?.value||'';const cf=$('#colorFilter')?.value||'';const zf=$('#sizeFilter')?.value||'';const sfld=$('#sortField')?.value||'brandName';const sdir=$('#sortDir')?.value||'asc';let out=items.filter(r=>(!bf||r.brandName===bf)&&(!sf||r.styleName===sf)&&(!cf||r.colorName===cf)&&(!zf||r.sizeName===zf));const cmp=(a,b)=>{let va=a[sfld],vb=b[sfld];if(sfld===PRICE_FIELD){va=parseFloat(String(va).replace(/[^0-9.\-]/g,''))||0;vb=parseFloat(String(vb).replace(/[^0-9.\-]/g,''))||0;return va-vb}va=String(va||'').toLowerCase();vb=String(vb||'').toLowerCase();if(va<vb)return -1;if(va>vb)return 1;return 0};out.sort(cmp);if(sdir==='desc')out.reverse();return out}
-function refreshCatalogDisplay(){const base=state.catalogOriginal||[];const final=applyFiltersAndSort(base);state.catalog=final;renderResults(final);setLoadStatus(`Showing <b>${final.length}</b> item(s).`,true)}
-const onSearch=debounce(async function(){const q=($('#searchInput')?.value||'').trim();if(!q){setLoadStatus('Enter a brand, style, part number, or SKU to search S&S.');$('#results').innerHTML='';return}setLoadStatus('Searching S&S…');try{const rows=await ssawFindByStyle(q);const styleIds=Array.from(new Set(rows.map(r=>r.styleID).filter(Boolean)));let titleById={};try{const styles=await ssawGetStylesByIds(styleIds);styles.forEach(s=>{titleById[s.styleID]=s.title||''})}catch(e){}state.catalogOriginal=rows.map(r=>({...r,styleTitle:titleById[r.styleID]||''}));state.columns=Object.keys(rows[0]||{});updateFilterControls(state.catalogOriginal);setLoadStatus(`Found <b>${rows.length}</b> results from S&S.`,true);refreshCatalogDisplay()}catch(err){setLoadStatus('Error: '+err.message)}},400)
+function updatePager(){
+  const pager=$('#pager'); if(!pager) return;
+  const total=state.catalogFiltered.length; const size=state.catalogPage.size;
+  const totalPages=Math.max(1, Math.ceil(total/size)); state.catalogPage.total=total;
+  if(total===0){ pager.style.display='none'; return; }
+  pager.style.display='flex';
+  const page=Math.min(state.catalogPage.page, totalPages); state.catalogPage.page=page;
+  const start=(page-1)*size+1; const end=Math.min(total, page*size);
+  $('#pagerInfo').textContent=`Showing ${start}–${end} of ${total} • Page ${page} of ${totalPages}`;
+  const prev=$('#btnPrevPage'), next=$('#btnNextPage'); if(prev) prev.disabled = page<=1; if(next) next.disabled = page>=totalPages;
+}
+function setPage(p){
+  const size=state.catalogPage.size; const totalPages=Math.max(1, Math.ceil(state.catalogFiltered.length/size));
+  state.catalogPage.page=Math.min(Math.max(1,p), totalPages);
+  const start=(state.catalogPage.page-1)*size; const end=start+size;
+  const slice=state.catalogFiltered.slice(start,end);
+  state.catalog=slice; renderResults(slice); updatePager();
+}
+function refreshCatalogDisplay(){
+  const base=state.catalogOriginal||[]; const final=applyFiltersAndSort(base);
+  state.catalogFiltered=final;
+  const size=Number($('#pageSize')?.value||state.catalogPage.size); state.catalogPage.size=size;
+  state.catalogPage.page=1;
+  const slice=final.slice(0,size); state.catalog=slice; renderResults(slice);
+  setLoadStatus(`Showing ${final.length} item(s).`,true); updatePager();
+}</b> item(s).`,true)}
+const onSearch=debounce(async function(){
+  const q=($('#searchInput')?.value||'').trim();
+  if(!q){setLoadStatus('Enter a brand, style, part number, or SKU to search S&S.');$('#results').innerHTML='';const pager=$('#pager');if(pager)pager.style.display='none';return}
+  setLoadStatus('Searching S&S…');
+  try{
+    const rows=await ssawFindByStyle(q);
+    const styleIds=Array.from(new Set(rows.map(r=>r.styleID).filter(Boolean)));
+    let titleById={};
+    try{const styles=await ssawGetStylesByIds(styleIds);styles.forEach(s=>{titleById[s.styleID]=s.title||''})}catch(e){}
+    state.catalogOriginal=rows.map(r=>({...r,styleTitle:titleById[r.styleID]||''}));
+    state.columns=Object.keys(rows[0]||{});
+    state.catalogPage.page=1;
+    updateFilterControls(state.catalogOriginal);
+    setLoadStatus(`Found <b>${rows.length}</b> results from S&S.`,true);
+    refreshCatalogDisplay();
+  }catch(err){setLoadStatus('Error: '+err.message)}
+},400)
 function getVal(row,key){return row?.[key]??''}
 function renderResults(items){const host=$('#results');host.innerHTML='';if(!items.length){host.innerHTML='<div class="muted">No results. Try different keywords or filters.</div>';return}items.slice(0,200).forEach((row,i)=>{const img=getVal(row,IMAGE_FIELD_FRONT)||'https://via.placeholder.com/64x64?text=IMG';const brand=getVal(row,'brandName');const style=getVal(row,'styleName');const color=getVal(row,'colorName');const sku=getVal(row,'sku');const size=getVal(row,'sizeName')||'One Size';const base=parseFloat(String(getVal(row,PRICE_FIELD)).replace(/[^0-9.\-]/g,''))||0;const title=row.styleTitle||'';const card=document.createElement('div');card.className='list';card.style.cssText='border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:10px;background:rgb(var(--bg));';card.innerHTML=`
 <div class="row" style="align-items:center">
@@ -304,7 +359,23 @@ doc.save(`${brand.toUpperCase().replace(/[^A-Z0-9]+/g,'_').slice(0,18)}_QUOTE_${
 function composeEmail(){const brand=($('#brandName').value||'').trim()||'Your Business';const to=($('#clientEmail').value||'').trim();const subject=encodeURIComponent(`${brand} estimate`);const body=encodeURIComponent('Hi, attaching your quote.');window.location.href=`mailto:${to}?subject=${subject}&body=${body}`}
 function shareUrl(){const payload={settings:state.settings,client:state.client,brand:state.brand,placements:state.placements,lines:state.lines};const s=btoa(unescape(encodeURIComponent(JSON.stringify(payload))));const url=location.origin+location.pathname+'#'+s;navigator.clipboard.writeText(url);$('#saveInfo').textContent='Copied link to clipboard'}
 function restoreFromHash(){if(location.hash.length>1){try{const s=location.hash.slice(1);const obj=JSON.parse(decodeURIComponent(escape(atob(s))));Object.assign(state.settings,obj.settings||{});state.client=obj.client||state.client;state.brand=obj.brand||state.brand;state.placements=obj.placements||[];state.lines=obj.lines||[];$('#brandName').value=state.brand.name||'';$('#logoUrl').value=state.brand.logo||'';renderPlacements();renderLines();calcTotals();populateMockLineOptions()}catch(_){}}}
-function bind(){$('#btnSearch').onclick=onSearch;$('#searchInput').onkeydown=e=>{if(e.key==='Enter')onSearch()};['#brandFilter','#styleFilter','#colorFilter','#sizeFilter','#sortField','#sortDir'].forEach(id=>$(id).onchange=refreshCatalogDisplay);['#dtfRate','#wastePct','#spSetup','#spRun','#markupPct','#taxPct','#shipping'].forEach(id=>$(id).oninput=calcTotals);$('#btnAddPlacement').onclick=addPlacement;$('#btnExport').onclick=generatePDF;$('#btnEmail').onclick=composeEmail;$('#btnShare').onclick=shareUrl;$('#btnNew').onclick=()=>{state.lines=[];state.placements=[];renderLines();renderPlacements();calcTotals();populateMockLineOptions()};['A','B'].forEach(which=>{$('#mockLine'+which).onchange=()=>setStageBase(which);$('#mockSide'+which).onchange=()=>setStageBase(which);$('#mockGarmentUrl'+which).onchange=()=>setStageBase(which);$('#btnCenter'+which+which).onclick=()=>centerOverlays(which);$('#btnExportPng'+which).onclick=()=>{const c=$('#mockCanvas'+which);if(!c.width)return;const a=document.createElement('a');a.download=`mock_${which}.png`;a.href=c.toDataURL('image/png');a.click()};$('#ovFile'+which).onchange=e=>{const f=e.target.files?.[0];if(f) addOverlayFile(which,f)};$('#btnAddUrl'+which).onclick=()=>{const url=$('#ovUrl'+which).value.trim();if(url) addOverlayUrl(which,url)}});window.addEventListener('resize',debounce(()=>{drawStage('A');drawStage('B')},150))}
+function bind(){
+  $('#btnSearch').onclick=onSearch; $('#searchInput').onkeydown=e=>{if(e.key==='Enter')onSearch()};
+  ['#brandFilter','#styleFilter','#colorFilter','#sizeFilter','#sortField','#sortDir'].forEach(id=>$(id).onchange=()=>{state.catalogPage.page=1;refreshCatalogDisplay()});
+  ['#dtfRate','#wastePct','#spSetup','#spRun','#markupPct','#taxPct','#shipping'].forEach(id=>$(id).oninput=calcTotals);
+  $('#btnAddPlacement').onclick=addPlacement; $('#btnExport').onclick=generatePDF; $('#btnEmail').onclick=composeEmail; $('#btnShare').onclick=shareUrl;
+  $('#btnNew').onclick=()=>{state.lines=[];state.placements=[];renderLines();renderPlacements();calcTotals();populateMockLineOptions()};
+  const pager=$('#pager'); if(pager){
+    $('#btnPrevPage').onclick=()=>setPage(state.catalogPage.page-1);
+    $('#btnNextPage').onclick=()=>setPage(state.catalogPage.page+1);
+    $('#pageSize').onchange=()=>{state.catalogPage.size=Number($('#pageSize').value||20);state.catalogPage.page=1;refreshCatalogDisplay()};
+  }
+  const reset=$('#btnReset'); if(reset){
+    reset.onclick=()=>{ $('#searchInput').value=''; ['#brandFilter','#styleFilter','#colorFilter','#sizeFilter'].forEach(id=>{const el=$(id); if(el) el.value='';}); $('#sortField').value='brandName'; $('#sortDir').value='asc'; state.catalogOriginal=[]; state.catalogFiltered=[]; $('#results').innerHTML=''; if($('#pager')) $('#pager').style.display='none'; const ls=$('#loadStatus'); if(ls){ls.style.display='none'; ls.textContent='';}};
+  }
+  ['A','B'].forEach(which=>{ $('#mockLine'+which).onchange=()=>setStageBase(which); $('#mockSide'+which).onchange=()=>setStageBase(which); $('#mockGarmentUrl'+which).onchange=()=>setStageBase(which); $('#btnCenter'+which+which).onclick=()=>centerOverlays(which); $('#btnExportPng'+which).onclick=()=>{const c=$('#mockCanvas'+which); if(!c.width)return; const a=document.createElement('a'); a.download=`mock_${which}.png`; a.href=c.toDataURL('image/png'); a.click()}; $('#ovFile'+which).onchange=e=>{const f=e.target.files?.[0]; if(f) addOverlayFile(which,f)}; $('#btnAddUrl'+which).onclick=()=>{const url=$('#ovUrl'+which).value.trim(); if(url) addOverlayUrl(which,url)}});
+  window.addEventListener('resize',debounce(()=>{drawStage('A');drawStage('B')},150));
+};['#brandFilter','#styleFilter','#colorFilter','#sizeFilter','#sortField','#sortDir'].forEach(id=>$(id).onchange=refreshCatalogDisplay);['#dtfRate','#wastePct','#spSetup','#spRun','#markupPct','#taxPct','#shipping'].forEach(id=>$(id).oninput=calcTotals);$('#btnAddPlacement').onclick=addPlacement;$('#btnExport').onclick=generatePDF;$('#btnEmail').onclick=composeEmail;$('#btnShare').onclick=shareUrl;$('#btnNew').onclick=()=>{state.lines=[];state.placements=[];renderLines();renderPlacements();calcTotals();populateMockLineOptions()};['A','B'].forEach(which=>{$('#mockLine'+which).onchange=()=>setStageBase(which);$('#mockSide'+which).onchange=()=>setStageBase(which);$('#mockGarmentUrl'+which).onchange=()=>setStageBase(which);$('#btnCenter'+which+which).onclick=()=>centerOverlays(which);$('#btnExportPng'+which).onclick=()=>{const c=$('#mockCanvas'+which);if(!c.width)return;const a=document.createElement('a');a.download=`mock_${which}.png`;a.href=c.toDataURL('image/png');a.click()};$('#ovFile'+which).onchange=e=>{const f=e.target.files?.[0];if(f) addOverlayFile(which,f)};$('#btnAddUrl'+which).onclick=()=>{const url=$('#ovUrl'+which).value.trim();if(url) addOverlayUrl(which,url)}});window.addEventListener('resize',debounce(()=>{drawStage('A');drawStage('B')},150))}
 document.addEventListener('DOMContentLoaded',()=>{bind();restoreFromHash();calcTotals()});
 console.groupCollapsed('Dev tests');
 console.assert(priceMultiplier(11)===2.5,'tier 11');
