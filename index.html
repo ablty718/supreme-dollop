@@ -36,7 +36,7 @@
     .card{background:rgb(var(--card));border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:16px;box-shadow:0 8px 30px rgba(0,0,0,.04);overflow: scroll;height: 90vh;}
     .card h2{margin:0 0 8px;font-size:18px}
     .sub{color:rgb(var(--muted));font-size:12px}
-    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .row{display:flex;gap:8px;flex-wrap:none;align-items:flex-start}
     input,select,textarea{width:100%;padding:10px 12px;border:1px solid rgba(0,0,0,.12);border-radius:12px;background:#fff;outline:none}
     input:focus,select:focus,textarea:focus{border-color:rgb(var(--ring));box-shadow:0 0 0 3px rgba(var(--ring)/.15)}
     label{font-size:12px;color:rgb(var(--muted))}
@@ -86,7 +86,7 @@
     <div class="grid">
       <!-- LEFT: Catalog -->
       <section class="card">
-        <h2>Garment Catalog</h2>
+        <h2>Item Catalog</h2>
         <div class="sub">Search live from S&S. Results populate filters automatically.</div>
 
         <div class="row" style="margin-top:8px">
@@ -151,7 +151,7 @@
           <div class="field"><label>PO / Ref (optional)</label><input id="clientPO" placeholder="Internal ref"/></div>
         </div>
 
-        <div class="sectionTitle">Placements</div>
+        <div class="sectionTitle">Artwork Placements</div>
         <div class="help">Add decoration locations. DTF is priced by square‑foot of art. Screen print is per color per location with one‑time setup.</div>
         <div id="placements" class="list" style="margin-top:8px"></div>
         <div class="row stickyActions">
@@ -159,7 +159,7 @@
           <span class="right help">Common sizes: Left Chest ~ 4"×4" • Full Front ~ 12"×14" • Neck ~ 3"×3"</span>
         </div>
 
-        <div class="sectionTitle">Settings</div>
+        <div class="sectionTitle">Pricing</div>
         <div class="row wrap">
           <div class="kpi"><span class="muted">DTF $/sqft</span><b id="kpiDTF">$8.00</b></div>
           <div class="kpi"><span class="muted">Screen: Setup /color</span><b id="kpiSetup">$20.00</b></div>
@@ -183,7 +183,7 @@
           <div class="field"><label>Terms / Notes</label><input id="terms" placeholder="Lead time, art approval, etc."/></div>
         </div>
 
-        <div class="sectionTitle">Garments in Quote</div>
+        <div class="sectionTitle">Items in Quote</div>
         <div id="quoteLines" class="list"></div>
 
         <div class="sectionTitle">Totals</div>
