@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ANTON v1.8</title>
+  <title>Apparel Quote Builder — S&S API Only</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -22,7 +22,7 @@
     *{box-sizing:border-box}
     html,body{margin:0;height:100%;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:rgb(var(--text));}
     body{background:linear-gradient(135deg, rgba(var(--brand)/0.06), rgba(var(--brand-2)/0.06)), rgb(var(--bg));}
-    .container{max-width:100%;margin-inline:auto;padding:24px;}
+    .container{max-width:1200px;margin-inline:auto;padding:24px;}
     header{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:16px}
     .brand{display:flex;gap:12px;align-items:center}
     .logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(145deg, rgba(var(--brand)/.9), rgba(var(--brand-2)/.9));box-shadow:0 8px 30px rgba(0,0,0,.12)}
@@ -33,7 +33,7 @@
     .btn.ghost{background:transparent;border-color:rgba(0,0,0,.12)}
     .grid{display:grid;grid-template-columns:1fr;gap:16px}
     @media(min-width:1000px){.grid{grid-template-columns:50% 1fr}}
-    .card{background:rgb(var(--card));border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:16px;box-shadow:0 8px 30px rgba(0,0,0,.04);height: 90vh;overflow: scroll;}
+    .card{background:rgb(var(--card));border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:16px;box-shadow:0 8px 30px rgba(0,0,0,.04)}
     .card h2{margin:0 0 8px;font-size:18px}
     .sub{color:rgb(var(--muted));font-size:12px}
     .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -51,7 +51,6 @@
     .divider{height:1px;background:linear-gradient(90deg,rgba(0,0,0,.06),transparent)}
     .chip{font-size:11px;padding:4px 8px;border-radius:999px;background:rgba(var(--brand)/.12);color:rgb(var(--brand));font-weight:700}
     .badge{font-size:11px;padding:4px 8px;border-radius:999px;background:rgba(var(--ok)/.12);color:rgb(var(--ok));font-weight:700}
-    details code{display:block;background:#0f172a;color:#e5e7eb;padding:12px;border-radius:12px;overflow:auto;font-size:12px}
     .stickyActions{position:sticky;bottom:0;display:flex;gap:8px;background:linear-gradient(180deg, transparent, rgba(255,255,255,.9));padding-top:12px}
     .totals{display:grid;grid-template-columns:1fr auto; gap:8px;padding:8px;border-radius:12px;background:rgb(var(--bg));border:1px dashed rgba(0,0,0,.12)}
     .kpi{display:grid;gap:4px;background:rgb(var(--bg));border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:10px;min-width:120px}
@@ -65,8 +64,7 @@
     .accent{color:rgb(var(--brand))}
     .kv{display:grid;grid-template-columns:140px 1fr;gap:6px;font-size:12px}
     .kv div{padding:4px 8px;border:1px solid rgba(0,0,0,.06);border-radius:8px;background:rgb(var(--bg))}
-    /*#results{overflow:scroll}*/
-    #quoteLines{overflow:scroll}
+    #quoteLines{overflow:auto}
   </style>
 </head>
 <body>
@@ -75,8 +73,8 @@
       <div class="brand">
         <div class="logo"></div>
         <div>
-          <div class="title">ANTON v1.8</div>
-          <div class="sub">DTF & Screen Print | Order Sheet</div>
+          <div class="title">Apparel Quote Builder</div>
+          <div class="sub">DTF & Screen Print • Catalog via S&S API</div>
         </div>
       </div>
       <div class="row">
@@ -89,17 +87,11 @@
       <!-- LEFT: Catalog -->
       <section class="card">
         <h2>Garment Catalog</h2>
-        <div class="sub">Default loads from your Google Sheet. You can also search live from SS if you add the proxy.</div>
+        <div class="sub">Search live from S&S. Results populate filters automatically.</div>
 
         <div class="row" style="margin-top:8px">
-          <label class="pill" style="display:inline-flex;align-items:center;gap:8px">
-            Source:
-            <select id="sourceSelect">
-              <option value="ssaw" selected>SS API</option>
-              <option value="sheet">Google Sheet</option>
-            </select>
-          </label>
-          <span class="pill">Price column: <b>customerPrice</b></span>
+          <span class="pill">Powered by S&S API</span>
+          <span class="pill">Price: <b>customerPrice</b></span>
           <span class="pill">Front: <b>colorFrontImage</b></span>
           <span class="pill">Back: <b>colorBackImage</b></span>
         </div>
@@ -147,7 +139,6 @@
         </div>
 
         <div id="loadStatus" class="alert" style="margin-top:10px; display:none"></div>
-
         <div id="results" class="list" style="margin-top:12px"></div>
       </section>
 
@@ -180,13 +171,13 @@
           <div class="field"><label>Logo URL (optional)</label><input id="logoUrl" placeholder="https://..."/></div>
         </div>
         <div class="row" style="margin-top:10px">
-          <div class="field"><label>DTF Rate ($/sqft)</label><input type="number" id="dtfRate" step="0.5" value="5"/></div>
+          <div class="field"><label>DTF Rate ($/sqft)</label><input type="number" id="dtfRate" step="0.5" value="8"/></div>
           <div class="field"><label>Waste/Overage (%)</label><input type="number" id="wastePct" step="1" value="10"/></div>
           <div class="field"><label>Screen Setup ($/color/location)</label><input type="number" id="spSetup" step="1" value="20"/></div>
           <div class="field"><label>Screen Run ($/color)</label><input type="number" id="spRun" step="0.25" value="0.75"/></div>
         </div>
         <div class="row" style="margin-top:10px">
-          <div class="field"><label>Garment Markup (%)</label><input type="number" id="markupPct" step="5" value="100"/></div>
+          <div class="field"><label>Garment Markup (%)</label><input type="number" id="markupPct" step="5" value="35"/></div>
           <div class="field"><label>Tax Rate (%)</label><input type="number" id="taxPct" step="0.01" value="0"/></div>
           <div class="field"><label>Shipping ($)</label><input type="number" id="shipping" step="5" value="0"/></div>
           <div class="field"><label>Terms / Notes</label><input id="terms" placeholder="Lead time, art approval, etc."/></div>
@@ -274,17 +265,16 @@
       </div>
     </section>
 
-    <footer class="sub" style="margin-top:16px;text-align:center">Sheet + optional SS API • Save/Share is encoded in the URL hash • PNG export may be limited by image host CORS.</footer>
+    <footer class="sub" style="margin-top:16px;text-align:center">S&S API only • Save/Share is encoded in the URL hash • PNG export may be limited by image host CORS.</footer>
   </div>
 
-  <!-- jsPDF (PDF export) & PapaParse (CSV) -->
+  <!-- jsPDF (PDF export) -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
   <script>
+  'use strict';
   // ---------- Config ----------
-  const SHEET_ID = '1EFw4qZn6YSZmPNC_FeW-pSc5PiDPeuaqJe4YjIpgb4U'; // first tab
-  const PRICE_FIELD = 'customerPrice'; // Column G in your sheet
+  const PRICE_FIELD = 'customerPrice';
   const IMAGE_FIELD_FRONT = 'colorFrontImage';
   const IMAGE_FIELD_BACK = 'colorBackImage';
 
@@ -297,43 +287,23 @@
     lines: [], // {id, styleName, brandName, colorName, image, images:{front,back}, units:[{size, qty, basePrice, unitPrice}], meta}
     catalog: [], // parsed rows (current view)
     columns: [],
-    catalogOriginal: [] // full base set for current source
+    catalogOriginal: [] // full base set for current search
   };
 
   const defaultLocations = ['Left Chest','Right Chest','Full Front','Full Back','Sleeve Left','Sleeve Right','Neck/Locker','Hood'];
   const $ = sel => document.querySelector(sel);
 
-  // ---------- Google Sheet helpers ----------
-  function sheetCsvUrl(id){ return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv`; }
-  async function fetchCsv(url){
-    const r = await fetch(url, { cache: 'no-store' });
-    if(!r.ok) throw new Error(`Fetch failed: ${r.status}`);
-    const text = await r.text();
-    return new Promise((resolve, reject)=>{
-      Papa.parse(text, { header:true, skipEmptyLines:true, complete: res=> resolve(res.data), error: err=> reject(err) });
-    });
-  }
-  function setLoadStatus(msg, ok=false){ const el = $('#loadStatus'); el.style.display='block'; el.style.borderColor = ok? 'rgba(16,185,129,.4)' : 'rgba(245,158,11,.3)'; el.style.background = ok? 'rgba(16,185,129,.12)' : 'rgba(245,158,11,.12)'; el.innerHTML = msg; }
+  // ---------- Status helper ----------
+  function setLoadStatus(msg, ok=false){ const el = $('#loadStatus'); if(!el) return; el.style.display='block'; el.style.borderColor = ok? 'rgba(16,185,129,.4)' : 'rgba(245,158,11,.3)'; el.style.background = ok? 'rgba(16,185,129,.12)' : 'rgba(245,158,11,.12)'; el.innerHTML = msg; }
 
-  async function loadSheet(){
-    try{
-      setLoadStatus('Loading Google Sheet…');
-      const rows = await fetchCsv(sheetCsvUrl(SHEET_ID));
-      if(!rows || !rows.length){ setLoadStatus('Loaded but found no rows. Make sure the sheet is shareable/public or published to the web as CSV.', false); return; }
-      state.catalog = rows.map(r=> Object.fromEntries(Object.entries(r).map(([k,v])=>[String(k).trim(), String(v??'').trim()])) );
-      state.catalogOriginal = state.catalog.slice();
-      state.columns = Object.keys(state.catalog[0]||{});
-      setLoadStatus(`Loaded <b>${state.catalog.length}</b> rows with <b>${state.columns.length}</b> columns.`, true);
-      updateFilterControls(state.catalogOriginal);
-      refreshCatalogDisplay();
-    }catch(err){ setLoadStatus('Error: '+ err.message, false); }
-  }
+  // ---------- Utils ----------
+  function debounce(fn, delay=350){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),delay); }; }
 
-  // ---------- S&S API helper (optional; requires /api/ssaw) ----------
-  function debounce(fn, delay=350){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),delay); } }
+  // ---------- S&S API helper (requires /api/ssaw proxy) ----------
   async function ssawFindByStyle(q, extra={}){
     const params = new URLSearchParams({
-      path:'products', style:q,
+      path:'products',
+      style:q,
       fields:[ 'sku','styleID','brandName','styleName','colorName','sizeName','qty', 'customerPrice','salePrice','piecePrice', IMAGE_FIELD_FRONT, IMAGE_FIELD_BACK ].join(',')
     });
     for (const [k,v] of Object.entries(extra||{})) params.set(k, v);
@@ -392,23 +362,17 @@
   }
 
   const onSearch = debounce(async function(){
-    const src = $('#sourceSelect')?.value || 'sheet';
     const q = ($('#searchInput')?.value||'').trim();
-    if(src==='ssaw'){
-      if(!q){ setLoadStatus('Enter a style, SKU, or brand to search S&S.'); return; }
-      setLoadStatus('Searching S&S…');
-      try{
-        const rows = await ssawFindByStyle(q);
-        state.catalogOriginal = rows.map(r=>({ ...r }));
-        state.columns = Object.keys(rows[0]||{});
-        updateFilterControls(state.catalogOriginal);
-        setLoadStatus(`Found <b>${rows.length}</b> results from S&S.`, true);
-        refreshCatalogDisplay();
-      }catch(err){ setLoadStatus('Error: '+err.message); }
-    } else {
-      setLoadStatus('Filtering Sheet…');
+    if(!q){ setLoadStatus('Enter a brand, style, part number, or SKU to search S&S.'); document.querySelector('#results').innerHTML=''; return; }
+    setLoadStatus('Searching S&S…');
+    try{
+      const rows = await ssawFindByStyle(q);
+      state.catalogOriginal = rows.map(r=> ({ ...r }));
+      state.columns = Object.keys(rows[0]||{});
+      updateFilterControls(state.catalogOriginal);
+      setLoadStatus(`Found <b>${rows.length}</b> results from S&S.`, true);
       refreshCatalogDisplay();
-    }
+    }catch(err){ setLoadStatus('Error: '+err.message); }
   }, 400);
 
   function getVal(row, key){ return row?.[key] ?? ''; }
@@ -430,21 +394,21 @@
       card.className = 'list';
       card.style.cssText='border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:10px;background:rgb(var(--bg));';
       card.innerHTML = `
-        <div class="row" style="align-items:center">
-          <img src="${img}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid rgba(0,0,0,.06)"/>
-          <div style="flex:1">
-            <div style="font-weight:700">${brand} ${style} <span class="muted">• ${color}</span></div>
-            <div class="sub">SKU: ${sku} <span class="pill">Base: $${base.toFixed(2)}</span></div>
+        <div class=\"row\" style=\"align-items:center\">
+          <img src=\"${img}\" alt=\"\" style=\"width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid rgba(0,0,0,.06)\"/>
+          <div style=\"flex:1\">
+            <div style=\"font-weight:700\">${brand} ${style} <span class=\"muted\">• ${color}</span></div>
+            <div class=\"sub\">SKU: ${sku} <span class=\"pill\">Base: $${base.toFixed(2)}</span></div>
           </div>
-          <div class="row" style="gap:6px">
-            <input type="text" value="${size}" id="size-${i}" style="width:120px"/>
-            <input type="number" min="0" value="12" id="qty-${i}" style="width:90px"/>
-            <button class="btn" data-idx="${i}">Add</button>
+          <div class=\"row\" style=\"gap:6px\">
+            <input type=\"text\" value=\"${size}\" id=\"size-${i}\" style=\"width:120px\"/>
+            <input type=\"number\" min=\"0\" value=\"12\" id=\"qty-${i}\" style=\"width:90px\"/>
+            <button class=\"btn\" data-idx=\"${i}\">Add</button>
           </div>
         </div>
-        <details style="margin-top:8px">
+        <details style=\"margin-top:8px\">
           <summary>View row data</summary>
-          <div class="kv" style="margin-top:8px">${state.columns.map(c=>`<div>${c}</div><div>${row[c]??''}</div>`).join('')}</div>
+          <div class=\"kv\" style=\"margin-top:8px\">${state.columns.map(c=>`<div>${c}</div><div>${row[c]??''}</div>`).join('')}</div>
         </details>
       `;
       card.querySelector('button').onclick = () => {
@@ -457,6 +421,7 @@
     });
   }
 
+  // ---------- Lines ----------
   function addLineFromRow(row, size, qty, basePrice, image, brand, style, color){
     let line = state.lines.find(l => l.brandName===brand && l.styleName===style && l.colorName===color);
     if(!line){
@@ -478,15 +443,15 @@
       const totalQty = line.units.reduce((a,b)=>a+Number(b.qty||0),0);
       const garmentSub = line.units.reduce((sum,u)=> sum + Number(u.qty||0) * Number(u.unitPrice||0), 0);
       el.innerHTML = `
-        <div class="row" style="align-items:center">
-          <img src="${line.images?.front || line.image || 'https://via.placeholder.com/56x56?text=IMG'}" style="width:56px;height:56px;border-radius:10px;border:1px solid rgba(0,0,0,.06);object-fit:cover"/>
-          <div style="flex:1">
-            <div style="font-weight:700">${line.brandName} ${line.styleName} • ${line.colorName}</div>
-            <div class="sub">Qty: <b>${totalQty}</b> • Break: x${priceMultiplier(totalQty)}</div>
+        <div class=\"row\" style=\"align-items:center\">
+          <img src=\"${line.images?.front || line.image || 'https://via.placeholder.com/56x56?text=IMG'}\" style=\"width:56px;height:56px;border-radius:10px;border:1px solid rgba(0,0,0,.06);object-fit:cover\"/>
+          <div style=\"flex:1\">
+            <div style=\"font-weight:700\">${line.brandName} ${line.styleName} • ${line.colorName}</div>
+            <div class=\"sub\">Qty: <b>${totalQty}</b> • Break: x${priceMultiplier(totalQty)}</div>
           </div>
-          <button class="btn ghost" data-del="${line.id}">Remove</button>
+          <button class=\"btn ghost\" data-del=\"${line.id}\">Remove</button>
         </div>
-        <table class="table">
+        <table class=\"table\">
           <thead><tr><th>Size</th><th>Qty</th><th>Base $</th><th>Unit $ (tiered)</th><th>Ext $</th></tr></thead>
           <tbody>
             ${line.units.map(u=>`<tr>
@@ -499,9 +464,9 @@
           </tbody>
         </table>
         <details><summary>Show all item fields</summary>
-          <div class="kv" style="margin-top:8px">${state.columns.map(c=>`<div>${c}</div><div>${line.meta?.[c]??''}</div>`).join('')}</div>
+          <div class=\"kv\" style=\"margin-top:8px\">${state.columns.map(c=>`<div>${c}</div><div>${line.meta?.[c]??''}</div>`).join('')}</div>
         </details>
-        <div class="row"><span class="muted">Garment subtotal (before markup):</span><b class="right">$${garmentSub.toFixed(2)}</b></div>
+        <div class=\"row\"><span class=\"muted\">Garment subtotal (before markup):</span><b class=\"right\">$${garmentSub.toFixed(2)}</b></div>
       `;
       el.querySelector('[data-del]').onclick = ()=>{ state.lines = state.lines.filter(x=>x.id!==line.id); renderLines(); calcTotals(); populateMockLineOptions(); };
       el.querySelectorAll('.sizeQty').forEach(inp=>{
@@ -528,17 +493,17 @@
     state.placements.forEach(p=>{
       const row = document.createElement('div'); row.className = 'loc';
       row.innerHTML = `
-        <select data-id="${p.id}" data-key="location">
+        <select data-id=\"${p.id}\" data-key=\"location\"> 
           ${defaultLocations.concat(['Custom']).map(loc=>`<option ${p.location===loc?'selected':''}>${loc}</option>`).join('')}
         </select>
-        <select data-id="${p.id}" data-key="technique">
+        <select data-id=\"${p.id}\" data-key=\"technique\">
           ${['DTF','Screen Print'].map(t=>`<option ${p.technique===t?'selected':''}>${t}</option>`).join('')}
         </select>
-        <label>W (in)</label><input type="number" min="1" step="0.1" value="${p.width}" data-id="${p.id}" data-key="width" />
-        <label>H (in)</label><input type="number" min="1" step="0.1" value="${p.height}" data-id="${p.id}" data-key="height" />
-        <label class="colorsLab ${p.technique==='Screen Print'?'':'hidden'}">Colors</label>
-        <input class="colorsInp ${p.technique==='Screen Print'?'':'hidden'}" type="number" min="1" step="1" value="${p.colors}" data-id="${p.id}" data-key="colors" />
-        <button class="btn ghost right" data-remove="${p.id}">Remove</button>
+        <label>W (in)</label><input type=\"number\" min=\"1\" step=\"0.1\" value=\"${p.width}\" data-id=\"${p.id}\" data-key=\"width\" />
+        <label>H (in)</label><input type=\"number\" min=\"1\" step=\"0.1\" value=\"${p.height}\" data-id=\"${p.id}\" data-key=\"height\" />
+        <label class=\"colorsLab ${p.technique==='Screen Print'?'':'hidden'}\">Colors</label>
+        <input class=\"colorsInp ${p.technique==='Screen Print'?'':'hidden'}\" type=\"number\" min=\"1\" step=\"1\" value=\"${p.colors}\" data-id=\"${p.id}\" data-key=\"colors\" />
+        <button class=\"btn ghost right\" data-remove=\"${p.id}\">Remove</button>
       `;
       row.querySelectorAll('select,input').forEach(el=>{
         el.oninput = ()=>{
@@ -593,19 +558,25 @@
 
     const markup = 1 + (Number($('#markupPct').value||state.settings.markupPct)/100);
     totals.garmentSell = totals.garmentCost * markup;
+    const garmentPerPiece = totals.qty ? (totals.garmentSell / totals.qty) : 0;
+    const pricePerPiece = garmentPerPiece + totals.decoPerPiece;
+
     totals.decoTotal = (totals.qty * totals.decoPerPiece) + totals.setup;
     const sub = totals.garmentSell + totals.decoTotal + totals.shipping;
     totals.tax = sub * (Number($('#taxPct').value||state.settings.taxPct)/100);
     totals.grand = sub + totals.tax;
 
-    $('#totals').innerHTML = `
-      <div class="muted">Total Pieces</div><div><b>${totals.qty}</b></div>
-      <div class="muted">Garments (w/ markup)</div><div><b>$${totals.garmentSell.toFixed(2)}</b></div>
-      <div class="muted">Decoration per piece</div><div><b>$${totals.decoPerPiece.toFixed(2)}</b></div>
-      <div class="muted">Screen setups</div><div><b>$${totals.setup.toFixed(2)}</b></div>
-      <div class="muted">Shipping</div><div><b>$${totals.shipping.toFixed(2)}</b></div>
-      <div class="muted">Tax</div><div><b>$${totals.tax.toFixed(2)}</b></div>
-      <div class="muted">Grand Total</div><div><b class="accent">$${totals.grand.toFixed(2)}</b></div>`;
+    function money(n){ return `$${Number(n||0).toFixed(2)}`; }
+    let html = '';
+    html += `<div class="muted">Pieces</div><div><b>${totals.qty}</b></div>`;
+    html += `<div class="muted">Garment $/ea</div><div><b>${money(garmentPerPiece)}</b></div>`;
+    html += `<div class="muted">Decoration $/ea</div><div><b>${money(totals.decoPerPiece)}</b></div>`;
+    html += `<div class="muted">Price per piece</div><div><b class="accent">${money(pricePerPiece)}</b></div>`;
+    if(totals.setup>0) html += `<div class="muted">Screen setups</div><div><b>${money(totals.setup)}</b></div>`;
+    if(totals.shipping>0) html += `<div class="muted">Shipping</div><div><b>${money(totals.shipping)}</b></div>`;
+    if(totals.tax>0) html += `<div class="muted">Tax</div><div><b>${money(totals.tax)}</b></div>`;
+    html += `<div class="muted">Grand Total</div><div><b class="accent">${money(totals.grand)}</b></div>`;
+    $('#totals').innerHTML = html;
   }
 
   // ---------- Mockup Studio (Factory for A & B) ----------
@@ -635,9 +606,46 @@
 
     const M = { garmentUrl:'', garmentImg:new Image(), gRect:null, overlays:[], active:null, dragging:false, dragOffX:0, dragOffY:0, mode:null, handle:null, guides:[] };
 
-    function fitCanvas(){ const w = stageWrap.clientWidth || 600; const ar = (M.garmentImg.naturalWidth||1)/(M.garmentImg.naturalHeight||1); const h = Math.max(300, Math.round(w / ar)); canvas.width = w; canvas.height = h; }
-    function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height); let dx=0,dy=0,dw=canvas.width,dh=canvas.height; if(M.garmentImg && M.garmentImg.naturalWidth){ const gw=M.garmentImg.naturalWidth, gh=M.garmentImg.naturalHeight; const s=Math.max(canvas.width/gw, canvas.height/gh); dw=gw*s; dh=gh*s; dx=(canvas.width-dw)/2; dy=(canvas.height-dh)/2; ctx.drawImage(M.garmentImg, dx, dy, dw, dh);} M.gRect = { x:dx, y:dy, w:dw, h:dh }; M.overlays.forEach(o=>{ if(!o.visible) return; drawOverlay(o); }); if(M.guides.length){ ctx.save(); ctx.strokeStyle='rgba(88,101,242,0.9)'; ctx.setLineDash([6,6]); M.guides.forEach(g=>{ ctx.beginPath(); if(g.type==='v'){ ctx.moveTo(g.x,0); ctx.lineTo(g.x,canvas.height);} else { ctx.moveTo(0,g.y); ctx.lineTo(canvas.width,g.y);} ctx.stroke();}); ctx.restore(); } }
-    function drawOverlay(o){ const dw=o.w*o.scale, dh=o.h*o.scale; ctx.save(); ctx.translate(o.x,o.y); ctx.rotate(o.rot*Math.PI/180); ctx.globalAlpha=o.opacity; ctx.drawImage(o.img, -dw/2, -dh/2, dw, dh); ctx.globalAlpha=1; if(M.active===o.id){ ctx.strokeStyle='rgba(0,0,0,.7)'; ctx.lineWidth=1; ctx.setLineDash([4,3]); ctx.strokeRect(-dw/2,-dh/2,dw,dh); ctx.setLineDash([]); const hs=8; const pts=[{n:'tl',x:-dw/2,y:-dh/2},{n:'tr',x:dw/2,y:-dh/2},{n:'br',x:dw/2,y:dh/2},{n:'bl',x:-dw/2,y:dh/2}]; ctx.fillStyle='white'; ctx.strokeStyle='black'; pts.forEach(p=>{ ctx.beginPath(); ctx.rect(p.x-hs,p.y-hs,hs*2,hs*2); ctx.fill(); ctx.stroke(); }); const ry=-dh/2-26; ctx.beginPath(); ctx.moveTo(0,-dh/2); ctx.lineTo(0,ry); ctx.stroke(); ctx.beginPath(); ctx.arc(0,ry,7,0,Math.PI*2); ctx.fill(); ctx.stroke(); } ctx.restore(); }
+    // ---- drawing helpers ----
+    function fitCanvasToWidth(targetW){
+      const w = Math.max(1, Math.round(targetW||stageWrap.clientWidth||600));
+      const ar = (M.garmentImg.naturalWidth||1)/(M.garmentImg.naturalHeight||1);
+      const h = Math.max(300, Math.round(w / ar));
+      if(canvas.width !== w || canvas.height !== h){
+        canvas.width = w; canvas.height = h;
+      }
+    }
+    function draw(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      let dx=0,dy=0,dw=canvas.width,dh=canvas.height;
+      if(M.garmentImg && M.garmentImg.naturalWidth){
+        const gw=M.garmentImg.naturalWidth, gh=M.garmentImg.naturalHeight;
+        const s=Math.max(canvas.width/gw, canvas.height/gh);
+        dw=gw*s; dh=gh*s; dx=(canvas.width-dw)/2; dy=(canvas.height-dh)/2;
+        ctx.drawImage(M.garmentImg, dx, dy, dw, dh);
+      }
+      M.gRect = { x:dx, y:dy, w:dw, h:dh };
+      M.overlays.forEach(o=>{ if(!o.visible) return; drawOverlay(o); });
+      if(M.guides.length){
+        ctx.save(); ctx.strokeStyle='rgba(88,101,242,0.9)'; ctx.setLineDash([6,6]);
+        M.guides.forEach(g=>{ ctx.beginPath(); if(g.type==='v'){ ctx.moveTo(g.x,0); ctx.lineTo(g.x,canvas.height);} else { ctx.moveTo(0,g.y); ctx.lineTo(canvas.width,g.y);} ctx.stroke();});
+        ctx.restore();
+      }
+    }
+    function drawOverlay(o){
+      const dw=o.w*o.scale, dh=o.h*o.scale;
+      ctx.save(); ctx.translate(o.x,o.y); ctx.rotate(o.rot*Math.PI/180); ctx.globalAlpha=o.opacity;
+      ctx.drawImage(o.img, -dw/2, -dh/2, dw, dh); ctx.globalAlpha=1;
+      if(M.active===o.id){
+        ctx.strokeStyle='rgba(0,0,0,.7)'; ctx.lineWidth=1; ctx.setLineDash([4,3]);
+        ctx.strokeRect(-dw/2,-dh/2,dw,dh); ctx.setLineDash([]);
+        const hs=8; const pts=[{n:'tl',x:-dw/2,y:-dh/2},{n:'tr',x:dw/2,y:-dh/2},{n:'br',x:dw/2,y:dh/2},{n:'bl',x:-dw/2,y:dh/2}];
+        ctx.fillStyle='white'; ctx.strokeStyle='black';
+        pts.forEach(p=>{ ctx.beginPath(); ctx.rect(p.x-hs,p.y-hs,hs*2,hs*2); ctx.fill(); ctx.stroke(); });
+        const ry=-dh/2-26; ctx.beginPath(); ctx.moveTo(0,-dh/2); ctx.lineTo(0,ry); ctx.stroke(); ctx.beginPath(); ctx.arc(0,ry,7,0,Math.PI*2); ctx.fill(); ctx.stroke();
+      }
+      ctx.restore();
+    }
 
     function localCoords(o,mx,my){ const rad=o.rot*Math.PI/180; const dx=mx-o.x, dy=my-o.y; return { x: Math.cos(rad)*dx + Math.sin(rad)*dy, y: -Math.sin(rad)*dx + Math.cos(rad)*dy }; }
     function hitTest(o,mx,my){ const dw=o.w*o.scale, dh=o.h*o.scale; const p=localCoords(o,mx,my); const inside=Math.abs(p.x)<=dw/2 && Math.abs(p.y)<=dh/2; const hs=8; const handles=[{name:'tl',x:-dw/2,y:-dh/2},{name:'tr',x:dw/2,y:-dh/2},{name:'br',x:dw/2,y:dh/2},{name:'bl',x:-dw/2,y:dh/2}]; const onHandle=handles.find(h=> Math.abs(p.x-h.x)<=hs && Math.abs(p.y-h.y)<=hs ); const ry=-dh/2-26; const rotHit=Math.hypot(p.x-0,p.y-ry)<=10; return { inside, handle:onHandle?.name||null, rot:rotHit }; }
@@ -645,13 +653,24 @@
 
     function applySnapping(o,nx,ny){ const snapT=8; const guides=[]; const dw=o.w*o.scale, dh=o.h*o.scale; if(Math.abs(nx-canvas.width/2)<snapT){ nx=canvas.width/2; guides.push({type:'v',x:canvas.width/2}); } if(Math.abs(ny-canvas.height/2)<snapT){ ny=canvas.height/2; guides.push({type:'h',y:canvas.height/2}); } if(M.gRect){ const g=M.gRect; const gx=g.x+g.w/2, gy=g.y+g.h/2; if(Math.abs(nx-gx)<snapT){ nx=gx; guides.push({type:'v',x:gx}); } if(Math.abs(ny-gy)<snapT){ ny=gy; guides.push({type:'h',y:gy}); } const leftX=g.x+dw/2, rightX=g.x+g.w-dw/2; const topY=g.y+dh/2, bottomY=g.y+g.h-dh/2; if(Math.abs(nx-leftX)<snapT){ nx=leftX; guides.push({type:'v',x:g.x}); } if(Math.abs(nx-rightX)<snapT){ nx=rightX; guides.push({type:'v',x:g.x+g.w}); } if(Math.abs(ny-topY)<snapT){ ny=topY; guides.push({type:'h',y:g.y}); } if(Math.abs(ny-bottomY)<snapT){ ny=bottomY; guides.push({type:'h',y:g.y+g.h}); } } M.guides=guides; return { x:nx, y:ny }; }
 
-    function loadGarment(){ const line=(state.lines||[]).find(l=>l.id===selLine.value); if(!line){ M.garmentUrl=''; M.garmentImg=new Image(); draw(); return; } let url=''; const side=selSide.value; if(side==='custom') url=garmentUrlInput.value.trim(); else if(side==='back') url=(line.images&&line.images.back)||(line.meta&&line.meta[IMAGE_FIELD_BACK])||''; else url=(line.images&&line.images.front)||line.image||''; const img=new Image(); img.crossOrigin='anonymous'; img.onload=()=>{ M.garmentImg=img; fitCanvas(); draw(); }; img.onerror=()=>{ M.garmentImg=img; fitCanvas(); draw(); }; M.garmentUrl=url; img.src=url||'https://via.placeholder.com/800x1000?text=Garment+Image'; }
+    function loadGarment(){
+      const line=(state.lines||[]).find(l=>l.id===selLine.value);
+      if(!line){ M.garmentUrl=''; M.garmentImg=new Image(); scheduleFit(); draw(); return; }
+      let url=''; const side=selSide.value;
+      if(side==='custom') url=garmentUrlInput.value.trim();
+      else if(side==='back') url=(line.images&&line.images.back)||(line.meta&&line.meta[IMAGE_FIELD_BACK])||'';
+      else url=(line.images&&line.images.front)||line.image||'';
+      const img=new Image(); img.crossOrigin='anonymous';
+      img.onload=()=>{ M.garmentImg=img; scheduleFit(true); draw(); };
+      img.onerror=()=>{ M.garmentImg=img; scheduleFit(true); draw(); };
+      M.garmentUrl=url; img.src=url||'https://via.placeholder.com/800x1000?text=Garment+Image';
+    }
     function addOverlayFromUrl(u){ if(!u) return; const img=new Image(); img.crossOrigin='anonymous'; img.onload=()=>{ const id=crypto.randomUUID(); const o={ id, url:u, img, x:canvas.width/2, y:canvas.height/2, scale: Math.min(0.6, canvas.width/(img.naturalWidth||1)), rot:0, opacity:1, visible:true, locked:false, w:img.naturalWidth||500, h:img.naturalHeight||500 }; M.overlays.push(o); M.active=id; rebuildList(); draw(); }; img.onerror=()=>alert('Could not load design URL'); img.src=u; }
     function fileToUrl(file){ return new Promise((res)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(file); }); }
 
     const list = document.getElementById('ovList'+S);
     function rebuildList(){ list.innerHTML = M.overlays.map(o=>`<div class="row" data-id="${o.id}" style="align-items:center;border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:6px;background:${M.active===o.id?'#eef2ff':'rgb(var(--bg))'}">
-        <span style=\"font-size:12px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">${o.url.split('/').pop()}</span>
+        <span style=\"font-size:12px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">${(o.url||'upload').split('/').pop()}</span>
         <button class=\"btn ghost\" data-vis=\"${o.id}\">${o.visible?'👁️':'🚫'}</button>
         <button class=\"btn ghost\" data-lock=\"${o.id}\">${o.locked?'🔒':'🔓'}</button>
         <button class=\"btn ghost\" data-up=\"${o.id}\">⬆️</button>
@@ -666,7 +685,6 @@
       list.querySelectorAll('[data-down]').forEach(b=> b.onclick = ()=>{ const id=b.getAttribute('data-down'); const i=M.overlays.findIndex(x=>x.id===id); if(i>=0 && i<M.overlays.length-1){ const t=M.overlays[i]; M.overlays[i]=M.overlays[i+1]; M.overlays[i+1]=t; rebuildList(); draw(); }});
     }
 
-    function localCoords(o,mx,my){ const rad=o.rot*Math.PI/180; const dx=mx-o.x, dy=my-o.y; return { x: Math.cos(rad)*dx + Math.sin(rad)*dy, y: -Math.sin(rad)*dx + Math.cos(rad)*dy }; }
     function onDown(e){ const r=canvas.getBoundingClientRect(); const mx=e.clientX-r.left, my=e.clientY-r.top; if(!M.active){ if(!selectTopmost(mx,my)) return; } const o=M.overlays.find(x=>x.id===M.active); if(!o || o.locked) return; const h=hitTest(o,mx,my); if(h.rot){ M.mode='rotate'; } else if(h.handle){ M.mode='scale'; M.handle=h.handle; } else if(h.inside){ M.mode='move'; const p=localCoords(o,mx,my); M.dragOffX=p.x; M.dragOffY=p.y; } else { M.mode=null; return; } M.dragging=true; e.preventDefault(); }
     function onMove(e){ if(!M.dragging || !M.active) return; const o=M.overlays.find(x=>x.id===M.active); const r=canvas.getBoundingClientRect(); const mx=e.clientX-r.left, my=e.clientY-r.top; if(M.mode==='move'){ const dx = mx - (o.x + Math.cos(o.rot*Math.PI/180)*M.dragOffX - Math.sin(o.rot*Math.PI/180)*M.dragOffY); const dy = my - (o.y + Math.sin(o.rot*Math.PI/180)*M.dragOffX + Math.cos(o.rot*Math.PI/180)*M.dragOffY); let nx=o.x+dx, ny=o.y+dy; const s=applySnapping(o,nx,ny); o.x=s.x; o.y=s.y; draw(); } else if(M.mode==='rotate'){ const ang=Math.atan2(my-o.y, mx-o.x); o.rot=(ang*180/Math.PI) + 90; M.guides=[]; draw(); } else if(M.mode==='scale'){ const lp=localCoords(o,mx,my); const hx=Math.abs(lp.x)*2/(o.w||1); const hy=Math.abs(lp.y)*2/(o.h||1); o.scale=Math.max(0.05, Math.min(5, Math.max(hx,hy))); M.guides=[]; draw(); } }
     function onUp(){ M.dragging=false; M.mode=null; M.guides=[]; draw(); }
@@ -678,6 +696,28 @@
 
     window.addEventListener('keydown', (e)=>{ const o=M.overlays.find(x=>x.id===M.active); if(!o) return; const step=e.shiftKey?10:1; if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){ if(e.key==='ArrowLeft') o.x -= step; if(e.key==='ArrowRight') o.x += step; if(e.key==='ArrowUp') o.y -= step; if(e.key==='ArrowDown') o.y += step; draw(); e.preventDefault(); } if(e.key==='Delete' || e.key==='Backspace'){ M.overlays = M.overlays.filter(x=>x.id!==o.id); M.active=null; rebuildList(); draw(); e.preventDefault(); } });
 
+    // ---- Resize handling (fixes ResizeObserver loop) ----
+    let roRAF = 0; let roBusy = false; let lastW = 0; let lastH = 0;
+    function scheduleFit(force=false){
+      if(roBusy && !force) return;
+      roBusy = true; cancelAnimationFrame(roRAF);
+      roRAF = requestAnimationFrame(()=>{
+        roBusy = false;
+        const w = stageWrap.clientWidth || 600;
+        const ar = (M.garmentImg.naturalWidth||1)/(M.garmentImg.naturalHeight||1);
+        const h = Math.max(300, Math.round(w / ar));
+        if(Math.abs(w-lastW) > 0.5 || Math.abs(h-lastH) > 0.5){
+          lastW = w; lastH = h; fitCanvasToWidth(w); draw();
+        }
+      });
+    }
+    // Use window resize instead of observing the same element we mutate
+    window.addEventListener('resize', () => scheduleFit());
+
+    // Initial fit/draw
+    scheduleFit(true); draw();
+
+    // UI bindings
     selLine && selLine.addEventListener('change', loadGarment);
     selSide && selSide.addEventListener('change', loadGarment);
     garmentUrlInput && garmentUrlInput.addEventListener('change', ()=>{ if(selSide.value==='custom') loadGarment(); });
@@ -686,160 +726,70 @@
     btnCenter && btnCenter.addEventListener('click', ()=>{ const o=M.overlays.find(x=>x.id===M.active); if(!o) return; o.x=canvas.width/2; o.y=canvas.height/2; draw(); });
     btnExport && btnExport.addEventListener('click', ()=>{ try{ const url=canvas.toDataURL('image/png'); const a=document.createElement('a'); a.href=url; a.download='mockup_'+S+'.png'; a.click(); }catch(e){ alert('Export blocked by image host (CORS). You can still screenshot this preview.'); } });
 
-    new ResizeObserver(()=>{ fitCanvas(); draw(); }).observe(stageWrap);
-    fitCanvas(); draw();
     return { getCanvas: ()=>canvas };
   }
 
-  // ---------- PDF, Email & Share ----------
+  // ---------- PDF (uses both mockups if present) ----------
   async function generatePDF(){
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ unit:'pt', format:'letter' });
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
-    const M = 40; // margin
-    let y = M;
+    const M = 40; let y = M;
 
-    // ---- Inputs / data ----
     const brand = ($('#brandName').value || 'Your Business').trim();
     const logoUrl = ($('#logoUrl').value || '').trim();
-
     const fmt = (n)=> '$' + Number(n||0).toFixed(2);
-    const today = new Date();
-    const dateStr = today.toLocaleDateString();
+    const dateStr = new Date().toLocaleDateString();
     const quoteNo = 'Q' + Math.random().toString(36).slice(2, 8).toUpperCase();
 
-    // Helpers
-    async function toDataURL(url){
-      try{ const r = await fetch(url, { mode:'cors' }); const b = await r.blob(); return await new Promise(res=>{ const fr = new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(b); }); }catch(_){ return null; }
-    }
+    async function toDataURL(url){ try{ const r = await fetch(url, { mode:'cors' }); const b = await r.blob(); return await new Promise(res=>{ const fr = new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(b); }); }catch(_){ return null; } }
     function hr(yy){ doc.setDrawColor(230); doc.line(M, yy, pageW - M, yy); }
     function ensure(h=0){ if(y + h > pageH - M){ addFooter(); doc.addPage(); y = M; addHeader(); } }
 
     function addHeader(){
-      // top banner
-      doc.setFillColor(88,101,242); // indigo
-      doc.rect(0, 0, pageW, 64, 'F');
-      doc.setTextColor(255);
-      doc.setFont('helvetica','bold'); doc.setFontSize(14);
-      doc.text(brand, M + 60, 38);
+      doc.setFillColor(88,101,242); doc.rect(0, 0, pageW, 64, 'F');
+      doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.text(brand, M + 60, 38);
       doc.setFontSize(22); doc.text('ESTIMATE', pageW - M - 140, 40);
-      // logo placeholder (actual image below)
-      doc.setFillColor(255,255,255);
-      doc.circle(M+30, 34, 18, 'F');
+      doc.setFillColor(255,255,255); doc.circle(M+30, 34, 18, 'F');
     }
-    function addFooter(){
-      const n = doc.internal.getNumberOfPages();
-      const p = n; // current page is always last when called here
-      doc.setFontSize(9); doc.setTextColor(140);
-      doc.text('Page ' + p, pageW - M, pageH - 12, { align:'right' });
-    }
+    function addFooter(){ const n = doc.internal.getNumberOfPages(); const p = n; doc.setFontSize(9); doc.setTextColor(140); doc.text('Page ' + p, pageW - M, pageH - 12, { align:'right' }); }
 
-    // Header first page
     addHeader();
+    if(logoUrl){ const logoData = await toDataURL(logoUrl); if(logoData){ try{ doc.addImage(logoData, (logoData.startsWith('data:image/jpeg')||logoData.startsWith('data:image/jpg')) ? 'JPEG' : 'PNG', M+12, 16, 36, 36); }catch(_){ } } }
+    y = 64 + 18;
 
-    // Insert logo if provided
-    if(logoUrl){
-      const logoData = await toDataURL(logoUrl);
-      if(logoData){ try{ doc.addImage(logoData, (logoData.startsWith('data:image/jpeg')||logoData.startsWith('data:image/jpg')) ? 'JPEG' : 'PNG', M+12, 16, 36, 36); }catch(_){} }
-    }
+    doc.setTextColor(30); doc.setFont('helvetica','normal'); doc.setFontSize(10);
+    doc.text('Date: ' + dateStr, M, y); doc.text('Quote #: ' + quoteNo, M+180, y); y += 20;
 
-    y = 64 + 18; // below banner
-
-    // Quote + Client meta
-    doc.setTextColor(30);
-    doc.setFont('helvetica','normal'); doc.setFontSize(10);
-    doc.text('Date: ' + dateStr, M, y);
-    doc.text('Quote #: ' + quoteNo, M+180, y);
-    y += 20;
-
-    const cName = $('#clientName').value || '';
-    const cEmail = $('#clientEmail').value || '';
-    const cPO = $('#clientPO').value || '';
-
+    const cName = $('#clientName').value || ''; const cEmail = $('#clientEmail').value || ''; const cPO = $('#clientPO').value || '';
     doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('Bill To', M, y); y += 14;
     doc.setFont('helvetica','normal'); doc.setFontSize(10);
     if(cName){ doc.text(cName, M, y); y += 12; }
     if(cEmail){ doc.text(cEmail, M, y); y += 12; }
     if(cPO){ doc.text('PO: ' + cPO, M, y); y += 14; }
 
-    // Placements table
-    if(state.placements.length){
-      ensure(80);
-      doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(30);
-      doc.text('Placements', M, y); y += 10; hr(y); y += 12;
-      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(80);
+    // Placements
+    if(state.placements.length){ ensure(80); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(30); doc.text('Placements', M, y); y += 10; hr(y); y += 12; doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(80);
       const colX = { loc:M, tech:M+170, size:M+280, colors:M+420 };
-      doc.text('Location', colX.loc, y);
-      doc.text('Technique', colX.tech, y);
-      doc.text('Size (W×H in)', colX.size, y);
-      doc.text('Colors', colX.colors, y);
-      y += 8; hr(y); y += 8; doc.setFont('helvetica','normal'); doc.setTextColor(30);
-      state.placements.forEach(p=>{
-        ensure(18);
-        const sizeStr = (p.width||0) + ' × ' + (p.height||0);
-        doc.text(String(p.location||''), colX.loc, y);
-        doc.text(String(p.technique||''), colX.tech, y);
-        doc.text(sizeStr, colX.size, y);
-        doc.text(p.technique==='Screen Print' ? String(p.colors||1) : '-', colX.colors, y);
-        y += 16;
-      });
-      y += 6;
-    }
+      doc.text('Location', colX.loc, y); doc.text('Technique', colX.tech, y); doc.text('Size (W×H in)', colX.size, y); doc.text('Colors', colX.colors, y); y += 8; hr(y); y += 8; doc.setFont('helvetica','normal'); doc.setTextColor(30);
+      state.placements.forEach(p=>{ ensure(18); const sizeStr = (p.width||0) + ' × ' + (p.height||0); doc.text(String(p.location||''), colX.loc, y); doc.text(String(p.technique||''), colX.tech, y); doc.text(sizeStr, colX.size, y); doc.text(p.technique==='Screen Print' ? String(p.colors||1) : '-', colX.colors, y); y += 16; }); y += 6; }
 
-    // Items table
-    ensure(40);
-    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(30);
-    doc.text('Items', M, y); y += 10; hr(y); y += 12;
-    const IX = { item:M, size:M+260, qty:M+360, unit:M+420, ext:M+500 };
-    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(80);
-    doc.text('Item', IX.item, y);
-    doc.text('Size', IX.size, y);
-    doc.text('Qty', IX.qty, y);
-    doc.text('Unit', IX.unit, y);
-    doc.text('Ext', IX.ext, y);
+    // Items
+    ensure(40); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(30); doc.text('Items', M, y); y += 10; hr(y); y += 12; const IX = { item:M, size:M+260, qty:M+360, unit:M+420, ext:M+500 };
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(80); doc.text('Item', IX.item, y); doc.text('Size', IX.size, y); doc.text('Qty', IX.qty, y); doc.text('Unit', IX.unit, y); doc.text('Ext', IX.ext, y);
     y += 8; hr(y); y += 8; doc.setFont('helvetica','normal'); doc.setTextColor(30);
 
-    state.lines.forEach(line=>{
-      const name = (line.brandName||'') + ' ' + (line.styleName||'') + ' • ' + (line.colorName||'');
-      const units = line.units||[];
-      units.forEach((u, idx)=>{
-        ensure(18);
-        if(idx===0){ doc.text(name, IX.item, y); }
-        doc.text(String(u.size||''), IX.size, y);
-        doc.text(String(u.qty||0), IX.qty, y);
-        doc.text(fmt(u.unitPrice||0), IX.unit, y);
-        doc.text(fmt((Number(u.qty)||0)*(Number(u.unitPrice)||0)), IX.ext, y);
-        y += 16;
-      });
-      y += 4;
-    });
+    state.lines.forEach(line=>{ const name = (line.brandName||'') + ' ' + (line.styleName||'') + ' • ' + (line.colorName||''); const units = line.units||[]; units.forEach((u, idx)=>{ ensure(18); if(idx===0){ doc.text(name, IX.item, y); } doc.text(String(u.size||''), IX.size, y); doc.text(String(u.qty||0), IX.qty, y); doc.text(fmt(u.unitPrice||0), IX.unit, y); doc.text(fmt((Number(u.qty)||0)*(Number(u.unitPrice)||0)), IX.ext, y); y += 16; }); y += 4; });
 
     // Totals
-    const deco = perPieceDecoration();
-    const totals = { qty:0, garmentCost:0 };
-    state.lines.forEach(line=>{
-      const lineQty = (line.units||[]).reduce((a,b)=> a + Number(b.qty||0), 0);
-      const lineCost = (line.units||[]).reduce((s,u)=> s + Number(u.qty||0)*Number(u.unitPrice||0), 0);
-      totals.qty += lineQty; totals.garmentCost += lineCost;
-    });
+    const deco = perPieceDecoration(); const totals = { qty:0, garmentCost:0 };
+    state.lines.forEach(line=>{ const lineQty = (line.units||[]).reduce((a,b)=> a + Number(b.qty||0), 0); const lineCost = (line.units||[]).reduce((s,u)=> s + Number(u.qty||0)*Number(u.unitPrice||0), 0); totals.qty += lineQty; totals.garmentCost += lineCost; });
     const markup = 1 + (Number($('#markupPct').value||state.settings.markupPct)/100);
-    const garmentSell = totals.garmentCost * markup;
-    const decoTotal = (totals.qty * (deco.perPiece||0)) + (deco.setup||0);
-    const shipping = Number($('#shipping').value||0);
-    const sub = garmentSell + decoTotal + shipping;
-    const taxRate = Number($('#taxPct').value||0)/100; const tax = sub * taxRate; const grand = sub + tax;
+    const garmentSell = totals.garmentCost * markup; const decoTotal = (totals.qty * (deco.perPiece||0)) + (deco.setup||0); const shipping = Number($('#shipping').value||0); const sub = garmentSell + decoTotal + shipping; const taxRate = Number($('#taxPct').value||0)/100; const tax = sub * taxRate; const grand = sub + tax;
 
-    ensure(120);
-    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('Totals', M, y); y += 10; hr(y); y += 12;
-    const boxW = (pageW - M*2 - 16)/2;
-    function totalRow(x,y,label,val,accent=false){
-      if(accent){ doc.setFillColor(232,235,255); } else { doc.setFillColor(247,248,251); }
-      doc.roundedRect(x, y, boxW, 28, 6, 6, 'F');
-      doc.setFont('helvetica','normal'); doc.setTextColor(90); doc.setFontSize(10); doc.text(label, x+10, y+18);
-      doc.setFont('helvetica','bold'); if (accent) { doc.setTextColor(88, 101, 242); } else { doc.setTextColor(20); } doc.setFontSize(accent?14:11);
-      doc.text(val, x+boxW-10, y+18, { align:'right' });
-    }
+    ensure(120); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('Totals', M, y); y += 10; hr(y); y += 12; const boxW = (pageW - M*2 - 16)/2;
+    function totalRow(x,y,label,val,accent=false){ if(accent){ doc.setFillColor(232,235,255); } else { doc.setFillColor(247,248,251); } doc.roundedRect(x, y, boxW, 28, 6, 6, 'F'); doc.setFont('helvetica','normal'); doc.setTextColor(90); doc.setFontSize(10); doc.text(label, x+10, y+18); doc.setFont('helvetica','bold'); if (accent) { doc.setTextColor(88, 101, 242); } else { doc.setTextColor(20); } doc.setFontSize(accent?14:11); doc.text(val, x+boxW-10, y+18, { align:'right' }); }
     totalRow(M, y, 'Total Pieces', String(totals.qty));
     totalRow(M, y+34, 'Garments (w/ markup)', fmt(garmentSell));
     totalRow(M, y+68, 'Decoration per piece', fmt(deco.perPiece||0));
@@ -849,93 +799,62 @@
     totalRow(M+boxW+16, y+68, 'Grand Total', fmt(grand), true);
     y += 140;
 
-    // Mockups (optional — up to two)
+    // Mockups (A & B)
     try{
       const mockA = document.getElementById('mockCanvasA');
       const mockB = document.getElementById('mockCanvasB');
       const haveA = mockA && mockA.width && mockA.height;
       const haveB = mockB && mockB.width && mockB.height;
-      if(haveA || haveB){
-        ensure(240);
-        doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(30);
-        if(haveA && haveB){
-          const colW = (pageW - M*2 - 16)/2;
-          doc.text('Mockup A', M, y);
-          doc.text('Mockup B', M+colW+16, y);
-          y += 10;
-          const addMock = (canvas, x) => { const url = canvas.toDataURL('image/png'); const scale = Math.min(1, colW / canvas.width); const h = canvas.height * scale; doc.addImage(url, 'PNG', x, y, colW, h); return h; };
-          const hA = haveA ? addMock(mockA, M) : 0;
-          const hB = haveB ? addMock(mockB, M+colW+16) : 0;
-          y += Math.max(hA, hB) + 10;
-        } else {
-          const canvas = haveA ? mockA : mockB; const tag = haveA ? 'Mockup A' : 'Mockup B';
-          doc.text(tag, M, y); y += 10;
-          const w = pageW - M*2; const scale = Math.min(1, w / canvas.width); const h = canvas.height * scale; doc.addImage(canvas.toDataURL('image/png'), 'PNG', M, y, w, h); y += h + 10;
-        }
+      if(haveA || haveB){ ensure(240); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(30);
+        if(haveA && haveB){ const colW = (pageW - M*2 - 16)/2; doc.text('Mockup A', M, y); doc.text('Mockup B', M+colW+16, y); y += 10; const addMock = (canvas, x) => { const url = canvas.toDataURL('image/png'); const scale = Math.min(1, colW / canvas.width); const h = canvas.height * scale; doc.addImage(url, 'PNG', x, y, colW, h); return h; }; const hA = haveA ? addMock(mockA, M) : 0; const hB = haveB ? addMock(mockB, M+colW+16) : 0; y += Math.max(hA, hB) + 10; }
+        else { const canvas = haveA ? mockA : mockB; const tag = haveA ? 'Mockup A' : 'Mockup B'; doc.text(tag, M, y); y += 10; const w = pageW - M*2; const scale = Math.min(1, w / canvas.width); const h = canvas.height * scale; doc.addImage(canvas.toDataURL('image/png'), 'PNG', M, y, w, h); y += h + 10; }
       }
     }catch(_){ }
 
-    // Terms / Notes
     const terms = ($('#terms').value||'').trim();
-    if(terms){
-      ensure(50);
-      doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(30); doc.text('Notes / Terms', M, y); y += 14;
-      doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(60);
-      const wrapped = doc.splitTextToSize(terms, pageW - M*2);
-      wrapped.forEach(t=>{ ensure(14); doc.text(t, M, y); y += 14; });
-    }
+    if(terms){ ensure(50); doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(30); doc.text('Notes / Terms', M, y); y += 14; doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(60); const wrapped = doc.splitTextToSize(terms, pageW - M*2); wrapped.forEach(t=>{ ensure(14); doc.text(t, M, y); y += 14; }); }
 
     addFooter();
-    const safeBrand = brand.toLowerCase().replace(/[^a-z0-9]+/gi,'_');
-    const fname = 'quote_' + safeBrand + '.pdf';
-    doc.save(fname);
+    const safeBrand = brand.toUpperCase().replace(/[^A-Z0-9]+/g,'_').slice(0,18);
+    doc.save(`${safeBrand}_QUOTE_${quoteNo}.pdf`);
   }
 
-  function composeEmail(){
-    const subject = encodeURIComponent('Quote');
-    const body = encodeURIComponent(document.querySelector('#totals').innerText + '\n\nNotes: ' + ($('#terms').value||''));
-    window.location.href = `mailto:${$('#clientEmail').value||''}?subject=${subject}&body=${body}`;
-  }
+  // ---------- Init ----------
+  function populateMockDefaults(){ populateMockLineOptions(); }
 
-  function encodeState(){
-    const data = { settings:{ dtfRate:+$('#dtfRate').value, wastePct:+$('#wastePct').value, spSetup:+$('#spSetup').value, spRun:+$('#spRun').value, markupPct:+$('#markupPct').value, taxPct:+$('#taxPct').value, shipping:+$('#shipping').value }, brand:{ name:$('#brandName').value, logo:$('#logoUrl').value }, client:{ name:$('#clientName').value, email:$('#clientEmail').value, po:$('#clientPO').value }, placements:state.placements, lines:state.lines };
-    return btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-  }
-  function decodeState(str){ try{ return JSON.parse(decodeURIComponent(escape(atob(str)))); }catch(_){ return null; } }
-  function saveToHash(){ const h = encodeState(); location.hash = 'q=' + h; $('#saveInfo').textContent = 'Saved in URL'; }
-  function loadFromHash(){ const m = location.hash.match(/q=([^&]+)/); if(!m) return; const data = decodeState(m[1]); if(!data) return; state.settings = { ...state.settings, ...data.settings }; $('#dtfRate').value=state.settings.dtfRate; $('#wastePct').value=state.settings.wastePct; $('#spSetup').value=state.settings.spSetup; $('#spRun').value=state.settings.spRun; $('#markupPct').value=state.settings.markupPct; $('#taxPct').value=state.settings.taxPct; $('#shipping').value=state.settings.shipping; state.brand = data.brand||state.brand; $('#brandName').value=state.brand.name||''; $('#logoUrl').value=state.brand.logo||''; state.client = data.client||state.client; $('#clientName').value=state.client.name||''; $('#clientEmail').value=state.client.email||''; $('#clientPO').value=state.client.po||''; state.placements = data.placements||[]; renderPlacements(); state.lines = data.lines||[]; renderLines(); calcTotals(); populateMockLineOptions(); }
-
-  // ---------- Events ----------
   window.addEventListener('DOMContentLoaded', ()=>{
-    // Load sheet immediately
-    loadSheet();
+    // Search & filters
+    document.getElementById('btnSearch')?.addEventListener('click', searchCatalog);
+    const si = document.getElementById('searchInput'); if(si){ si.addEventListener('input', onSearch); si.addEventListener('keydown', e=>{ if(e.key==='Enter') searchCatalog(); }); }
+    ;['brandFilter','styleFilter','colorFilter','sizeFilter','sortField','sortDir'].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('change', refreshCatalogDisplay); });
 
-    // UI handlers
-    $('#btnSearch').onclick = searchCatalog;
-    $('#searchInput').addEventListener('input', onSearch);
-    $('#searchInput').addEventListener('keydown', e=>{ if(e.key==='Enter') searchCatalog(); });
-    $('#sourceSelect').addEventListener('change', ()=>{ refreshCatalogDisplay(); });
+    // Quote / totals
+    document.getElementById('btnAddPlacement')?.addEventListener('click', addPlacement);
+    ;['dtfRate','wastePct','spSetup','spRun','markupPct','taxPct','shipping'].forEach(id=>{ const el=document.getElementById(id); if(el) el.oninput = calcTotals; });
 
-    // Filters & sort
-    ['brandFilter','styleFilter','colorFilter','sizeFilter','sortField','sortDir'].forEach(id=>{
-      const el = document.getElementById(id); if(el) el.addEventListener('change', refreshCatalogDisplay);
-    });
+    // Mockup studios
+    const studioA = createStudio('A');
+    const studioB = createStudio('B');
 
-    $('#btnAddPlacement').onclick = addPlacement;
-    $('#dtfRate').oninput = $('#wastePct').oninput = $('#spSetup').oninput = $('#spRun').oninput = $('#markupPct').oninput = $('#taxPct').oninput = $('#shipping').oninput = calcTotals;
-    $('#btnExport').onclick = generatePDF;
-    $('#btnEmail').onclick = composeEmail;
-    $('#btnShare').onclick = ()=>{ saveToHash(); navigator.clipboard.writeText(location.href).then(()=> $('#saveInfo').textContent='URL copied'); };
-    $('#btnNew').onclick = ()=>{ if(confirm('Clear current quote?')){ state.lines=[]; state.placements=[]; renderLines(); renderPlacements(); calcTotals(); populateMockLineOptions(); location.hash=''; $('#saveInfo').textContent=''; } };
+    document.getElementById('btnExport')?.addEventListener('click', generatePDF);
 
-    // Build studios
-    createStudio('A');
-    createStudio('B');
+    setLoadStatus('Enter a search and press “Search” to load products from S&S.');
 
-    // Initial
-    addPlacement();
-    calcTotals();
-    loadFromHash();
+    // ---- Dev sanity tests (non-blocking) ----
+    try{
+      console.groupCollapsed('Dev tests');
+      console.assert(priceMultiplier(0) === 2.5, 'tier <12');
+      console.assert(priceMultiplier(12) === 1.0, 'tier 12-23');
+      console.assert(priceMultiplier(24) === 0.9, 'tier 24-47');
+      console.assert(priceMultiplier(48) === 0.8, 'tier 48-71');
+      console.assert(priceMultiplier(72) === 0.75, 'tier 72-143');
+      console.assert(priceMultiplier(144) === 0.7, 'tier 144-199');
+      console.assert(priceMultiplier(250) === 0.65, 'tier >200');
+      const testLine={ units:[{qty:24, basePrice:10, unitPrice:0}] }; recalcLine(testLine); console.assert(Math.abs(testLine.units[0].unitPrice-9) < 1e-6, 'recalcLine tiered unit');
+      const before = perPieceDecoration(); // uses defaults
+      console.assert(typeof before.perPiece === 'number' && before.perPiece >= 0, 'perPieceDecoration returns number');
+      console.groupEnd();
+    }catch(e){ console.warn('Dev tests error', e); }
   });
   </script>
 </body>
