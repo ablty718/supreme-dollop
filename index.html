@@ -22,7 +22,7 @@
     *{box-sizing:border-box}
     html,body{margin:0;height:100%;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:rgb(var(--text));}
     body{background:linear-gradient(135deg, rgba(var(--brand)/0.06), rgba(var(--brand-2)/0.06)), rgb(var(--bg));}
-    .container{max-width:1200px;margin-inline:auto;padding:24px;}
+    .container{max-width:100%;margin-inline:auto;padding:24px;}
     header{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:16px}
     .brand{display:flex;gap:12px;align-items:center}
     .logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(145deg, rgba(var(--brand)/.9), rgba(var(--brand-2)/.9));box-shadow:0 8px 30px rgba(0,0,0,.12)}
@@ -32,8 +32,8 @@
     .btn.primary{background:linear-gradient(90deg, rgba(var(--brand)/.95), rgba(var(--brand-2)/.95));color:white;border-color:transparent}
     .btn.ghost{background:transparent;border-color:rgba(0,0,0,.12)}
     .grid{display:grid;grid-template-columns:1fr;gap:16px}
-    @media(min-width:1000px){.grid{grid-template-columns:420px 1fr}}
-    .card{background:rgb(var(--card));border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:16px;box-shadow:0 8px 30px rgba(0,0,0,.04)}
+    @media(min-width:1000px){.grid{grid-template-columns:50% 1fr}}
+    .card{background:rgb(var(--card));border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:16px;box-shadow:0 8px 30px rgba(0,0,0,.04);height: 90vh;overflow: scroll;}
     .card h2{margin:0 0 8px;font-size:18px}
     .sub{color:rgb(var(--muted));font-size:12px}
     .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -51,6 +51,7 @@
     .divider{height:1px;background:linear-gradient(90deg,rgba(0,0,0,.06),transparent)}
     .chip{font-size:11px;padding:4px 8px;border-radius:999px;background:rgba(var(--brand)/.12);color:rgb(var(--brand));font-weight:700}
     .badge{font-size:11px;padding:4px 8px;border-radius:999px;background:rgba(var(--ok)/.12);color:rgb(var(--ok));font-weight:700}
+    details code{display:block;background:#0f172a;color:#e5e7eb;padding:12px;border-radius:12px;overflow:auto;font-size:12px}
     .stickyActions{position:sticky;bottom:0;display:flex;gap:8px;background:linear-gradient(180deg, transparent, rgba(255,255,255,.9));padding-top:12px}
     .totals{display:grid;grid-template-columns:1fr auto; gap:8px;padding:8px;border-radius:12px;background:rgb(var(--bg));border:1px dashed rgba(0,0,0,.12)}
     .kpi{display:grid;gap:4px;background:rgb(var(--bg));border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:10px;min-width:120px}
@@ -59,11 +60,13 @@
     .loc{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid rgba(0,0,0,.08);border-radius:12px;background:rgb(var(--bg));}
     .loc input{width:76px}
     .help{font-size:12px;color:rgb(var(--muted))}
-    .alert{padding:10px 12px;border-radius:12px;background:rgba(var(--warn)/.12);border:1px solid rgba(245,158,11,.3)}
+    .alert{padding:10px 12px;border-radius:12px;background:rgba(var(--warn)/.12);border:1px solid rgba(var(--warn)/.3)}
     .hidden{display:none}
     .accent{color:rgb(var(--brand))}
     .kv{display:grid;grid-template-columns:140px 1fr;gap:6px;font-size:12px}
     .kv div{padding:4px 8px;border:1px solid rgba(0,0,0,.06);border-radius:8px;background:rgb(var(--bg))}
+    /*#results{overflow:scroll}*/
+    #quoteLines{overflow:scroll}
   </style>
 </head>
 <body>
@@ -73,7 +76,7 @@
         <div class="logo"></div>
         <div>
           <div class="title">ANTON v1.8</div>
-          <div class="sub">DTF & Screen Print • Catalog via S&S API</div>
+          <div class="sub">DTF & Screen Print | Order Sheet</div>
         </div>
       </div>
       <div class="row">
@@ -86,11 +89,17 @@
       <!-- LEFT: Catalog -->
       <section class="card">
         <h2>Garment Catalog</h2>
-        <div class="sub">Search live from S&S. Results populate filters automatically.</div>
+        <div class="sub">Default loads from your Google Sheet. You can also search live from SS if you add the proxy.</div>
 
         <div class="row" style="margin-top:8px">
-          <span class="pill">Powered by S&S API</span>
-          <span class="pill">Price: <b>customerPrice</b></span>
+          <label class="pill" style="display:inline-flex;align-items:center;gap:8px">
+            Source:
+            <select id="sourceSelect">
+              <option value="ssaw" selected>SS API</option>
+              <option value="sheet">Google Sheet</option>
+            </select>
+          </label>
+          <span class="pill">Price column: <b>customerPrice</b></span>
           <span class="pill">Front: <b>colorFrontImage</b></span>
           <span class="pill">Back: <b>colorBackImage</b></span>
         </div>
@@ -138,6 +147,7 @@
         </div>
 
         <div id="loadStatus" class="alert" style="margin-top:10px; display:none"></div>
+
         <div id="results" class="list" style="margin-top:12px"></div>
       </section>
 
@@ -170,15 +180,15 @@
           <div class="field"><label>Logo URL (optional)</label><input id="logoUrl" placeholder="https://..."/></div>
         </div>
         <div class="row" style="margin-top:10px">
-          <div class="field"><label>DTF Rate ($/sqft)</label><input type="number" id="dtfRate" step="0.01" value="8"/></div>
+          <div class="field"><label>DTF Rate ($/sqft)</label><input type="number" id="dtfRate" step="0.5" value="5"/></div>
           <div class="field"><label>Waste/Overage (%)</label><input type="number" id="wastePct" step="1" value="10"/></div>
-          <div class="field"><label>Screen Setup ($/color/location)</label><input type="number" id="spSetup" step="0.01" value="20"/></div>
-          <div class="field"><label>Screen Run ($/color)</label><input type="number" id="spRun" step="0.01" value="0.75"/></div>
+          <div class="field"><label>Screen Setup ($/color/location)</label><input type="number" id="spSetup" step="1" value="20"/></div>
+          <div class="field"><label>Screen Run ($/color)</label><input type="number" id="spRun" step="0.25" value="0.75"/></div>
         </div>
         <div class="row" style="margin-top:10px">
-          <div class="field"><label>Garment Markup (%)</label><input type="number" id="markupPct" step="1" value="35"/></div>
+          <div class="field"><label>Garment Markup (%)</label><input type="number" id="markupPct" step="5" value="100"/></div>
           <div class="field"><label>Tax Rate (%)</label><input type="number" id="taxPct" step="0.01" value="0"/></div>
-          <div class="field"><label>Shipping ($)</label><input type="number" id="shipping" step="0.01" value="0"/></div>
+          <div class="field"><label>Shipping ($)</label><input type="number" id="shipping" step="5" value="0"/></div>
           <div class="field"><label>Terms / Notes</label><input id="terms" placeholder="Lead time, art approval, etc."/></div>
         </div>
 
@@ -196,52 +206,85 @@
       </section>
     </div>
 
-    <!-- MOCKUP STUDIO (single stage for simplicity here) -->
+    <!-- MOCKUP STUDIO (Two Stages) -->
     <section class="card" id="mockSection" style="margin-top:16px">
       <h2>Mockup Studio</h2>
-      <div class="sub">Choose a garment from the quote (front/back) and overlay one or more designs. Drag to move, use handles to scale/rotate, and snap to smart guides. Export as PNG.</div>
+      <div class="sub">Create up to two previews. Each stage supports multiple overlays with rotate/scale handles and smart guides. Export PNGs individually and include both in the PDF.</div>
 
-      <div class="row" style="margin-top:10px">
-        <div class="field" style="flex:2"><label>Garment from Quote</label>
-          <select id="mockLine"><option value="">— choose garment from quote —</option></select>
+      <div class="row" style="margin-top:10px; align-items:flex-end">
+        <div class="field" style="flex:1"><label>Stage A — Garment from Quote</label>
+          <select id="mockLineA"><option value="">— choose garment from quote —</option></select>
         </div>
-        <div class="field" style="max-width:160px"><label>Image Side</label>
-          <select id="mockSide"><option value="front">Front</option><option value="back">Back</option><option value="custom">Custom URL</option></select>
+        <div class="field" style="max-width:160px"><label>Side</label>
+          <select id="mockSideA"><option value="front">Front</option><option value="back">Back</option><option value="custom">Custom URL</option></select>
         </div>
-        <div class="field" style="flex:2"><label>Custom Garment URL</label>
-          <input id="mockGarmentUrl" placeholder="https://... (optional when Side=Custom)"/>
+        <div class="field" style="flex:1"><label>Custom URL (optional)</label>
+          <input id="mockGarmentUrlA" placeholder="https://..."/>
         </div>
+        <div class="field" style="max-width:130px"><label>&nbsp;</label><button class="btn" id="btnExportPngA">Export PNG A</button></div>
       </div>
 
+      <div class="row" style="align-items:flex-end">
+        <div class="field" style="flex:1"><label>Stage B — Garment from Quote</label>
+          <select id="mockLineB"><option value="">— choose garment from quote —</option></select>
+        </div>
+        <div class="field" style="max-width:160px"><label>Side</label>
+          <select id="mockSideB"><option value="front">Front</option><option value="back">Back</option><option value="custom">Custom URL</option></select>
+        </div>
+        <div class="field" style="flex:1"><label>Custom URL (optional)</label>
+          <input id="mockGarmentUrlB" placeholder="https://..."/>
+        </div>
+        <div class="field" style="max-width:130px"><label>&nbsp;</label><button class="btn" id="btnExportPngB">Export PNG B</button></div>
+      </div>
+
+      <!-- Add overlays -->
       <div class="row" style="margin-top:6px">
-        <div class="field"><label>Add Design (Upload)</label><input id="ovFile" type="file" accept="image/*"/></div>
-        <div class="field" style="flex:2"><label>Add Design (URL)</label><input id="ovUrl" placeholder="https://..."/></div>
-        <div class="field" style="max-width:160px"><label>&nbsp;</label><button class="btn" id="btnAddUrl">Add Overlay</button></div>
-        <div class="field" style="max-width:170px"><label>&nbsp;</label><button class="btn ghost" id="btnCenter">Center Active</button></div>
-        <div class="field" style="max-width:150px"><label>&nbsp;</label><button class="btn" id="btnExportPng">Export PNG</button></div>
+        <div class="field"><label>Add Design (Upload → A)</label><input id="ovFileA" type="file" accept="image/*"/></div>
+        <div class="field" style="flex:2"><label>Add Design (URL → A)</label><input id="ovUrlA" placeholder="https://..."/></div>
+        <div class="field" style="max-width:150px"><label>&nbsp;</label><button class="btn" id="btnAddUrlA">Add to A</button></div>
+        <div class="field" style="max-width:160px"><label>&nbsp;</label><button class="btn ghost" id="btnCenterAA">Center A</button></div>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <div class="field"><label>Add Design (Upload → B)</label><input id="ovFileB" type="file" accept="image/*"/></div>
+        <div class="field" style="flex:2"><label>Add Design (URL → B)</label><input id="ovUrlB" placeholder="https://..."/></div>
+        <div class="field" style="max-width:150px"><label>&nbsp;</label><button class="btn" id="btnAddUrlB">Add to B</button></div>
+        <div class="field" style="max-width:160px"><label>&nbsp;</label><button class="btn ghost" id="btnCenterBB">Center B</button></div>
       </div>
 
-      <div class="row" style="margin-top:8px">
+      <!-- Stages side by side -->
+      <div class="row" style="margin-top:8px; align-items:flex-start">
         <div class="field" style="flex:1">
-          <label>Stage</label>
-          <div id="stageWrap" style="position:relative;background:rgba(0,0,0,.04);border:1px dashed rgba(0,0,0,.12);border-radius:14px;overflow:hidden;min-height:300px;display:grid;place-items:center">
-            <canvas id="mockCanvas" style="width:100%;height:auto;display:block"></canvas>
+          <label>Stage A</label>
+          <div id="stageWrapA" style="position:relative;background:rgba(0,0,0,.04);border:1px dashed rgba(0,0,0,.12);border-radius:14px;overflow:hidden;min-height:300px;display:grid;place-items:center">
+            <canvas id="mockCanvasA" style="width:100%;height:auto;display:block"></canvas>
+          </div>
+          <div class="field" style="margin-top:8px"><label>Layers A</label>
+            <div id="ovListA" class="list" style="max-height:320px;overflow:auto;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:8px;background:rgb(var(--bg))"></div>
           </div>
         </div>
-        <div class="field" style="flex:1;min-width:260px">
-          <label>Layers</label>
-          <div id="ovList" class="list" style="max-height:320px;overflow:auto;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:8px;background:rgb(var(--bg))"></div>
+        <div class="field" style="flex:1">
+          <label>Stage B</label>
+          <div id="stageWrapB" style="position:relative;background:rgba(0,0,0,.04);border:1px dashed rgba(0,0,0,.12);border-radius:14px;overflow:hidden;min-height:300px;display:grid;place-items:center">
+            <canvas id="mockCanvasB" style="width:100%;height:auto;display:block"></canvas>
+          </div>
+          <div class="field" style="margin-top:8px"><label>Layers B</label>
+            <div id="ovListB" class="list" style="max-height:320px;overflow:auto;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:8px;background:rgb(var(--bg))"></div>
+          </div>
         </div>
       </div>
     </section>
 
-    <footer class="sub" style="margin-top:16px;text-align:center">Powered by S&S API • Save/Share is encoded in the URL hash • PNG export may be limited by image host CORS.</footer>
+    <footer class="sub" style="margin-top:16px;text-align:center">Sheet + optional SS API • Save/Share is encoded in the URL hash • PNG export may be limited by image host CORS.</footer>
   </div>
 
+  <!-- jsPDF (PDF export) & PapaParse (CSV) -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
   <script>
-  'use strict';
   // ---------- Config ----------
-  const PRICE_FIELD = 'customerPrice';
+  const SHEET_ID = '1EFw4qZn6YSZmPNC_FeW-pSc5PiDPeuaqJe4YjIpgb4U'; // first tab
+  const PRICE_FIELD = 'customerPrice'; // Column G in your sheet
   const IMAGE_FIELD_FRONT = 'colorFrontImage';
   const IMAGE_FIELD_BACK = 'colorBackImage';
 
@@ -251,39 +294,90 @@
     brand: { name: '', logo: '' },
     client: { name: '', email: '', po: '' },
     placements: [],
-    lines: [],
-    catalog: [],
+    lines: [], // {id, styleName, brandName, colorName, image, images:{front,back}, units:[{size, qty, basePrice, unitPrice}], meta}
+    catalog: [], // parsed rows (current view)
     columns: [],
-    catalogOriginal: []
+    catalogOriginal: [] // full base set for current source
   };
+
   const defaultLocations = ['Left Chest','Right Chest','Full Front','Full Back','Sleeve Left','Sleeve Right','Neck/Locker','Hood'];
   const $ = sel => document.querySelector(sel);
 
-  // ---------- Helpers ----------
-  function setLoadStatus(msg, ok=false){ const el = $('#loadStatus'); if(!el) return; el.style.display='block'; el.style.borderColor = ok? 'rgba(16,185,129,.4)' : 'rgba(245,158,11,.3)'; el.style.background = ok? 'rgba(16,185,129,.12)' : 'rgba(245,158,11,.12)'; el.innerHTML = msg; }
-  function debounce(fn, delay=350){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),delay); }; }
+  // ---------- Google Sheet helpers ----------
+  function sheetCsvUrl(id){ return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv`; }
+  async function fetchCsv(url){
+    const r = await fetch(url, { cache: 'no-store' });
+    if(!r.ok) throw new Error(`Fetch failed: ${r.status}`);
+    const text = await r.text();
+    return new Promise((resolve, reject)=>{
+      Papa.parse(text, { header:true, skipEmptyLines:true, complete: res=> resolve(res.data), error: err=> reject(err) });
+    });
+  }
+  function setLoadStatus(msg, ok=false){ const el = $('#loadStatus'); el.style.display='block'; el.style.borderColor = ok? 'rgba(16,185,129,.4)' : 'rgba(245,158,11,.3)'; el.style.background = ok? 'rgba(16,185,129,.12)' : 'rgba(245,158,11,.12)'; el.innerHTML = msg; }
+
+  async function loadSheet(){
+    try{
+      setLoadStatus('Loading Google Sheet…');
+      const rows = await fetchCsv(sheetCsvUrl(SHEET_ID));
+      if(!rows || !rows.length){ setLoadStatus('Loaded but found no rows. Make sure the sheet is shareable/public or published to the web as CSV.', false); return; }
+      state.catalog = rows.map(r=> Object.fromEntries(Object.entries(r).map(([k,v])=>[String(k).trim(), String(v??'').trim()])) );
+      state.catalogOriginal = state.catalog.slice();
+      state.columns = Object.keys(state.catalog[0]||{});
+      setLoadStatus(`Loaded <b>${state.catalog.length}</b> rows with <b>${state.columns.length}</b> columns.`, true);
+      updateFilterControls(state.catalogOriginal);
+      refreshCatalogDisplay();
+    }catch(err){ setLoadStatus('Error: '+ err.message, false); }
+  }
+
+  // ---------- S&S API helper (optional; requires /api/ssaw) ----------
+  function debounce(fn, delay=350){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),delay); } }
   async function ssawFindByStyle(q, extra={}){
-    const params = new URLSearchParams({ path:'products', style:q, fields:[ 'sku','styleID','brandName','styleName','colorName','sizeName','qty', 'customerPrice','salePrice','piecePrice', IMAGE_FIELD_FRONT, IMAGE_FIELD_BACK ].join(',') });
+    const params = new URLSearchParams({
+      path:'products', style:q,
+      fields:[ 'sku','styleID','brandName','styleName','colorName','sizeName','qty', 'customerPrice','salePrice','piecePrice', IMAGE_FIELD_FRONT, IMAGE_FIELD_BACK ].join(',')
+    });
     for (const [k,v] of Object.entries(extra||{})) params.set(k, v);
     const r = await fetch(`/api/ssaw?${params}`);
     if(!r.ok) throw new Error(`S&S error ${r.status}`);
     return r.json();
   }
 
-  // ---------- Catalog ----------
+  // ---------- Pricing: quantity breaks ----------
+  function priceMultiplier(qty){
+    if(qty < 12) return 2.5;
+    if(qty <= 23) return 1.0;
+    if(qty <= 47) return 0.9;
+    if(qty <= 71) return 0.8;
+    if(qty <= 143) return 0.75;
+    if(qty <= 199) return 0.7;
+    return 0.65; // >200
+  }
+  function recalcLine(line){
+    const totalQty = line.units.reduce((a,b)=> a + Number(b.qty||0), 0);
+    const mult = priceMultiplier(totalQty);
+    line.units.forEach(u=>{ u.unitPrice = Number(u.basePrice||0) * mult; });
+  }
+
+  // ---------- Catalog UI ----------
+  function searchCatalog(){ onSearch(); }
+
+  // Build filters from current dataset and re-render
   function updateFilterControls(base){
     const uniq = (arr)=> Array.from(new Set(arr.filter(Boolean))).sort((a,b)=> String(a).localeCompare(String(b)));
     const brands = uniq(base.map(r=>r.brandName));
     const styles = uniq(base.map(r=>r.styleName));
     const colors = uniq(base.map(r=>r.colorName));
     const sizes  = uniq(base.map(r=>r.sizeName));
-    function fill(selId, values){ const sel=$(selId); if(!sel) return; const prev=sel.value; sel.innerHTML = ['<option value="">All</option>'].concat(values.map(v=>`<option value="${v}">${v}</option>`)).join(''); if([...sel.options].some(o=>o.value===prev)) sel.value = prev; }
+    function fill(selId, values){ const sel=document.querySelector(selId); if(!sel) return; const prev=sel.value; sel.innerHTML = ['<option value="">All</option>'].concat(values.map(v=>`<option value="${v}">${v}</option>`)).join(''); if([...sel.options].some(o=>o.value===prev)) sel.value = prev; }
     fill('#brandFilter', brands); fill('#styleFilter', styles); fill('#colorFilter', colors); fill('#sizeFilter', sizes);
   }
   function applyFiltersAndSort(items){
     const bf=$('#brandFilter')?.value||''; const sf=$('#styleFilter')?.value||''; const cf=$('#colorFilter')?.value||''; const zf=$('#sizeFilter')?.value||''; const sfld=$('#sortField')?.value||'brandName'; const sdir=$('#sortDir')?.value||'asc';
     let out = items.filter(r=> (!bf || r.brandName===bf) && (!sf || r.styleName===sf) && (!cf || r.colorName===cf) && (!zf || r.sizeName===zf));
-    const cmp = (a,b)=>{ let va=a[sfld], vb=b[sfld]; if(sfld===PRICE_FIELD){ va=parseFloat(String(va).replace(/[^0-9.\-]/g,''))||0; vb=parseFloat(String(vb).replace(/[^0-9.\-]/g,''))||0; return va-vb; } va = String(va||'').toLowerCase(); vb=String(vb||'').toLowerCase(); if(va<vb) return -1; if(va>vb) return 1; return 0; };
+    const cmp = (a,b)=>{
+      let va=a[sfld], vb=b[sfld];
+      if(sfld===PRICE_FIELD){ va=parseFloat(String(va).replace(/[^0-9.\-]/g,''))||0; vb=parseFloat(String(vb).replace(/[^0-9.\-]/g,''))||0; return va-vb; }
+      va = String(va||'').toLowerCase(); vb=String(vb||'').toLowerCase(); if(va<vb) return -1; if(va>vb) return 1; return 0; };
     out.sort(cmp); if(sdir==='desc') out.reverse();
     return out;
   }
@@ -296,25 +390,33 @@
     state.catalog = final; renderResults(final);
     setLoadStatus(`Showing <b>${final.length}</b> item(s).`, true);
   }
+
   const onSearch = debounce(async function(){
+    const src = $('#sourceSelect')?.value || 'sheet';
     const q = ($('#searchInput')?.value||'').trim();
-    if(!q){ setLoadStatus('Enter a brand, style, part number, or SKU to search S&S.'); $('#results').innerHTML=''; return; }
-    setLoadStatus('Searching S&S…');
-    try{
-      const rows = await ssawFindByStyle(q);
-      state.catalogOriginal = rows.map(r=>({ ...r }));
-      state.columns = Object.keys(rows[0]||{});
-      updateFilterControls(state.catalogOriginal);
-      setLoadStatus(`Found <b>${rows.length}</b> results from S&S.`, true);
+    if(src==='ssaw'){
+      if(!q){ setLoadStatus('Enter a style, SKU, or brand to search S&S.'); return; }
+      setLoadStatus('Searching S&S…');
+      try{
+        const rows = await ssawFindByStyle(q);
+        state.catalogOriginal = rows.map(r=>({ ...r }));
+        state.columns = Object.keys(rows[0]||{});
+        updateFilterControls(state.catalogOriginal);
+        setLoadStatus(`Found <b>${rows.length}</b> results from S&S.`, true);
+        refreshCatalogDisplay();
+      }catch(err){ setLoadStatus('Error: '+err.message); }
+    } else {
+      setLoadStatus('Filtering Sheet…');
       refreshCatalogDisplay();
-    }catch(err){ setLoadStatus('Error: '+err.message); }
+    }
   }, 400);
-  function searchCatalog(){ onSearch(); }
 
   function getVal(row, key){ return row?.[key] ?? ''; }
+
   function renderResults(items){
     const host = $('#results'); host.innerHTML='';
     if(!items.length){ host.innerHTML = '<div class="muted">No results. Try different keywords or filters.</div>'; return; }
+
     items.slice(0, 200).forEach((row,i)=>{
       const img = getVal(row, IMAGE_FIELD_FRONT) || 'https://via.placeholder.com/64x64?text=IMG';
       const brand = getVal(row,'brandName');
@@ -323,6 +425,7 @@
       const sku = getVal(row,'sku');
       const size = getVal(row,'sizeName') || 'One Size';
       const base = parseFloat(String(getVal(row, PRICE_FIELD)).replace(/[^0-9.\-]/g,'')) || 0;
+
       const card = document.createElement('div');
       card.className = 'list';
       card.style.cssText='border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:10px;background:rgb(var(--bg));';
@@ -354,18 +457,6 @@
     });
   }
 
-  // ---------- Quote Lines ----------
-  function priceMultiplier(qty){
-    if(qty < 12) return 2.5;
-    if(qty <= 23) return 1.0;
-    if(qty <= 47) return 0.9;
-    if(qty <= 71) return 0.8;
-    if(qty <= 143) return 0.75;
-    if(qty <= 199) return 0.7;
-    return 0.65;
-  }
-  function recalcLine(line){ const totalQty = line.units.reduce((a,b)=> a + Number(b.qty||0), 0); const mult = priceMultiplier(totalQty); line.units.forEach(u=>{ u.unitPrice = Number(u.basePrice||0) * mult; }); }
-
   function addLineFromRow(row, size, qty, basePrice, image, brand, style, color){
     let line = state.lines.find(l => l.brandName===brand && l.styleName===style && l.colorName===color);
     if(!line){
@@ -378,6 +469,7 @@
     recalcLine(line);
     renderLines(); calcTotals(); populateMockLineOptions();
   }
+
   function renderLines(){
     const host = $('#quoteLines'); host.innerHTML='';
     if(!state.lines.length){ host.innerHTML = '<div class="muted">No garments added yet. Use the catalog on the left.</div>'; return; }
@@ -425,22 +517,64 @@
     })
   }
 
-  // ---------- Placements & Totals ----------
-  function addPlacement(){ state.placements.push({ id: crypto.randomUUID(), location: defaultLocations[Math.min(state.placements.length, defaultLocations.length-1)] || 'Custom', technique: 'DTF', width: 4, height: 4, colors: 1 }); renderPlacements(); calcTotals(); }
-  function renderPlacements(){ const host = $('#placements'); host.innerHTML=''; if(!state.placements.length){ host.innerHTML = '<div class="muted">No placements yet.</div>'; return; } state.placements.forEach(p=>{ const row = document.createElement('div'); row.className = 'loc'; row.innerHTML = `
-        <select data-id="${p.id}" data-key="location">${defaultLocations.concat(['Custom']).map(loc=>`<option ${p.location===loc?'selected':''}>${loc}</option>`).join('')}</select>
-        <select data-id="${p.id}" data-key="technique">${['DTF','Screen Print'].map(t=>`<option ${p.technique===t?'selected':''}>${t}</option>`).join('')}</select>
+  // ---------- Placements ----------
+  function addPlacement(){
+    state.placements.push({ id: crypto.randomUUID(), location: defaultLocations[Math.min(state.placements.length, defaultLocations.length-1)] || 'Custom', technique: 'DTF', width: 4, height: 4, colors: 1 });
+    renderPlacements(); calcTotals();
+  }
+  function renderPlacements(){
+    const host = $('#placements'); host.innerHTML='';
+    if(!state.placements.length){ host.innerHTML = '<div class="muted">No placements yet.</div>'; return; }
+    state.placements.forEach(p=>{
+      const row = document.createElement('div'); row.className = 'loc';
+      row.innerHTML = `
+        <select data-id="${p.id}" data-key="location">
+          ${defaultLocations.concat(['Custom']).map(loc=>`<option ${p.location===loc?'selected':''}>${loc}</option>`).join('')}
+        </select>
+        <select data-id="${p.id}" data-key="technique">
+          ${['DTF','Screen Print'].map(t=>`<option ${p.technique===t?'selected':''}>${t}</option>`).join('')}
+        </select>
         <label>W (in)</label><input type="number" min="1" step="0.1" value="${p.width}" data-id="${p.id}" data-key="width" />
         <label>H (in)</label><input type="number" min="1" step="0.1" value="${p.height}" data-id="${p.id}" data-key="height" />
         <label class="colorsLab ${p.technique==='Screen Print'?'':'hidden'}">Colors</label>
         <input class="colorsInp ${p.technique==='Screen Print'?'':'hidden'}" type="number" min="1" step="1" value="${p.colors}" data-id="${p.id}" data-key="colors" />
-        <button class="btn ghost right" data-remove="${p.id}">Remove</button>`;
-      row.querySelectorAll('select,input').forEach(el=>{ el.oninput = ()=>{ const pl = state.placements.find(x=>x.id===el.dataset.id); const key = el.dataset.key; let val = el.value; if(['width','height','colors'].includes(key)) val = Number(val); if(key==='technique'){ row.querySelector('.colorsLab').classList.toggle('hidden', val!=='Screen Print'); row.querySelector('.colorsInp').classList.toggle('hidden', val!=='Screen Print'); } pl[key] = val; calcTotals(); } });
+        <button class="btn ghost right" data-remove="${p.id}">Remove</button>
+      `;
+      row.querySelectorAll('select,input').forEach(el=>{
+        el.oninput = ()=>{
+          const pl = state.placements.find(x=>x.id===el.dataset.id);
+          const key = el.dataset.key; let val = el.value;
+          if(['width','height','colors'].includes(key)) val = Number(val);
+          if(key==='technique'){
+            row.querySelector('.colorsLab').classList.toggle('hidden', val!=='Screen Print');
+            row.querySelector('.colorsInp').classList.toggle('hidden', val!=='Screen Print');
+          }
+          pl[key] = val; calcTotals();
+        }
+      });
       row.querySelector('[data-remove]').onclick = ()=>{ state.placements = state.placements.filter(x=>x.id!==p.id); renderPlacements(); calcTotals(); };
       host.appendChild(row);
-    }); }
+    });
+  }
 
-  function perPieceDecoration(){ let setup = 0; let perPiece = 0; state.placements.forEach(p=>{ if(p.technique==='DTF'){ const sqft = (Number(p.width)||0) * (Number(p.height)||0) / 144; const base = sqft * Number($('#dtfRate').value||state.settings.dtfRate); const withWaste = base * (1 + (Number($('#wastePct').value||state.settings.wastePct)/100)); perPiece += withWaste; } else { const colors = Math.max(1, Number(p.colors)||1); perPiece += colors * Number($('#spRun').value||state.settings.spRun); setup += colors * Number($('#spSetup').value||state.settings.spSetup); } }); return { perPiece, setup }; }
+  // ---------- Totals ----------
+  function perPieceDecoration(){
+    let setup = 0; let perPiece = 0;
+    state.placements.forEach(p=>{
+      if(p.technique==='DTF'){
+        const sqft = (Number(p.width)||0) * (Number(p.height)||0) / 144;
+        const base = sqft * Number($('#dtfRate').value||state.settings.dtfRate);
+        const withWaste = base * (1 + (Number($('#wastePct').value||state.settings.wastePct)/100));
+        perPiece += withWaste;
+      } else {
+        const colors = Math.max(1, Number(p.colors)||1);
+        perPiece += colors * Number($('#spRun').value||state.settings.spRun);
+        setup += colors * Number($('#spSetup').value||state.settings.spSetup);
+      }
+    });
+    return { perPiece, setup };
+  }
+
   function calcTotals(){
     $('#kpiDTF').textContent = `$${Number($('#dtfRate').value||state.settings.dtfRate).toFixed(2)}`;
     $('#kpiSetup').textContent = `$${Number($('#spSetup').value||state.settings.spSetup).toFixed(2)}`;
@@ -448,31 +582,30 @@
     $('#kpiMU').textContent = `${Number($('#markupPct').value||state.settings.markupPct)}%`;
 
     const totals = { qty:0, garmentCost:0, garmentSell:0, decoPerPiece:0, setup:0, decoTotal:0, shipping: Number($('#shipping').value||0), tax:0, grand:0 };
-    const deco = perPieceDecoration(); totals.decoPerPiece = deco.perPiece; totals.setup = deco.setup;
+    const deco = perPieceDecoration();
+    totals.decoPerPiece = deco.perPiece; totals.setup = deco.setup;
 
-    state.lines.forEach(line=>{ const lineQty = line.units.reduce((a,b)=>a+Number(b.qty||0),0); const lineCost = line.units.reduce((sum,u)=> sum + Number(u.qty||0)*Number(u.unitPrice||0), 0); totals.qty += lineQty; totals.garmentCost += lineCost; });
+    state.lines.forEach(line=>{
+      const lineQty = line.units.reduce((a,b)=>a+Number(b.qty||0),0);
+      const lineCost = line.units.reduce((sum,u)=> sum + Number(u.qty||0)*Number(u.unitPrice||0), 0);
+      totals.qty += lineQty; totals.garmentCost += lineCost;
+    });
 
     const markup = 1 + (Number($('#markupPct').value||state.settings.markupPct)/100);
     totals.garmentSell = totals.garmentCost * markup;
-    const garmentPerPiece = totals.qty ? (totals.garmentSell / totals.qty) : 0;
-    const pricePerPiece = garmentPerPiece + totals.decoPerPiece;
-
     totals.decoTotal = (totals.qty * totals.decoPerPiece) + totals.setup;
     const sub = totals.garmentSell + totals.decoTotal + totals.shipping;
     totals.tax = sub * (Number($('#taxPct').value||state.settings.taxPct)/100);
     totals.grand = sub + totals.tax;
 
-    function money(n){ return `$${Number(n||0).toFixed(2)}`; }
-    let html = '';
-    html += `<div class="muted">Pieces</div><div><b>${totals.qty}</b></div>`;
-    html += `<div class="muted">Garment $/ea</div><div><b>${money(garmentPerPiece)}</b></div>`;
-    html += `<div class="muted">Decoration $/ea</div><div><b>${money(totals.decoPerPiece)}</b></div>`;
-    html += `<div class="muted">Price per piece</div><div><b class="accent">${money(pricePerPiece)}</b></div>`;
-    if(totals.setup>0) html += `<div class="muted">Screen setups</div><div><b>${money(totals.setup)}</b></div>`;
-    if(totals.shipping>0) html += `<div class="muted">Shipping</div><div><b>${money(totals.shipping)}</b></div>`;
-    if(totals.tax>0) html += `<div class="muted">Tax</div><div><b>${money(totals.tax)}</b></div>`;
-    html += `<div class="muted">Grand Total</div><div><b class="accent">${money(totals.grand)}</b></div>`;
-    $('#totals').innerHTML = html;
+    $('#totals').innerHTML = `
+      <div class="muted">Total Pieces</div><div><b>${totals.qty}</b></div>
+      <div class="muted">Garments (w/ markup)</div><div><b>$${totals.garmentSell.toFixed(2)}</b></div>
+      <div class="muted">Decoration per piece</div><div><b>$${totals.decoPerPiece.toFixed(2)}</b></div>
+      <div class="muted">Screen setups</div><div><b>$${totals.setup.toFixed(2)}</b></div>
+      <div class="muted">Shipping</div><div><b>$${totals.shipping.toFixed(2)}</b></div>
+      <div class="muted">Tax</div><div><b>$${totals.tax.toFixed(2)}</b></div>
+      <div class="muted">Grand Total</div><div><b class="accent">$${totals.grand.toFixed(2)}</b></div>`;
   }
 
   // ---------- Mockup Studio (Factory for A & B) ----------
