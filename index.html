@@ -230,8 +230,31 @@ const defaultLocations=['Left Chest','Right Chest','Full Front','Full Back','Sle
 function setLoadStatus(msg,ok=false){const el=$('#loadStatus');if(!el)return;el.style.display='block';el.style.borderColor=ok?'rgba(16,185,129,.4)':'rgba(245,158,11,.3)';el.style.background=ok?'rgba(16,185,129,.12)':'rgba(245,158,11,.12)';el.innerHTML=msg}
 let toastTimer=null;function showToast(message,onUndo){const t=document.getElementById('toast');if(!t)return;const msgEl=document.getElementById('toastMsg');const undoBtn=document.getElementById('toastUndo');msgEl.textContent=message;t.classList.remove('hidden');clearTimeout(toastTimer);undoBtn.onclick=()=>{t.classList.add('hidden');onUndo&&onUndo()};toastTimer=setTimeout(()=>{t.classList.add('hidden');undoBtn.onclick=null},6000)}
 async function ssawFindByStyle(q,extra={}){const params=new URLSearchParams({path:'products',style:q,fields:['sku','styleID','brandName','styleName','colorName','sizeName','qty','customerPrice','salePrice','piecePrice',IMAGE_FIELD_FRONT,IMAGE_FIELD_BACK].join(',')});for(const[k,v]of Object.entries(extra||{}))params.set(k,v);const r=await fetch(`/api/ssaw?${params}`);if(!r.ok)throw new Error(`S&S error ${r.status}`);return r.json()}
-async function ssawQueryProducts(params){const p=new URLSearchParams({path:'products'});const wanted=['sku','styleID','brandName','styleName','colorName','sizeName','qty','customerPrice','salePrice','piecePrice',IMAGE_FIELD_FRONT,IMAGE_FIELD_BACK];p.set('fields',wanted.join(','));for(const[k,v]of Object.entries(params||{})){if(v!==undefined&&v!==null&&v!=='')p.set(k,v)}const r=await fetch(`/api/ssaw?${p}`);if(!r.ok){try{return []}catch(_){}return []}return r.json()}
-async function ssawSearchProducts(q){const fields=['sku','styleID','brandName','styleName','colorName','sizeName','qty','customerPrice','salePrice','piecePrice',IMAGE_FIELD_FRONT,IMAGE_FIELD_BACK].join(',');const tasks=[ssawQueryProducts({style:q,fields}),ssawQueryProducts({sku:q,fields}),ssawQueryProducts({search:q,fields})];const settled=await Promise.allSettled(tasks);const rows=[];for(const s of settled){if(s.status==='fulfilled'&&Array.isArray(s.value))rows.push(...s.value)}const seen=new Set();const dedup=rows.filter(r=>{const key=`${r.sku||''}|${r.sizeName||''}`;if(seen.has(key))return false;seen.add(key);return true});return dedup}
+async function ssawQueryProducts(params){
+  const p=new URLSearchParams({path:'products'});
+  const wanted=['sku','styleID','brandName','styleName','colorName','sizeName','qty','customerPrice','salePrice','piecePrice',IMAGE_FIELD_FRONT,IMAGE_FIELD_BACK];
+  p.set('fields',wanted.join(','));
+  for(const [k,v] of Object.entries(params||{})){
+    if(v!==undefined && v!==null && v!=='') p.set(k,v);
+  }
+  const r=await fetch(`/api/ssaw?${p}`);
+  if(!r.ok){ return []; }
+  try{ return await r.json(); }catch(_){ return []; }
+}
+async function ssawSearchProducts(q){
+  const fields=['sku','styleID','brandName','styleName','colorName','sizeName','qty','customerPrice','salePrice','piecePrice',IMAGE_FIELD_FRONT,IMAGE_FIELD_BACK].join(',');
+  const tasks=[
+    ssawQueryProducts({style:q,fields}),
+    ssawQueryProducts({partnumber:q,fields}),
+    ssawQueryProducts({styleid:q,fields})
+  ];
+  const settled=await Promise.allSettled(tasks);
+  const rows=[];
+  for(const s of settled){ if(s.status==='fulfilled' && Array.isArray(s.value)) rows.push(...s.value); }
+  const seen=new Set();
+  const dedup=rows.filter(r=>{ const key=`${r.sku||''}|${r.sizeName||''}`; if(seen.has(key)) return false; seen.add(key); return true; });
+  return dedup
+}
 async function ssawGetStylesByIds(ids){if(!ids?.length) return [];const params=new URLSearchParams({path:'styles',styleid:ids.join(','),fields:['styleID','title','brandName','styleName'].join(',')});const r=await fetch(`/api/ssaw?${params}`);if(!r.ok) throw new Error(`S&S styles error ${r.status}`);return r.json()}
 function priceMultiplier(q){if(q<12)return 2.5; if(q<=23)return 1.0; if(q<=47)return 0.9; if(q<=71)return 0.8; if(q<=143)return 0.75; if(q<=199)return 0.7; return 0.65}
 function recalcLine(line){const total=line.units.reduce((a,b)=>a+Number(b.qty||0),0);const m=priceMultiplier(total);line.units.forEach(u=>u.unitPrice=Number(u.basePrice||0)*m)}
