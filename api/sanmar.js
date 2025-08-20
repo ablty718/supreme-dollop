@@ -1,12 +1,28 @@
 // /api/sanmar.js
-// SOAP proxy for SanMar search -> JSON (optionally normalized)
-// Deps:  npm i fast-xml-parser
-// Env:
-//   SANMAR_SOAP_ENDPOINT (required) e.g. https://.../SanMarService.svc
-//   SANMAR_SOAP_NS                   default 'http://api.sanmar.com/'
-//   SANMAR_SOAP_ACTION_PREFIX        e.g. 'http://api.sanmar.com/'
-//   SANMAR_SOAP_VERSION              '1.1' (default) or '1.2'
-//   SANMAR_USER, SANMAR_PASS, SANMAR_CUSTOMER_NUMBER (optional if required by WSDL)
+// SanMar SOAP proxy — correct param mapping + better endpoint handling
+// ---------------------------------------------------------------
+// ✅ What this endpoint accepts (query or JSON body):
+//   q                 → free-text keywords
+//   styleNumber | style | styleid
+//   partNumber  | partnumber
+//   brand       | brandName
+//   color       | colorName
+//   page, pageSize (defaults: 1, 50)
+//   normalize   → '1' | 'true' to return unified product rows
+//   debug       → '1' | 'true' to include troubleshooting payload
+//   endpoint    → (optional) override SANMAR_SOAP_ENDPOINT for testing
+//   action      → optional SOAP method (default: SearchProducts)
+//
+// 🚀 Notes
+// - We map legacy RESTish params like ?path=products&styleid=... into proper SOAP fields.
+// - If SANMAR_SOAP_ENDPOINT is empty, we return a helpful error (and show how to set it).
+// - Requires: npm i fast-xml-parser
+// - Optional env:
+//     SANMAR_SOAP_ENDPOINT (required in prod)
+//     SANMAR_SOAP_NS                default 'http://api.sanmar.com/'
+//     SANMAR_SOAP_ACTION_PREFIX     e.g. 'http://api.sanmar.com/'
+//     SANMAR_SOAP_VERSION           '1.1' (default) or '1.2'
+//     SANMAR_USER, SANMAR_PASS, SANMAR_CUSTOMER_NUMBER (if your WSDL needs auth)
 
 import { XMLParser } from 'fast-xml-parser';
 
@@ -18,8 +34,23 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
 
   try {
-    const endpoint = (process.env.SANMAR_SOAP_ENDPOINT || '').trim();
-    if (!endpoint) return res.status(500).json({ ok: false, error: 'Missing SANMAR_SOAP_ENDPOINT' });
+    // ---- Read query/body & normalize keys
+    const inData = await readInput(req);
+    const params = normalizeIncoming(inData);
+
+    // ---- Resolve endpoint & SOAP config
+    const endpoint = (params.endpoint || process.env.SANMAR_SOAP_ENDPOINT || '').trim();
+    if (!endpoint) {
+      return res.status(500).json({
+        ok: false,
+        error: 'Missing SANMAR_SOAP_ENDPOINT',
+        hint: 'Set an environment variable SANMAR_SOAP_ENDPOINT to your SanMar SOAP service URL or pass ?endpoint=... for testing.',
+        example: {
+          vercel: 'vercel env add SANMAR_SOAP_ENDPOINT',
+          local: 'SANMAR_SOAP_ENDPOINT=https://your.sanmar/ws/SanMarService.svc'
+        }
+      });
+    }
 
     const NS = (process.env.SANMAR_SOAP_NS || 'http://api.sanmar.com/').trim();
     const ACTION_PREFIX = (process.env.SANMAR_SOAP_ACTION_PREFIX || '').trim();
@@ -28,71 +59,41 @@ export default async function handler(req, res) {
     const PASS = process.env.SANMAR_PASS || '';
     const CUST = process.env.SANMAR_CUSTOMER_NUMBER || '';
 
-    // Read params
-    let query;
-    if (req.method === 'POST' && req.headers['content-type']?.includes('application/json')) {
-      query = req.body || {};
-    } else {
-      const url = new URL(req.url, 'http://localhost');
-      query = Object.fromEntries(url.searchParams.entries());
-    }
-    const action = (query.action || 'SearchProducts').trim();
-    const q = (query.q || query.search || '').toString();
-    const page = Number(query.page || 1);
-    const pageSize = Number(query.pageSize || query.limit || 50);
-    const normalize = query.normalize === '1' || query.normalize === 'true';
-    const debug = query.debug === '1' || query.debug === 'true';
+    // ---- Choose action (default SearchProducts)
+    const action = String(inData.action || 'SearchProducts');
 
-    // Build SOAP envelope
-    const bodyXml = buildActionXML({ ns: NS, action, q, page, pageSize });
-    const envelope = buildEnvelope({
-      ns: NS,
-      action,
-      auth: { user: USER, pass: PASS, customer: CUST },
-      payload: bodyXml,
-    });
+    // ---- Build SOAP body
+    const payload = buildActionXML({ action, ns: NS, params });
 
-    // Headers for SOAP 1.1 vs 1.2
+    // ---- Envelope & headers
+    const envelope = buildEnvelope({ ns: NS, action, auth: { user: USER, pass: PASS, customer: CUST }, payload });
     const headers = SOAP_VER === '1.2'
       ? { 'Content-Type': 'application/soap+xml; charset=utf-8' }
       : { 'Content-Type': 'text/xml; charset=utf-8', ...(ACTION_PREFIX || action ? { SOAPAction: ACTION_PREFIX ? `${ACTION_PREFIX}${action}` : action } : {}) };
 
+    // ---- Call SOAP
     const ac = new AbortController();
     const timer = setTimeout(() => ac.abort(), 20000);
-
     const resp = await fetch(endpoint, { method: 'POST', headers, body: envelope, signal: ac.signal });
     clearTimeout(timer);
 
     const rawText = await resp.text();
     if (!resp.ok) {
-      return res.status(resp.status).json({
-        ok: false,
-        status: resp.status,
-        statusText: resp.statusText,
-        bodySnippet: rawText.slice(0, 1200),
-      });
+      return res.status(resp.status).json({ ok: false, status: resp.status, statusText: resp.statusText, bodySnippet: rawText.slice(0, 2000) });
     }
 
-    // Parse XML
-    const parser = new XMLParser({
-      ignoreAttributes: false,
-      removeNSPrefix: true, // collapse ns:Tag -> Tag
-      trimValues: true,
-    });
+    // ---- Parse XML
+    const parser = new XMLParser({ ignoreAttributes: false, removeNSPrefix: true, trimValues: true });
     const xml = parser.parse(rawText);
-
-    // Unwrap body + detect Fault
     const env = xml?.Envelope || xml?.['soap:Envelope'] || xml;
     const body = env?.Body || env?.['soap:Body'] || xml;
     const fault = body?.Fault || body?.['soap:Fault'];
-    if (fault) {
-      return res.status(502).json({ ok: false, fault, message: fault?.faultstring || 'SOAP Fault' });
-    }
+    if (fault) return res.status(502).json({ ok: false, fault, message: fault?.faultstring || 'SOAP Fault' });
 
-    // Try to pick a response node like <SearchProductsResponse><SearchProductsResult>...</...>
     const responseNode = pickResponseNode(body);
     const resultNode = pickResultNode(responseNode);
 
+    const normalize = params.normalize;
     let data = { ok: true, action };
     if (normalize) {
       const items = normalizeProducts(resultNode || body);
@@ -101,11 +102,14 @@ export default async function handler(req, res) {
       data = { ...data, raw: resultNode || body };
     }
 
-    if (debug) {
+    if (params.debug) {
       data.debug = {
+        endpointUsed: endpoint,
+        action,
         sentHeaders: headers,
-        envelopeSnippet: envelope.slice(0, 1200),
-        responseSnippet: rawText.slice(0, 1200),
+        resolvedParams: { ...params, endpoint: undefined },
+        envelopeSnippet: redactSecrets(envelope).slice(0, 1600),
+        responseSnippet: rawText.slice(0, 1600),
       };
     }
 
@@ -117,8 +121,48 @@ export default async function handler(req, res) {
   }
 }
 
-/* ---------------- SOAP helpers ---------------- */
+/* ---------------- Input helpers ---------------- */
+async function readInput(req) {
+  if (req.method === 'POST' && req.headers['content-type']?.includes('application/json')) {
+    return req.body || {};
+  }
+  const url = new URL(req.url, 'http://localhost');
+  return Object.fromEntries(url.searchParams.entries());
+}
 
+function normalizeIncoming(q) {
+  const page = num(q.page) || 1;
+  const pageSize = num(q.pageSize || q.limit) || 50;
+
+  // Accept many aliases; map legacy RESTish keys to SOAPish semantics
+  const params = {
+    keywords: firstVal(q.q, q.search, q.keywords, q.style, q.styleid, q.partnumber, q.partNumber),
+    styleNumber: firstVal(q.styleNumber, q.style, q.styleid),
+    partNumber: firstVal(q.partNumber, q.partnumber),
+    brand: firstVal(q.brand, q.brandName),
+    color: firstVal(q.color, q.colorName),
+    page,
+    pageSize,
+    normalize: yes(q.normalize),
+    debug: yes(q.debug),
+    endpoint: q.endpoint,
+  };
+
+  // If style/part provided but no keywords, don't force keywords
+  if (!params.keywords && (params.styleNumber || params.partNumber)) {
+    // leave keywords empty
+  }
+  return params;
+}
+
+function firstVal(...vals) {
+  for (const v of vals) if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim();
+  return '';
+}
+function yes(v) { return v === '1' || v === 'true' || v === true; }
+function num(v) { const n = Number(v); return Number.isFinite(n) ? n : null; }
+
+/* ---------------- SOAP builders ---------------- */
 function buildEnvelope({ ns, action, auth, payload }) {
   const hasAuth = auth?.user || auth?.pass || auth?.customer;
   return `<?xml version="1.0" encoding="utf-8"?>
@@ -137,17 +181,38 @@ function buildEnvelope({ ns, action, auth, payload }) {
 </soapenv:Envelope>`;
 }
 
-// Adjust element names to match your WSDL if needed
-function buildActionXML({ ns, action, q, page, pageSize }) {
-  const Tag = `san:${escapeXml(action)}`;
-  const kw = q ? `<san:Keywords>${escapeXml(q)}</san:Keywords>` : '';
-  const pg = page ? `<san:PageNumber>${page}</san:PageNumber>` : '';
-  const ps = pageSize ? `<san:PageSize>${pageSize}</san:PageSize>` : '';
-  return `<${Tag}>
-    ${kw}
-    ${pg}
-    ${ps}
-  </${Tag}>`;
+function buildActionXML({ action, ns, params }) {
+  const A = `san:${escapeXml(action)}`;
+
+  // Default → SearchProducts with a flexible set of filters
+  if (!action || /searchproducts/i.test(action)) {
+    const nodes = [
+      node('Keywords', params.keywords),
+      node('StyleNumber', params.styleNumber),
+      node('PartNumber', params.partNumber),
+      node('BrandName', params.brand),
+      node('ColorName', params.color),
+      node('PageNumber', params.page),
+      node('PageSize', params.pageSize),
+    ].filter(Boolean).join('\n');
+    return `<${A}>\n${nodes}\n</${A}>`;
+  }
+
+  // If someone explicitly calls other actions, pass through a minimal shape
+  // (adjust element names to match your WSDL if needed)
+  const nodes = [
+    node('Keywords', params.keywords),
+    node('StyleNumber', params.styleNumber),
+    node('PartNumber', params.partNumber),
+    node('PageNumber', params.page),
+    node('PageSize', params.pageSize),
+  ].filter(Boolean).join('\n');
+  return `<${A}>\n${nodes}\n</${A}>`;
+}
+
+function node(tag, val) {
+  if (val === undefined || val === null || String(val) === '') return '';
+  return `  <san:${tag}>${escapeXml(String(val))}</san:${tag}>`;
 }
 
 function escapeXml(s = '') {
@@ -156,36 +221,23 @@ function escapeXml(s = '') {
 }
 
 /* ---------------- XML pickers & walkers ---------------- */
-
 function pickResponseNode(body) {
-  // Find the first *Response node
   if (!body || typeof body !== 'object') return body;
-  for (const k of Object.keys(body)) {
-    if (/response$/i.test(k)) return body[k];
-  }
+  for (const k of Object.keys(body)) if (/response$/i.test(k)) return body[k];
   return body;
 }
 function pickResultNode(node) {
   if (!node || typeof node !== 'object') return node;
-  for (const k of Object.keys(node)) {
-    if (/result$/i.test(k)) return node[k];
-  }
+  for (const k of Object.keys(node)) if (/result$/i.test(k)) return node[k];
   return node;
 }
-
 function walk(node, fn, key = '') {
   fn(node, key);
-  if (Array.isArray(node)) {
-    for (const item of node) walk(item, fn, key);
-  } else if (node && typeof node === 'object') {
-    for (const k of Object.keys(node)) {
-      walk(node[k], fn, k);
-    }
-  }
+  if (Array.isArray(node)) for (const item of node) walk(item, fn, key);
+  else if (node && typeof node === 'object') for (const k of Object.keys(node)) walk(node[k], fn, k);
 }
 
 /* ---------------- Normalizer ---------------- */
-
 function normalizeProducts(body) {
   const buckets = [];
 
@@ -199,13 +251,12 @@ function normalizeProducts(body) {
   });
   if (directProducts) return directProducts.map(mapProduct);
 
-  // Fallback: any arrays keyed like Product / Item
+  // Fallback buckets
   walk(body, (node, key) => {
     if (Array.isArray(node) && /product|item/i.test(String(key || ''))) buckets.push(...node);
     if (node && typeof node === 'object' && !Array.isArray(node) && /product|item/i.test(String(key || ''))) buckets.push(node);
   });
 
-  // If still empty, collect arrays that look product-ish
   if (!buckets.length) {
     walk(body, (node) => {
       if (Array.isArray(node)) {
@@ -217,8 +268,7 @@ function normalizeProducts(body) {
 
   return buckets.map(mapProduct).filter((x, i, arr) => {
     const key = `${x.sku}|${x.sizeName}`;
-    const seenBefore = arr.findIndex(y => `${y.sku}|${y.sizeName}` === key);
-    return seenBefore === i;
+    return arr.findIndex(y => `${y.sku}|${y.sizeName}` === key) === i;
   });
 }
 
@@ -229,7 +279,7 @@ function mapProduct(p) {
   const color = p.Color || p.ColorName || p.ColorDesc;
   const size = p.Size || p.SizeName;
   const title = p.Description || p.ProductTitle || p.ProductName || p.DescriptionLong || style;
-  const price = num(p.Price) ?? num(p.CustomerPrice) ?? num(p.SalePrice) ?? num(p.Cost) ?? 0;
+  const price = nnum(p.Price) ?? nnum(p.CustomerPrice) ?? nnum(p.SalePrice) ?? nnum(p.Cost) ?? 0;
   const imgFront = p.ImageFrontURL || p.ImageURL || p.Image || pickImage(p);
   const imgBack = p.ImageBackURL || p.BackImageURL || null;
 
@@ -260,14 +310,13 @@ function isProductish(obj) {
   );
 }
 
-function num(v) {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
+function nnum(v) { const n = Number(v); return Number.isFinite(n) ? n : null; }
+function pickImage(p) { for (const k of Object.keys(p || {})) if (/image/i.test(k) && typeof p[k] === 'string' && /^https?:/i.test(p[k])) return p[k]; return null; }
 
-function pickImage(p) {
-  for (const k of Object.keys(p || {})) {
-    if (/image/i.test(k) && typeof p[k] === 'string' && /^https?:/i.test(p[k])) return p[k];
-  }
-  return null;
+/* ---------------- Utilities ---------------- */
+function redactSecrets(s) {
+  return s
+    .replace(/<san:Password>[^<]*<\/san:Password>/gi, '<san:Password>••••••</san:Password>')
+    .replace(/<san:Username>[^<]*<\/san:Username>/gi, '<san:Username>••••••</san:Username>')
+    .replace(/<san:CustomerNumber>[^<]*<\/san:CustomerNumber>/gi, '<san:CustomerNumber>••••••</san:CustomerNumber>');
 }
