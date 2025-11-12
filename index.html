@@ -269,6 +269,48 @@ function setLoadStatus(msg,ok=false){const el=$('#loadStatus');if(!el)return;el.
 let toastTimer=null;function showToast(message,onUndo){const t=document.getElementById('toast');if(!t)return;const msgEl=document.getElementById('toastMsg');const undoBtn=document.getElementById('toastUndo');msgEl.textContent=message;t.classList.remove('hidden');clearTimeout(toastTimer);undoBtn.onclick=()=>{t.classList.add('hidden');onUndo&&onUndo()};toastTimer=setTimeout(()=>{t.classList.add('hidden');undoBtn.onclick=null},6000)}
 
 // --- S&S helpers (unchanged) ---
+
+async function searchCatalog() {
+  const query = document.querySelector('input[type="text"], input[type="search"]').value;
+  const supplier = document.querySelector('select').value; // sns or sanmar
+
+  try {
+    const res = await fetch(`/api/catalog?supplier=${supplier}&query=${encodeURIComponent(query)}`);
+    const products = await res.json();
+
+    const container = document.querySelector("#results") || document.body.appendChild(document.createElement("div"));
+    container.id = "results";
+    container.innerHTML = "";
+
+    if (!products.length) {
+      container.innerHTML = `<p>No results found for "${query}".</p>`;
+      return;
+    }
+
+    products.forEach(p => {
+      const card = document.createElement("div");
+      card.className = "product-card";
+      card.innerHTML = `
+        <h3>${p.brand} — ${p.style}</h3>
+        <p>${p.color} • ${p.size}</p>
+        <p><strong>$${p.price}</strong></p>
+        <img src="${p.imageFront}" alt="${p.style}" width="120" />
+        <small>Source: ${p.provider}</small>
+      `;
+      container.appendChild(card);
+    });
+  } catch (err) {
+    console.error("Error fetching catalog:", err);
+  }
+}
+
+// Hook the search button
+document.querySelectorAll("button").forEach(btn => {
+  if (btn.textContent.trim() === "Search") {
+    btn.addEventListener("click", searchCatalog);
+  }
+});
+  
 async function ssawQueryProducts(params){const p=new URLSearchParams({path:'products'});const wanted=['sku','styleID','brandName','styleName','colorName','sizeName','qty','customerPrice','salePrice','piecePrice',IMAGE_FIELD_FRONT,IMAGE_FIELD_BACK];p.set('fields',wanted.join(','));for(const [k,v] of Object.entries(params||{})){if(v!==undefined&&v!==null&&v!=='')p.set(k,v)}const r=await fetch(`/api/ssaw?${p}`);if(!r.ok){return []}try{return await r.json()}catch(_){return []}}
 async function ssawSearchProducts(q){const fields=['sku','styleID','brandName','styleName','colorName','sizeName','qty','customerPrice','salePrice','piecePrice',IMAGE_FIELD_FRONT,IMAGE_FIELD_BACK].join(',');const tasks=[ssawQueryProducts({style:q,fields}),ssawQueryProducts({partnumber:q,fields}),ssawQueryProducts({styleid:q,fields})];const settled=await Promise.allSettled(tasks);const rows=[];for(const s of settled){if(s.status==='fulfilled'&&Array.isArray(s.value))rows.push(...s.value)}const seen=new Set();const dedup=rows.filter(r=>{const key=`${r.sku||''}|${r.sizeName||''}`;if(seen.has(key))return false;seen.add(key);return true});return dedup}
 async function ssawGetStylesByIds(ids){if(!ids?.length)return[];const params=new URLSearchParams({path:'styles',styleid:ids.join(','),fields:['styleID','title','brandName','styleName'].join(',')});const r=await fetch(`/api/ssaw?${params}`);if(!r.ok)return[];try{return await r.json()}catch(_){return[]}}
@@ -509,40 +551,6 @@ console.assert(roundInc(6.29,0.25)===6.25,'round .25 a');
 console.assert(roundInc(10.97,0.25)===11.0,'round .25 b');
 console.assert(roundInc(10.88,0.25)===10.75,'round .25 c');
 console.groupEnd();
-  async function searchCatalog() {
-    const query = document.querySelector("#searchInput").value;
-    const supplier = document.querySelector("#supplierSelect").value;
-
-    try {
-      const res = await fetch(`/api/catalog?supplier=${supplier}&query=${encodeURIComponent(query)}`);
-      const products = await res.json();
-      
-      const container = document.querySelector("#results");
-      container.innerHTML = "";
-
-      if (products.length === 0) {
-        container.innerHTML = "<p>No products found.</p>";
-        return;
-      }
-
-      // Render simple cards
-      products.forEach(p => {
-        const card = document.createElement("div");
-        card.className = "product-card";
-        card.innerHTML = `
-          <h3>${p.brand} — ${p.style}</h3>
-          <p>${p.color} • ${p.size}</p>
-          <p><strong>$${p.price}</strong></p>
-          <img src="${p.imageFront}" alt="${p.style}" width="100" />
-          <small>Source: ${p.provider}</small>
-        `;
-        container.appendChild(card);
-      });
-    } catch (err) {
-      console.error("Fetch error:", err);
-    }
-  }
-
 </script>
 </body>
 </html>
