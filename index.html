@@ -76,24 +76,21 @@ label{font-size:12px;color:rgb(var(--muted))}
     <button class="btn primary" id="btnExport">Generate PDF</button>
   </div>
 </header>
-<div class="grid">
   <section class="card">
     <h2>Garment Catalog</h2>
-    <div class="sub">Search live from S&S. Results populate filters automatically.</div>
+    <div class="sub">Search live from supplier APIs. SanMar fallback enabled.</div>
     <div class="row" style="margin-top:8px">
-      <span class="pill">Powered by S&S API</span>
-      <span class="pill">Price: customerPrice</span>
-      <span class="pill">Front: colorFrontImage</span>
-      <span class="pill">Back: colorBackImage</span>
+      <input id="searchInput" placeholder="Search by brand, style, SKU..." style="flex:1">
+      <select id="supplierSelect">
+        <option value="sns" selected>S&S</option>
+        <option value="sanmar">SanMar</option>
+      </select>
+      <button id="btnSearch" class="primary">Search</button>
+      <button id="btnReset">Clear</button>
     </div>
-    <div class="row" style="margin-top:10px">
-      <div class="field" style="flex:2">
-        <label>Search catalog</label>
-        <input id="searchInput" placeholder="Search catalog..." />
-<select id="supplierSelect">
-  <option value="sns" selected>S&S</option>
-  <option value="sanmar">SanMar</option>
-</select>
+    <div id="loadStatus" style="margin-top:8px;color:#555"></div>
+    <div id="results" class="list"></div>
+  </section>
 <button onclick="searchCatalog()">Search</button>
 
 <div id="results"></div>
