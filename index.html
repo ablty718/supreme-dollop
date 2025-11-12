@@ -41,6 +41,7 @@ label{font-size:12px;color:rgb(var(--muted))}
 .kpi{display:grid;gap:4px;background:rgb(var(--bg));border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:10px;min-width:120px}
 .kpi b{font-size:20px}
 .loc{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid rgba(0,0,0,.08);border-radius:12px;background:rgb(var(--bg))}
+.loc input{width:76px}
 .alert{padding:10px 12px;border-radius:12px;background:rgba(var(--warn)/.12);border:1px solid rgba(0,0,0,.12)}
 .hidden{display:none}
 .accent{color:rgb(var(--brand))}
@@ -76,24 +77,20 @@ label{font-size:12px;color:rgb(var(--muted))}
     <button class="btn primary" id="btnExport">Generate PDF</button>
   </div>
 </header>
+<div class="grid">
   <section class="card">
     <h2>Garment Catalog</h2>
-    <div class="sub">Search live from supplier APIs. SanMar fallback enabled.</div>
+    <div class="sub">Search live from S&S. Results populate filters automatically.</div>
     <div class="row" style="margin-top:8px">
-      <input id="searchInput" placeholder="Search by brand, style, SKU..." style="flex:1">
-      <select id="supplierSelect">
-        <option value="sns" selected>S&S</option>
-        <option value="sanmar">SanMar</option>
-      </select>
-      <button id="btnSearch" class="primary">Search</button>
-      <button id="btnReset">Clear</button>
+      <span class="pill">Powered by S&S API</span>
+      <span class="pill">Price: customerPrice</span>
+      <span class="pill">Front: colorFrontImage</span>
+      <span class="pill">Back: colorBackImage</span>
     </div>
-    <div id="loadStatus" style="margin-top:8px;color:#555"></div>
-    <div id="results" class="list"></div>
-  </section>
-<button onclick="searchCatalog()">Search</button>
-
-<div id="results"></div>
+    <div class="row" style="margin-top:10px">
+      <div class="field" style="flex:2">
+        <label>Search catalog</label>
+        <input id="searchInput" placeholder="Search by brand, style, color, sku, etc." />
       </div>
       <div class="field" style="max-width:120px">
         <label>&nbsp;</label>
@@ -143,14 +140,15 @@ label{font-size:12px;color:rgb(var(--muted))}
       <div class="field"><label>PO / Ref</label><input id="clientPO"/></div>
     </div>
     <div class="sectionTitle">Placements</div>
-    <div class="sub">Choose pricing table (Transfer or Hoodie) and location. No sqft math — prices are per piece.</div>
+    <div class="sub">Add decoration locations.</div>
     <div id="placements" class="list" style="margin-top:8px"></div>
     <div class="row" style="position:sticky;bottom:0;gap:8px;background:linear-gradient(180deg,transparent,rgba(255,255,255,.9));padding-top:12px">
       <button class="btn" id="btnAddPlacement">Add Placement</button>
-      <span class="right sub">Examples: Left Chest • Full Front • Oversized Back</span>
+      <span class="right sub">Left Chest 4×4 • Full Front 12×14 • Neck 3×3</span>
     </div>
     <div class="sectionTitle">Settings</div>
     <div class="row wrap">
+      <div class="kpi"><span class="muted">DTF $/sqft</span><b id="kpiDTF">$8.00</b></div>
       <div class="kpi"><span class="muted">Screen: Setup /color</span><b id="kpiSetup">$20.00</b></div>
       <div class="kpi"><span class="muted">Screen: Run /color</span><b id="kpiRun">$0.75</b></div>
       <div class="kpi"><span class="muted">Garment Markup</span><b id="kpiMU">35%</b></div>
@@ -160,6 +158,8 @@ label{font-size:12px;color:rgb(var(--muted))}
       <div class="field"><label>Logo URL</label><input id="logoUrl"/></div>
     </div>
     <div class="row" style="margin-top:10px">
+      <div class="field"><label>DTF Rate ($/sqft)</label><input type="number" id="dtfRate" step="0.25" value="10"/></div>
+      <div class="field"><label>Waste/Overage (%)</label><input type="number" id="wastePct" step="1" value="10"/></div>
       <div class="field"><label>Screen Setup ($/color/location)</label><input type="number" id="spSetup" step="0.25" value="20"/></div>
       <div class="field"><label>Screen Run ($/color)</label><input type="number" id="spRun" step="0.25" value="0.75"/></div>
     </div>
@@ -225,103 +225,21 @@ const $=s=>document.querySelector(s);
 const $$=s=>Array.from(document.querySelectorAll(s));
 function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms)}}
 function roundInc(n,inc=0.25){n=Number(n)||0;return Math.round(n/inc)*inc}
-
-// Static transfer pricing tables from the provided sheet
-const TRANSFER_TABLE={
-  'Left Chest':1.50,
-  'Right Chest':1.50,
-  'Full Front':4.50,
-  'Full Back':4.50,
-  'Oversized Back':6.00,
-  'Oversized Chest':6.00,
-  'Team Name':2.50,
-  'Locker Patch':1.50,
-  'Sleeve':1.50,
-};
-const HOODIE_TABLE={
-  'Left Chest':1.00,
-  'Right Chest':1.00,
-  'Full Front':3.50,
-  'Full Back':3.50,
-  'Oversized Back':4.50,
-  'Oversized Chest':4.50,
-  'Team Name':1.50,
-  'Locker Patch':1.00,
-  'Sleeve':1.00,
-};
-const PRICING_TABLES={Transfer:TRANSFER_TABLE,Hoodie:HOODIE_TABLE};
-const PRICING_LOCATIONS=Object.keys(TRANSFER_TABLE); // shared keys
-
-const state={
-  settings:{spSetup:20,spRun:0.75,markupPct:35,taxPct:0,shipping:0},
-  brand:{name:'',logo:''},
-  client:{name:'',email:'',po:''},
-  placements:[],
-  lines:[],
-  catalog:[],columns:[],catalogOriginal:[],catalogFiltered:[],catalogPage:{page:1,size:20,total:0},
-  mock:{A:{base:null,overlays:[],img:null},B:{base:null,overlays:[],img:null}}
-};
-
+const state={settings:{dtfRate:8,wastePct:10,spSetup:20,spRun:0.75,markupPct:35,taxPct:0,shipping:0},brand:{name:'',logo:''},client:{name:'',email:'',po:''},placements:[],lines:[],catalog:[],columns:[],catalogOriginal:[],catalogFiltered:[],catalogPage:{page:1,size:20,total:0},mock:{A:{base:null,overlays:[],img:null},B:{base:null,overlays:[],img:null}}};
+const defaultLocations=['Left Chest','Right Chest','Full Front','Full Back','Sleeve Left','Sleeve Right','Neck/Locker','Hood'];
 function setLoadStatus(msg,ok=false){const el=$('#loadStatus');if(!el)return;el.style.display='block';el.style.borderColor=ok?'rgba(16,185,129,.4)':'rgba(245,158,11,.3)';el.style.background=ok?'rgba(16,185,129,.12)':'rgba(245,158,11,.12)';el.innerHTML=msg}
 let toastTimer=null;function showToast(message,onUndo){const t=document.getElementById('toast');if(!t)return;const msgEl=document.getElementById('toastMsg');const undoBtn=document.getElementById('toastUndo');msgEl.textContent=message;t.classList.remove('hidden');clearTimeout(toastTimer);undoBtn.onclick=()=>{t.classList.add('hidden');onUndo&&onUndo()};toastTimer=setTimeout(()=>{t.classList.add('hidden');undoBtn.onclick=null},6000)}
-
-// --- S&S helpers (unchanged) ---
-
-async function searchCatalog() {
-  const query = document.querySelector('input[type="text"], input[type="search"]').value;
-  const supplier = document.querySelector('select').value; // sns or sanmar
-
-  try {
-    const res = await fetch(`/api/catalog?supplier=${supplier}&query=${encodeURIComponent(query)}`);
-    const products = await res.json();
-
-    const container = document.querySelector("#results") || document.body.appendChild(document.createElement("div"));
-    container.id = "results";
-    container.innerHTML = "";
-
-    if (!products.length) {
-      container.innerHTML = `<p>No results found for "${query}".</p>`;
-      return;
-    }
-
-    products.forEach(p => {
-      const card = document.createElement("div");
-      card.className = "product-card";
-      card.innerHTML = `
-        <h3>${p.brand} — ${p.style}</h3>
-        <p>${p.color} • ${p.size}</p>
-        <p><strong>$${p.price}</strong></p>
-        <img src="${p.imageFront}" alt="${p.style}" width="120" />
-        <small>Source: ${p.provider}</small>
-      `;
-      container.appendChild(card);
-    });
-  } catch (err) {
-    console.error("Error fetching catalog:", err);
-  }
-}
-
-// Hook the search button
-document.querySelectorAll("button").forEach(btn => {
-  if (btn.textContent.trim() === "Search") {
-    btn.addEventListener("click", searchCatalog);
-  }
-});
-  
 async function ssawQueryProducts(params){const p=new URLSearchParams({path:'products'});const wanted=['sku','styleID','brandName','styleName','colorName','sizeName','qty','customerPrice','salePrice','piecePrice',IMAGE_FIELD_FRONT,IMAGE_FIELD_BACK];p.set('fields',wanted.join(','));for(const [k,v] of Object.entries(params||{})){if(v!==undefined&&v!==null&&v!=='')p.set(k,v)}const r=await fetch(`/api/ssaw?${p}`);if(!r.ok){return []}try{return await r.json()}catch(_){return []}}
 async function ssawSearchProducts(q){const fields=['sku','styleID','brandName','styleName','colorName','sizeName','qty','customerPrice','salePrice','piecePrice',IMAGE_FIELD_FRONT,IMAGE_FIELD_BACK].join(',');const tasks=[ssawQueryProducts({style:q,fields}),ssawQueryProducts({partnumber:q,fields}),ssawQueryProducts({styleid:q,fields})];const settled=await Promise.allSettled(tasks);const rows=[];for(const s of settled){if(s.status==='fulfilled'&&Array.isArray(s.value))rows.push(...s.value)}const seen=new Set();const dedup=rows.filter(r=>{const key=`${r.sku||''}|${r.sizeName||''}`;if(seen.has(key))return false;seen.add(key);return true});return dedup}
 async function ssawGetStylesByIds(ids){if(!ids?.length)return[];const params=new URLSearchParams({path:'styles',styleid:ids.join(','),fields:['styleID','title','brandName','styleName'].join(',')});const r=await fetch(`/api/ssaw?${params}`);if(!r.ok)return[];try{return await r.json()}catch(_){return[]}}
-
 function priceMultiplier(q){if(q<12)return 2.5; if(q<=23)return 1.0; if(q<=47)return 0.9; if(q<=71)return 0.8; if(q<=143)return 0.75; if(q<=199)return 0.7; return 0.65}
 function recalcLine(line){const total=line.units.reduce((a,b)=>a+Number(b.qty||0),0);const m=priceMultiplier(total);line.units.forEach(u=>u.unitPrice=Number(u.basePrice||0)*m)}
-
 function updateFilterControls(base){const uniq=a=>Array.from(new Set(a.filter(Boolean))).sort((x,y)=>String(x).localeCompare(String(y)));const brands=uniq(base.map(r=>r.brandName));const styles=uniq(base.map(r=>r.styleName));const colors=uniq(base.map(r=>r.colorName));const sizes=uniq(base.map(r=>r.sizeName));function fill(id,vals){const sel=$(id);if(!sel)return;const prev=sel.value;sel.innerHTML=['<option value="">All</option>'].concat(vals.map(v=>`<option value="${v}">${v}</option>`)).join('');if([...sel.options].some(o=>o.value===prev))sel.value=prev}fill('#brandFilter',brands);fill('#styleFilter',styles);fill('#colorFilter',colors);fill('#sizeFilter',sizes)}
 function applyFiltersAndSort(items){const bf=$('#brandFilter')?.value||'';const sf=$('#styleFilter')?.value||'';const cf=$('#colorFilter')?.value||'';const zf=$('#sizeFilter')?.value||'';const sfld=$('#sortField')?.value||'brandName';const sdir=$('#sortDir')?.value||'asc';let out=items.filter(r=>(!bf||r.brandName===bf)&&(!sf||r.styleName===sf)&&(!cf||r.colorName===cf)&&(!zf||r.sizeName===zf));const cmp=(a,b)=>{let va=a[sfld],vb=b[sfld];if(sfld===PRICE_FIELD){va=parseFloat(String(va).replace(/[^0-9.\-]/g,''))||0;vb=parseFloat(String(vb).replace(/[^0-9.\-]/g,''))||0;return va-vb}va=String(va||'').toLowerCase();vb=String(vb||'').toLowerCase();if(va<vb)return -1;if(va>vb)return 1;return 0};out.sort(cmp);if(sdir==='desc')out.reverse();return out}
 function updatePager(){const pager=$('#pager');if(!pager)return;const total=state.catalogFiltered.length;const size=state.catalogPage.size;const totalPages=Math.max(1,Math.ceil(total/size));state.catalogPage.total=total;if(total===0){pager.style.display='none';return}pager.style.display='flex';const page=Math.min(state.catalogPage.page,totalPages);state.catalogPage.page=page;const start=(page-1)*size+1;const end=Math.min(total,page*size);$('#pagerInfo').textContent=`Showing ${start}–${end} of ${total} • Page ${page} of ${totalPages}`;const prev=$('#btnPrevPage'),next=$('#btnNextPage');if(prev)prev.disabled=page<=1;if(next)next.disabled=page>=totalPages}
 function setPage(p){const size=state.catalogPage.size;const totalPages=Math.max(1,Math.ceil(state.catalogFiltered.length/size));state.catalogPage.page=Math.min(Math.max(1,p),totalPages);const start=(state.catalogPage.page-1)*size;const end=start+size;const slice=state.catalogFiltered.slice(start,end);state.catalog=slice;renderResults(slice);updatePager()}
 function refreshCatalogDisplay(){const base=state.catalogOriginal||[];const final=applyFiltersAndSort(base);state.catalogFiltered=final;const size=Number($('#pageSize')?.value||state.catalogPage.size);state.catalogPage.size=size;state.catalogPage.page=1;const slice=final.slice(0,size);state.catalog=slice;renderResults(slice);setLoadStatus(`Showing ${final.length} item(s).`,true);updatePager()}
 const onSearch=debounce(async function(){const q=($('#searchInput')?.value||'').trim();if(!q){setLoadStatus('Enter a brand, style, part number, or SKU to search S&S.');$('#results').innerHTML='';const pager=$('#pager');if(pager)pager.style.display='none';return}setLoadStatus('Searching S&S…');try{const rows=await ssawSearchProducts(q);const styleIds=Array.from(new Set(rows.map(r=>r.styleID).filter(Boolean)));let titleById={};try{const styles=await ssawGetStylesByIds(styleIds);styles.forEach(s=>{titleById[s.styleID]=s.title||''})}catch(e){}state.catalogOriginal=rows.map(r=>({...r,styleTitle:titleById[r.styleID]||''}));state.columns=Object.keys(rows[0]||{});state.catalogPage.page=1;updateFilterControls(state.catalogOriginal);setLoadStatus(`Found <b>${rows.length}</b> results from S&S.`,true);refreshCatalogDisplay()}catch(err){setLoadStatus('Error: '+err.message)}},400)
-
 function getVal(row,key){return row?.[key]??''}
 function renderResults(items){const host=$('#results');host.innerHTML='';if(!items.length){host.innerHTML='<div class="muted">No results. Try different keywords or filters.</div>';return}items.forEach((row,i)=>{const img=getVal(row,IMAGE_FIELD_FRONT)||'https://via.placeholder.com/64x64?text=IMG';const brand=getVal(row,'brandName');const style=getVal(row,'styleName');const color=getVal(row,'colorName');const sku=getVal(row,'sku');const size=getVal(row,'sizeName')||'One Size';const base=parseFloat(String(getVal(row,PRICE_FIELD)).replace(/[^0-9.\-]/g,''))||0;const title=row.styleTitle||'';const card=document.createElement('div');card.className='list';card.style.cssText='border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:10px;background:rgb(var(--bg));';card.innerHTML=`
 <div class="row" style="align-items:center">
@@ -338,9 +256,7 @@ function renderResults(items){const host=$('#results');host.innerHTML='';if(!ite
 </div>
 </div>
 <details style="margin-top:8px"><summary>View row data</summary><div class="kv" style="margin-top:8px">${state.columns.map(c=>`<div>${c}</div><div>${row[c]??''}</div>`).join('')}</div></details>`;card.querySelector('button').onclick=()=>{const qty=Number(document.getElementById(`qty-${i}`).value||0);const sizeInput=document.getElementById(`size-${i}`).value||'One Size';if(!qty)return;addLineFromRow(row,sizeInput,qty,base,img,brand,style,color)};host.appendChild(card)})}
-
 function addLineFromRow(row,size,qty,basePrice,image,brand,style,color){let line=state.lines.find(l=>l.brandName===brand&&l.styleName===style&&l.colorName===color);if(!line){line={id:crypto.randomUUID(),styleName:style,brandName:brand,colorName:color,styleTitle:row.styleTitle||'',image,images:{front:getVal(row,IMAGE_FIELD_FRONT)||image,back:getVal(row,IMAGE_FIELD_BACK)||''},meta:row,units:[]};state.lines.push(line)}const found=line.units.find(u=>u.size===size);if(found){found.qty+=qty;found.basePrice=basePrice}else{line.units.push({size,qty,basePrice,unitPrice:basePrice})}recalcLine(line);renderLines();calcTotals();populateMockLineOptions()}
-
 function renderLines(){const host=$('#quoteLines');host.innerHTML='';if(!state.lines.length){host.innerHTML='<div class="muted">No garments added yet. Use the catalog on the left.</div>';return}state.lines.forEach(line=>{const el=document.createElement('div');el.className='list';el.style.cssText='border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:10px;background:rgb(var(--bg));';const totalQty=line.units.reduce((a,b)=>a+Number(b.qty||0),0);const garmentSub=line.units.reduce((s,u)=>s+Number(u.qty||0)*Number(u.unitPrice||0),0);el.innerHTML=`
 <div class="row" style="align-items:center">
 <img src="${line.images?.front||line.image||'https://via.placeholder.com/56x56?text=IMG'}" style="width:56px;height:56px;border-radius:10px;border:1px solid rgba(0,0,0,.06);object-fit:cover"/>
@@ -363,99 +279,17 @@ ${line.units.map(u=>`<tr data-line="${line.id}" data-size="${u.size}">
 </tbody></table>
 <details><summary>Show all item fields</summary><div class="kv" style="margin-top:8px">${state.columns.map(c=>`<div>${c}</div><div>${line.meta?.[c]??''}</div>`).join('')}</div></details>
 <div class="row"><span class="muted">Garment subtotal (before markup):</span><b class="right">$${garmentSub.toFixed(2)}</b></div>`;el.querySelector('[data-del]').onclick=()=>{if(!confirm(`Remove item ${line.brandName} ${line.styleName} • ${line.colorName}?`))return;const snapshot=JSON.parse(JSON.stringify(line));state.lines=state.lines.filter(x=>x.id!==line.id);renderLines();calcTotals();populateMockLineOptions();showToast(`Removed item ${line.brandName} ${line.styleName} • ${line.colorName}`,()=>{state.lines.push(snapshot);renderLines();calcTotals();populateMockLineOptions()})};el.querySelectorAll('.sizeQty').forEach(inp=>{const tr=inp.closest('tr');const lid=tr.getAttribute('data-line');const size=tr.getAttribute('data-size');inp.oninput=()=>{const L=state.lines.find(x=>x.id===lid);const unit=L?.units.find(u=>u.size===size);if(!L||!unit)return;unit.qty=Number(inp.value||0);recalcLine(L);renderLines();calcTotals();populateMockLineOptions()}});el.querySelectorAll('[data-size-remove]').forEach(btn=>{btn.onclick=()=>{const[lid,size]=btn.getAttribute('data-size-remove').split('|');const L=state.lines.find(x=>x.id===lid);if(!L)return;if(!confirm(`Remove size ${size} from ${L.brandName} ${L.styleName} • ${L.colorName}?`))return;const idx=L.units.findIndex(u=>u.size===size);if(idx===-1)return;const removedUnit=JSON.parse(JSON.stringify(L.units[idx]));const removedWholeLine=(L.units.length===1);const lineSnapshot=JSON.parse(JSON.stringify(L));if(removedWholeLine){state.lines=state.lines.filter(x=>x.id!==lid)}else{L.units.splice(idx,1);recalcLine(L)}renderLines();calcTotals();populateMockLineOptions();showToast(`Removed ${size} from ${line.brandName} ${line.styleName} • ${line.colorName}`,()=>{const i=state.lines.findIndex(x=>x.id===lid);if(removedWholeLine||i===-1){state.lines.push(lineSnapshot)}else{const units=state.lines[i].units;if(!units.find(u=>u.size===removedUnit.size)){units.splice(Math.min(idx,units.length),0,removedUnit)}recalcLine(state.lines[i])}renderLines();calcTotals();populateMockLineOptions()})}});host.appendChild(el)})}
-
-// NEW: per-piece decoration based on pricing tables (no sqft)
-function perPieceDecoration(){let perPiece=0,setup=0;state.placements.forEach(p=>{
-  if(p.technique==='DTF'){
-    const table=PRICING_TABLES[p.table||'Transfer']||TRANSFER_TABLE;
-    const price=table[p.location]||0;
-    perPiece+=Number(price||0);
-  }else if(p.technique==='Screen Print'){
-    const colors=Number(p.colors||1);
-    perPiece+=colors*Number($('#spRun').value||state.settings.spRun);
-    setup+=colors*Number($('#spSetup').value||state.settings.spSetup);
-  }
-});
-return{perPiece,setup}
-}
-
-function calcTotals(){
-  $('#kpiSetup').textContent=`$${Number($('#spSetup').value||state.settings.spSetup).toFixed(2)}`;
-  $('#kpiRun').textContent=`$${Number($('#spRun').value||state.settings.spRun).toFixed(2)}`;
-  $('#kpiMU').textContent=`${Number($('#markupPct').value||state.settings.markupPct)}%`;
-  const totals={qty:0,garmentCost:0,garmentSell:0,decoPerPiece:0,setup:0,shipping:Number($('#shipping').value||0)};
-  const deco=perPieceDecoration();
-  totals.decoPerPiece=deco.perPiece; totals.setup=deco.setup;
-  state.lines.forEach(line=>{const lineQty=line.units.reduce((a,b)=>a+Number(b.qty||0),0);const lineCost=line.units.reduce((s,u)=>s+Number(u.qty||0)*Number(u.unitPrice||0),0);totals.qty+=lineQty;totals.garmentCost+=lineCost});
-  const markup=1+(Number($('#markupPct').value||state.settings.markupPct)/100);
-  totals.garmentSell=totals.garmentCost*markup;
-  const garmentEaRaw=totals.qty?(totals.garmentSell/totals.qty):0;
-  const priceEaRaw=garmentEaRaw+totals.decoPerPiece;
-  const rGarmentEa=roundInc(garmentEaRaw,0.25);
-  const rDecoEa=roundInc(totals.decoPerPiece,0.25);
-  const rPPE=roundInc(priceEaRaw,0.25);
-  const rSetup=roundInc(totals.setup,0.25);
-  const rShip=roundInc(totals.shipping,0.25);
-  const preTaxRounded=roundInc(rPPE*totals.qty,0.25)+rSetup+rShip;
-  const taxRate=(Number($('#taxPct').value||state.settings.taxPct)/100);
-  const rTax=roundInc(preTaxRounded*taxRate,0.25);
-  const rGrand=roundInc(preTaxRounded+rTax,0.25);
-  const money=n=>`$${Number(n||0).toFixed(2)}`;
-  let html='';
-  html+=`<div class="muted">Pieces</div><div><b>${totals.qty}</b></div>`;
-  html+=`<div class="muted">Garment $/ea</div><div><b>${money(rGarmentEa)}</b></div>`;
-  html+=`<div class="muted">Decoration $/ea</div><div><b>${money(rDecoEa)}</b></div>`;
-  html+=`<div class="muted">Price per piece</div><div><b class="accent">${money(rPPE)}</b></div>`;
-  if(totals.setup>0)html+=`<div class="muted">Screen setups</div><div><b>${money(rSetup)}</b></div>`;
-  if(totals.shipping>0)html+=`<div class="muted">Shipping</div><div><b>${money(rShip)}</b></div>`;
-  if(rTax>0)html+=`<div class="muted">Tax</div><div><b>${money(rTax)}</b></div>`;
-  html+=`<div class="muted">Grand Total</div><div><b class="accent">${money(rGrand)}</b></div>`;
-  $('#totals').innerHTML=html
-}
-
-function renderPlacements(){
-  const host=$('#placements');host.innerHTML='';
-  state.placements.forEach((p,i)=>{
-    const row=document.createElement('div');
-    row.className='loc';
-    const showColors=p.technique==='Screen Print';
-    row.innerHTML=`
-<select data-k="technique">
-  <option ${p.technique==='DTF'?'selected':''}>DTF</option>
-  <option ${p.technique==='Screen Print'?'selected':''}>Screen Print</option>
-</select>
-${p.technique==='DTF' ? `
-<select data-k="table">${Object.keys(PRICING_TABLES).map(t=>`<option ${t===(p.table||'Transfer')?'selected':''}>${t}</option>`).join('')}</select>
-<select data-k="location">${PRICING_LOCATIONS.map(x=>`<option ${x===p.location?'selected':''}>${x}</option>`).join('')}</select>
-<span class="pill">$<span data-kpi="price">0.00</span>/ea</span>
-` : `
-<select data-k="location">${PRICING_LOCATIONS.map(x=>`<option ${x===p.location?'selected':''}>${x}</option>`).join('')}</select>
+function perPieceDecoration(){let perPiece=0,setup=0;state.placements.forEach(p=>{if(p.technique==='DTF'){const w=Number(p.width||0),h=Number(p.height||0);const sqft=(w*h)/144;const over=1+Number($('#wastePct').value||state.settings.wastePct)/100;perPiece+=sqft*Number($('#dtfRate').value||state.settings.dtfRate)*over}else if(p.technique==='Screen Print'){const colors=Number(p.colors||1);perPiece+=colors*Number($('#spRun').value||state.settings.spRun);setup+=colors*Number($('#spSetup').value||state.settings.spSetup)}});return{perPiece,setup}}
+function calcTotals(){$('#kpiDTF').textContent=`$${Number($('#dtfRate').value||state.settings.dtfRate).toFixed(2)}`;$('#kpiSetup').textContent=`$${Number($('#spSetup').value||state.settings.spSetup).toFixed(2)}`;$('#kpiRun').textContent=`$${Number($('#spRun').value||state.settings.spRun).toFixed(2)}`;$('#kpiMU').textContent=`${Number($('#markupPct').value||state.settings.markupPct)}%`;const totals={qty:0,garmentCost:0,garmentSell:0,decoPerPiece:0,setup:0,shipping:Number($('#shipping').value||0)};const deco=perPieceDecoration();totals.decoPerPiece=deco.perPiece;totals.setup=deco.setup;state.lines.forEach(line=>{const lineQty=line.units.reduce((a,b)=>a+Number(b.qty||0),0);const lineCost=line.units.reduce((s,u)=>s+Number(u.qty||0)*Number(u.unitPrice||0),0);totals.qty+=lineQty;totals.garmentCost+=lineCost});const markup=1+(Number($('#markupPct').value||state.settings.markupPct)/100);totals.garmentSell=totals.garmentCost*markup;const garmentEaRaw=totals.qty?(totals.garmentSell/totals.qty):0;const priceEaRaw=garmentEaRaw+totals.decoPerPiece;const rGarmentEa=roundInc(garmentEaRaw,0.25);const rDecoEa=roundInc(totals.decoPerPiece,0.25);const rPPE=roundInc(priceEaRaw,0.25);const rSetup=roundInc(totals.setup,0.25);const rShip=roundInc(totals.shipping,0.25);const preTaxRounded=roundInc(rPPE*totals.qty,0.25)+rSetup+rShip;const taxRate=(Number($('#taxPct').value||state.settings.taxPct)/100);const rTax=roundInc(preTaxRounded*taxRate,0.25);const rGrand=roundInc(preTaxRounded+rTax,0.25);const money=n=>`$${Number(n||0).toFixed(2)}`;let html='';html+=`<div class="muted">Pieces</div><div><b>${totals.qty}</b></div>`;html+=`<div class="muted">Garment $/ea</div><div><b>${money(rGarmentEa)}</b></div>`;html+=`<div class="muted">Decoration $/ea</div><div><b>${money(rDecoEa)}</b></div>`;html+=`<div class="muted">Price per piece</div><div><b class="accent">${money(rPPE)}</b></div>`;if(totals.setup>0)html+=`<div class="muted">Screen setups</div><div><b>${money(rSetup)}</b></div>`;if(totals.shipping>0)html+=`<div class="muted">Shipping</div><div><b>${money(rShip)}</b></div>`;if(rTax>0)html+=`<div class="muted">Tax</div><div><b>${money(rTax)}</b></div>`;html+=`<div class="muted">Grand Total</div><div><b class="accent">${money(rGrand)}</b></div>`;$('#totals').innerHTML=html}
+function renderPlacements(){const host=$('#placements');host.innerHTML='';state.placements.forEach((p,i)=>{const row=document.createElement('div');row.className='loc';row.innerHTML=`
+<select data-k="location">${defaultLocations.map(x=>`<option ${x===p.location?'selected':''}>${x}</option>`).join('')}<option ${p.location&&!defaultLocations.includes(p.location)?'selected':''}>${p.location||'Custom'}</option></select>
+<select data-k="technique"><option ${p.technique==='DTF'?'selected':''}>DTF</option><option ${p.technique==='Screen Print'?'selected':''}>Screen Print</option></select>
+<input data-k="width" type="number" step="0.5" value="${p.width||10}" placeholder="W"/>
+<input data-k="height" type="number" step="0.5" value="${p.height||10}" placeholder="H"/>
 <input data-k="colors" type="number" step="1" value="${p.colors||1}" placeholder="Colors"/>
-`}
-<button class="btn ghost" data-del="${i}">Remove</button>`;
-    // bind
-    row.querySelectorAll('[data-k]').forEach(inp=>{
-      inp.oninput=()=>{const k=inp.getAttribute('data-k');let v=inp.value; if(k==='colors')v=Number(v||0); state.placements[i][k]=v; updatePlacementPriceDisplay(row, state.placements[i]); calcTotals()}
-    });
-    row.querySelector('[data-del]').onclick=()=>{state.placements.splice(i,1);renderPlacements();calcTotals()};
-    host.appendChild(row);
-    updatePlacementPriceDisplay(row, p);
-  });
-  calcTotals()
-}
-
-function updatePlacementPriceDisplay(row, p){
-  const priceEl=row.querySelector('[data-kpi="price"]');
-  if(!priceEl) return;
-  const table=PRICING_TABLES[p.table||'Transfer']||TRANSFER_TABLE;
-  const price=table[p.location]||0;
-  priceEl.textContent=Number(price).toFixed(2);
-}
-
-function addPlacement(){ state.placements.push({technique:'DTF', table:'Transfer', location:'Left Chest', colors:1}); renderPlacements() }
-
+<button class="btn ghost" data-del="${i}">Remove</button>`;row.querySelectorAll('[data-k]').forEach(inp=>{inp.oninput=()=>{const k=inp.getAttribute('data-k');let v=inp.value;if(['width','height','colors'].includes(k))v=Number(v||0);state.placements[i][k]=v;calcTotals()}});row.querySelector('[data-del]').onclick=()=>{state.placements.splice(i,1);renderPlacements();calcTotals()};host.appendChild(row)});calcTotals()}
+function addPlacement(){state.placements.push({location:'Left Chest',technique:'DTF',width:4,height:4,colors:1});renderPlacements()}
 function populateMockLineOptions(){const opts=['<option value="">— choose —</option>'].concat(state.lines.map(l=>`<option value="${l.id}">${l.brandName} ${l.styleName} • ${l.colorName}</option>`)).join('');$('#mockLineA').innerHTML=opts;$('#mockLineB').innerHTML=opts}
-
 function loadImage(url){return new Promise((res,rej)=>{const img=new Image();img.crossOrigin='anonymous';img.onload=()=>res(img);img.onerror=rej;img.src=url})}
 function drawStage(which){const canvas=$(`#mockCanvas${which}`);const ctx=canvas.getContext('2d');const wrap=$(`#stageWrap${which}`);const st=state.mock[which];const w=wrap.clientWidth;const base=st.img;const ratio=base?base.naturalWidth/base.naturalHeight:1;const cw=w;const ch=base?Math.round(cw/ratio):Math.max(300,wrap.clientHeight);canvas.width=cw;canvas.height=ch;ctx.clearRect(0,0,cw,ch);if(base){const scale=Math.min(cw/base.naturalWidth,ch/base.naturalHeight);const bw=base.naturalWidth*scale;const bh=base.naturalHeight*scale;const bx=(cw-bw)/2;const by=(ch-bh)/2;ctx.drawImage(base,bx,by,bw,bh);st.base={x:bx,y:by,w:bw,h:bh}}else{st.base=null}st.overlays.forEach(o=>{ctx.save();ctx.translate(o.x,o.y);ctx.rotate(o.r);ctx.scale(o.s,o.s);ctx.drawImage(o.img,-o.img.width/2,-o.img.height/2);ctx.restore()});let gv=$(`#guideV${which}`),gh=$(`#guideH${which}`);if(!gv){gv=document.createElement('div');gv.id=`guideV${which}`;gv.className='guide v';$(`#stageWrap${which}`).appendChild(gv)}if(!gh){gh=document.createElement('div');gh.id=`guideH${which}`;gh.className='guide h';$(`#stageWrap${which}`).appendChild(gh)}gv.style.left='-1000px';gh.style.top='-1000px'}
 async function setStageBase(which){const side=$(`#mockSide${which}`).value;const lineId=$(`#mockLine${which}`).value;let url='';if(side==='custom'){url=$(`#mockGarmentUrl${which}`).value.trim()}else if(lineId){const line=state.lines.find(l=>l.id===lineId);url=(side==='front'?line?.images?.front:line?.images?.back)||line?.image||''}if(!url)return;try{const img=await loadImage(url);state.mock[which].img=img;drawStage(which)}catch(e){}}
@@ -464,73 +298,14 @@ function addOverlayUrl(which,url){loadImage(url).then(img=>{const st=state.mock[
 function addOverlayFile(which,file){const fr=new FileReader();fr.onload=()=>addOverlayUrl(which,fr.result);fr.readAsDataURL(file)}
 function renderOverlayList(which){const list=$('#ovList'+which);const st=state.mock[which];list.innerHTML='';st.overlays.forEach(o=>{const row=document.createElement('div');row.className='row';row.innerHTML=`<span class="pill" style="min-width:60px">Layer</span><button class="btn ghost" data-del="${o.id}">Remove</button>`;row.querySelector('[data-del]').onclick=()=>{st.overlays=st.overlays.filter(x=>x.id!==o.id);renderOverlayList(which);drawStage(which)};list.appendChild(row)});attachOverlayInteraction(which)}
 function attachOverlayInteraction(which){const canvas=$('#mockCanvas'+which);const st=state.mock[which];let active=null,mode=null;function pick(x,y){for(let i=st.overlays.length-1;i>=0;i--){const o=st.overlays[i];const dx=x-o.x,dy=y-o.y;const dist=Math.hypot(dx,dy);const imgw=o.img.width*o.s,imgh=o.img.height*o.s;const hit=dist<Math.max(imgw,imgh)/2;if(hit)return o}return null}function near(a,b,th=8){return Math.abs(a-b)<=th}canvas.onpointerdown=e=>{const rect=canvas.getBoundingClientRect();const x=e.clientX-rect.left;const y=e.clientY-rect.top;const o=pick(x,y);if(!o)return;active=o;mode='move';canvas.setPointerCapture(e.pointerId)};canvas.onpointermove=e=>{if(!active)return;const rect=canvas.getBoundingClientRect();const x=e.clientX-rect.left;const y=e.clientY-rect.top;if(mode==='move'){active.x+=x;active.y+=y}drawStage(which);const base=state.mock[which].base;if(base){const gv=$('#guideV'+which),gh=$('#guideH'+which);if(near(active.x,base.x+base.w/2)){gv.style.left=(base.x+base.w/2)+'px'}else{gv.style.left='-1000px'}if(near(active.y,base.y+base.h/2)){gh.style.top=(base.y+base.h/2)+'px'}else{gh.style.top='-1000px'}}};canvas.onpointerup=()=>{active=null;mode=null};canvas.onwheel=e=>{const rect=canvas.getBoundingClientRect();const x=e.clientX-rect.left;const y=e.clientY-rect.top;const o=pick(x,y);if(!o)return;e.preventDefault();o.s=Math.min(3,Math.max(0.1,o.s*(e.deltaY<0?1.05:0.95)));drawStage(which)};canvas.oncontextmenu=e=>{const rect=canvas.getBoundingClientRect();const x=e.clientX-rect.left;const y=e.clientY-rect.top;const o=pick(x,y);if(!o)return e.preventDefault();o.r+=Math.PI/16;drawStage(which);e.preventDefault()}}
-
-async function generatePDF(){
-  const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:'pt',format:'letter'});const W=doc.internal.pageSize.getWidth();let y=40;
-  const brand=($('#brandName').value||'').trim()||'Your Business';
-  const logoUrl=($('#logoUrl').value||'').trim();
-  async function toDataURL(url){try{const r=await fetch(url,{mode:'cors'});const b=await r.blob();return await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.readAsDataURL(b)})}catch(_){return null}}
-  doc.setFillColor(88,101,242);doc.rect(0,0,W,64,'F');doc.setTextColor(255);doc.setFont('helvetica','bold');doc.setFontSize(14);doc.text(brand,60,38);doc.setFontSize(22);doc.text('ESTIMATE',W-140,40);doc.setFillColor(255,255,255);doc.circle(30,34,18,'F');if(logoUrl){const logo=await toDataURL(logoUrl);if(logo){try{doc.addImage(logo,'PNG',12,16,36,36)}catch(_){}}}
-  y=82;doc.setTextColor(30);doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text('Date: '+new Date().toLocaleDateString(),40,y);doc.text('Quote #: Q'+Math.random().toString(36).slice(2,8).toUpperCase(),220,y);y+=20;
-  const cName=$('#clientName').value||'';const cEmail=$('#clientEmail').value||'';const cPO=$('#clientPO').value||'';
-  doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('Bill To',40,y);y+=14;doc.setFont('helvetica','normal');doc.setFontSize(10);if(cName){doc.text(cName,40,y);y+=12}if(cEmail){doc.text(cEmail,40,y);y+=12}if(cPO){doc.text('PO: '+cPO,40,y);y+=14}
-  if(state.placements.length){
-    doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('Placements',40,y);y+=10;doc.setDrawColor(230);doc.line(40,y, W-40,y);y+=12;doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(80);
-    const colX={loc:40,tech:210,table:320,price:420,colors:500};
-    doc.text('Location',colX.loc,y);doc.text('Technique',colX.tech,y);doc.text('Table',colX.table,y);doc.text('$ /ea',colX.price,y);doc.text('Colors',colX.colors,y);
-    y+=8;doc.setDrawColor(230);doc.line(40,y, W-40,y);y+=8;doc.setFont('helvetica','normal');doc.setTextColor(30);
-    state.placements.forEach(p=>{
-      const table=p.technique==='DTF'?(p.table||'Transfer'):'';
-      const price=p.technique==='DTF'?(PRICING_TABLES[p.table||'Transfer']?.[p.location]||0):'-';
-      doc.text(String(p.location||''),colX.loc,y);
-      doc.text(String(p.technique||''),colX.tech,y);
-      doc.text(String(table),colX.table,y);
-      doc.text(typeof price==='number'?`$${price.toFixed(2)}`:'-',colX.price,y);
-      doc.text(p.technique==='Screen Print'?String(p.colors||1):'-',colX.colors,y);
-      y+=16
-    });
-    y+=6
-  }
-  const IX={item:40,size:300,qty:380,unit:440,ext:520};
-  doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(30);doc.text('Items',40,y);y+=10;doc.setDrawColor(230);doc.line(40,y, W-40,y);y+=12;doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(80);doc.text('Item',IX.item,y);doc.text('Size',IX.size,y);doc.text('Qty',IX.qty,y);doc.text('Unit',IX.unit,y);doc.text('Ext',IX.ext,y);y+=8;doc.setDrawColor(230);doc.line(40,y, W-40,y);y+=8;doc.setFont('helvetica','normal');doc.setTextColor(30);
-  state.lines.forEach(line=>{const baseName=`${line.brandName||''} ${line.styleName||''} • ${line.colorName||''}`.trim();(line.units||[]).forEach((u,idx)=>{let rowY=y;if(idx===0){doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text(baseName,IX.item,rowY);if(line.styleTitle){doc.setFont('helvetica','normal');doc.setFontSize(9);doc.text(String(line.styleTitle),IX.item,rowY+12);rowY+=12}}doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text(String(u.size||''),IX.size,rowY);doc.text(String(u.qty||0),IX.qty,rowY);doc.text('$'+Number(u.unitPrice||0).toFixed(2),IX.unit,rowY);doc.text('$'+(Number(u.qty||0)*Number(u.unitPrice||0)).toFixed(2),IX.ext,rowY);y=rowY+16});y+=4});
-  // totals
-  const deco=perPieceDecoration();const totals={qty:0,garmentCost:0};
-  state.lines.forEach(line=>{const lineQty=(line.units||[]).reduce((a,b)=>a+Number(b.qty||0),0);const lineCost=(line.units||[]).reduce((s,u)=>s+Number(u.qty||0)*Number(u.unitPrice||0),0);totals.qty+=lineQty;totals.garmentCost+=lineCost});
-  const markup=1+(Number($('#markupPct').value||state.settings.markupPct)/100);
-  const garmentSell=totals.garmentCost*markup;const shipping=Number($('#shipping').value||0);const taxRate=Number($('#taxPct').value||0)/100;const garmentEaRaw=totals.qty?(garmentSell/totals.qty):0;const priceEaRaw=garmentEaRaw+(deco.perPiece||0);const rPPE=roundInc(priceEaRaw,0.25);const rSetup=roundInc(deco.setup||0,0.25);const rShipping=roundInc(shipping,0.25);const preTaxRounded=roundInc(rPPE*totals.qty,0.25)+rSetup+rShipping;const rTax=roundInc(preTaxRounded*taxRate,0.25);const rGrand=roundInc(preTaxRounded+rTax,0.25);const rGarmentSell=roundInc(garmentSell,0.25);const rDecoPer=roundInc(deco.perPiece||0,0.25);
-  doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(30);doc.text('Totals',40,y);y+=10;const boxW=(W-80-16)/2;function totalRow(x,yy,label,val,accent){if(accent){doc.setFillColor(232,235,255)}else{doc.setFillColor(247,248,251)}doc.roundedRect(x,yy,boxW,28,6,6,'F');doc.setFont('helvetica','normal');doc.setTextColor(90);doc.setFontSize(10);doc.text(label,x+10,yy+18);doc.setFont('helvetica','bold');doc.setTextColor(accent?[88,101,242]:[20,20,20]);doc.setFontSize(accent?14:11);doc.text(val,x+boxW-10,yy+18,{align:'right'})}function fmt(n){return '$'+Number(n||0).toFixed(2)}
-  totalRow(40,y,'Total Pieces',String(totals.qty));
-  totalRow(40,y+34,'Garments (w/ markup)',fmt(rGarmentSell));
-  totalRow(40,y+68,'Decoration per piece',fmt(rDecoPer));
-  totalRow(40,y+102,'Screen setups',fmt(rSetup));
-  totalRow(40+boxW+16,y,'Shipping',fmt(rShipping));
-  totalRow(40+boxW+16,y+34,'Tax',fmt(rTax));
-  totalRow(40+boxW+16,y+68,'Grand Total',fmt(rGrand),true);
-  y+=140;
-  // mockups (unchanged)
-  const addMock=(canvas,x,label)=>{if(!canvas||!canvas.width||!canvas.height)return 0;doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(30);if(label)doc.text(label,x,y);if(label)y+=10;const colW=(W-80-16)/2;const w=(x>40?colW:W-80);const scale=Math.min(1,w/canvas.width);const h=canvas.height*scale;doc.addImage(canvas.toDataURL('image/png'),'PNG',x,y,w,h);y+=h+10;return h};
-  const haveA=$('#mockCanvasA').width>0&&$('#mockCanvasA').height>0;const haveB=$('#mockCanvasB').width>0&&$('#mockCanvasB').height>0;
-  if(haveA&&haveB){const colW=(W-80-16)/2;doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(30);doc.text('Mockup A',40,y);doc.text('Mockup B',40+colW+16,y);y+=10;const hA=addMock($('#mockCanvasA'),40,'');const hB=addMock($('#mockCanvasB'),40+colW+16,'');y+=Math.max(hA,hB)}else{if(haveA)addMock($('#mockCanvasA'),40,'Mockup A');if(haveB)addMock($('#mockCanvasB'),40,'Mockup B')}
-  doc.save(`${brand.toUpperCase().replace(/[^A-Z0-9]+/g,'_').slice(0,18)}_QUOTE_${(''+Date.now()).slice(-6)}.pdf`)
-}
-
+async function generatePDF(){const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:'pt',format:'letter'});const W=doc.internal.pageSize.getWidth();let y=40;const brand=($('#brandName').value||'').trim()||'Your Business';const logoUrl=($('#logoUrl').value||'').trim();async function toDataURL(url){try{const r=await fetch(url,{mode:'cors'});const b=await r.blob();return await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.readAsDataURL(b)})}catch(_){return null}}doc.setFillColor(88,101,242);doc.rect(0,0,W,64,'F');doc.setTextColor(255);doc.setFont('helvetica','bold');doc.setFontSize(14);doc.text(brand,60,38);doc.setFontSize(22);doc.text('ESTIMATE',W-140,40);doc.setFillColor(255,255,255);doc.circle(30,34,18,'F');if(logoUrl){const logo=await toDataURL(logoUrl);if(logo){try{doc.addImage(logo,'PNG',12,16,36,36)}catch(_){}}}y=82;doc.setTextColor(30);doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text('Date: '+new Date().toLocaleDateString(),40,y);doc.text('Quote #: Q'+Math.random().toString(36).slice(2,8).toUpperCase(),220,y);y+=20;const cName=$('#clientName').value||'';const cEmail=$('#clientEmail').value||'';const cPO=$('#clientPO').value||'';doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('Bill To',40,y);y+=14;doc.setFont('helvetica','normal');doc.setFontSize(10);if(cName){doc.text(cName,40,y);y+=12}if(cEmail){doc.text(cEmail,40,y);y+=12}if(cPO){doc.text('PO: '+cPO,40,y);y+=14}if(state.placements.length){doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text('Placements',40,y);y+=10;doc.setDrawColor(230);doc.line(40,y, W-40,y);y+=12;doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(80);const colX={loc:40,tech:210,size:320,colors:460};doc.text('Location',colX.loc,y);doc.text('Technique',colX.tech,y);doc.text('Size (W×H in)',colX.size,y);doc.text('Colors',colX.colors,y);y+=8;doc.setDrawColor(230);doc.line(40,y, W-40,y);y+=8;doc.setFont('helvetica','normal');doc.setTextColor(30);state.placements.forEach(p=>{const sizeStr=(p.width||0)+' × '+(p.height||0);doc.text(String(p.location||''),colX.loc,y);doc.text(String(p.technique||''),colX.tech,y);doc.text(sizeStr,colX.size,y);doc.text(p.technique==='Screen Print'?String(p.colors||1):'-',colX.colors,y);y+=16});y+=6}
+const IX={item:40,size:300,qty:380,unit:440,ext:520};doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(30);doc.text('Items',40,y);y+=10;doc.setDrawColor(230);doc.line(40,y, W-40,y);y+=12;doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(80);doc.text('Item',IX.item,y);doc.text('Size',IX.size,y);doc.text('Qty',IX.qty,y);doc.text('Unit',IX.unit,y);doc.text('Ext',IX.ext,y);y+=8;doc.setDrawColor(230);doc.line(40,y, W-40,y);y+=8;doc.setFont('helvetica','normal');doc.setTextColor(30);state.lines.forEach(line=>{const baseName=`${line.brandName||''} ${line.styleName||''} • ${line.colorName||''}`.trim();(line.units||[]).forEach((u,idx)=>{let rowY=y;if(idx===0){doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text(baseName,IX.item,rowY);if(line.styleTitle){doc.setFont('helvetica','normal');doc.setFontSize(9);doc.text(String(line.styleTitle),IX.item,rowY+12);rowY+=12}}doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text(String(u.size||''),IX.size,rowY);doc.text(String(u.qty||0),IX.qty,rowY);doc.text('$'+Number(u.unitPrice||0).toFixed(2),IX.unit,rowY);doc.text('$'+(Number(u.qty||0)*Number(u.unitPrice||0)).toFixed(2),IX.ext,rowY);y=rowY+16});y+=4});
+const deco=perPieceDecoration();const totals={qty:0,garmentCost:0};state.lines.forEach(line=>{const lineQty=(line.units||[]).reduce((a,b)=>a+Number(b.qty||0),0);const lineCost=(line.units||[]).reduce((s,u)=>s+Number(u.qty||0)*Number(u.unitPrice||0),0);totals.qty+=lineQty;totals.garmentCost+=lineCost});const markup=1+(Number($('#markupPct').value||state.settings.markupPct)/100);const garmentSell=totals.garmentCost*markup;const shipping=Number($('#shipping').value||0);const taxRate=Number($('#taxPct').value||0)/100;const garmentEaRaw=totals.qty?(garmentSell/totals.qty):0;const priceEaRaw=garmentEaRaw+(deco.perPiece||0);const rPPE=roundInc(priceEaRaw,0.25);const rSetup=roundInc(deco.setup||0,0.25);const rShipping=roundInc(shipping,0.25);const preTaxRounded=roundInc(rPPE*totals.qty,0.25)+rSetup+rShipping;const rTax=roundInc(preTaxRounded*taxRate,0.25);const rGrand=roundInc(preTaxRounded+rTax,0.25);const rGarmentSell=roundInc(garmentSell,0.25);const rDecoPer=roundInc(deco.perPiece||0,0.25);doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(30);doc.text('Totals',40,y);y+=10;const boxW=(W-80-16)/2;function totalRow(x,yy,label,val,accent){if(accent){doc.setFillColor(232,235,255)}else{doc.setFillColor(247,248,251)}doc.roundedRect(x,yy,boxW,28,6,6,'F');doc.setFont('helvetica','normal');doc.setTextColor(90);doc.setFontSize(10);doc.text(label,x+10,yy+18);doc.setFont('helvetica','bold');doc.setTextColor(accent?[88,101,242]:[20,20,20]);doc.setFontSize(accent?14:11);doc.text(val,x+boxW-10,yy+18,{align:'right'})}function fmt(n){return '$'+Number(n||0).toFixed(2)}totalRow(40,y,'Total Pieces',String(totals.qty));totalRow(40,y+34,'Garments (w/ markup)',fmt(rGarmentSell));totalRow(40,y+68,'Decoration per piece',fmt(rDecoPer));totalRow(40,y+102,'Screen setups',fmt(rSetup));totalRow(40+boxW+16,y,'Shipping',fmt(rShipping));totalRow(40+boxW+16,y+34,'Tax',fmt(rTax));totalRow(40+boxW+16,y+68,'Grand Total',fmt(rGrand),true);y+=140;const addMock=(canvas,x,label)=>{if(!canvas||!canvas.width||!canvas.height)return 0;doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(30);if(label)doc.text(label,x,y);if(label)y+=10;const colW=(W-80-16)/2;const w=(x>40?colW:W-80);const scale=Math.min(1,w/canvas.width);const h=canvas.height*scale;doc.addImage(canvas.toDataURL('image/png'),'PNG',x,y,w,h);y+=h+10;return h};const haveA=$('#mockCanvasA').width>0&&$('#mockCanvasA').height>0;const haveB=$('#mockCanvasB').width>0&&$('#mockCanvasB').height>0;if(haveA&&haveB){const colW=(W-80-16)/2;doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(30);doc.text('Mockup A',40,y);doc.text('Mockup B',40+colW+16,y);y+=10;const hA=addMock($('#mockCanvasA'),40,'');const hB=addMock($('#mockCanvasB'),40+colW+16,'');y+=Math.max(hA,hB)}else{if(haveA)addMock($('#mockCanvasA'),40,'Mockup A');if(haveB)addMock($('#mockCanvasB'),40,'Mockup B')}doc.save(`${brand.toUpperCase().replace(/[^A-Z0-9]+/g,'_').slice(0,18)}_QUOTE_${(''+Date.now()).slice(-6)}.pdf`)}
 function composeEmail(){const brand=($('#brandName').value||'').trim()||'Your Business';const to=($('#clientEmail').value||'').trim();const subject=encodeURIComponent(`${brand} estimate`);const body=encodeURIComponent('Hi, attaching your quote.');window.location.href=`mailto:${to}?subject=${subject}&body=${body}`}
 function shareUrl(){const payload={settings:state.settings,client:state.client,brand:state.brand,placements:state.placements,lines:state.lines};const s=btoa(unescape(encodeURIComponent(JSON.stringify(payload))));const url=location.origin+location.pathname+'#'+s;navigator.clipboard.writeText(url);$('#saveInfo').textContent='Copied link to clipboard'}
 function restoreFromHash(){if(location.hash.length>1){try{const s=location.hash.slice(1);const obj=JSON.parse(decodeURIComponent(escape(atob(s))));Object.assign(state.settings,obj.settings||{});state.client=obj.client||state.client;state.brand=obj.brand||state.brand;state.placements=obj.placements||[];state.lines=obj.lines||[];$('#brandName').value=state.brand.name||'';$('#logoUrl').value=state.brand.logo||'';renderPlacements();renderLines();calcTotals();populateMockLineOptions()}catch(_){}}}
-function bind(){
-  $('#btnSearch').onclick=onSearch;$('#searchInput').onkeydown=e=>{if(e.key==='Enter')onSearch()};
-  ['#brandFilter','#styleFilter','#colorFilter','#sizeFilter','#sortField','#sortDir'].forEach(id=>$(id).onchange=()=>{state.catalogPage.page=1;refreshCatalogDisplay()});
-  ['#spSetup','#spRun','#markupPct','#taxPct','#shipping'].forEach(id=>$(id).oninput=calcTotals);
-  $('#btnAddPlacement').onclick=addPlacement;$('#btnExport').onclick=generatePDF;$('#btnEmail').onclick=composeEmail;$('#btnShare').onclick=shareUrl;$('#btnNew').onclick=()=>{state.lines=[];state.placements=[];renderLines();renderPlacements();calcTotals();populateMockLineOptions()};
-  const pager=$('#pager');if(pager){$('#btnPrevPage').onclick=()=>setPage(state.catalogPage.page-1);$('#btnNextPage').onclick=()=>setPage(state.catalogPage.page+1);$('#pageSize').onchange=()=>{state.catalogPage.size=Number($('#pageSize').value||20);state.catalogPage.page=1;refreshCatalogDisplay()}};
-  const reset=$('#btnReset');if(reset){reset.onclick=()=>{$('#searchInput').value='';['#brandFilter','#styleFilter','#colorFilter','#sizeFilter'].forEach(id=>{const el=$(id);if(el)el.value=''});$('#sortField').value='brandName';$('#sortDir').value='asc';state.catalogOriginal=[];state.catalogFiltered=[];$('#results').innerHTML='';if($('#pager'))$('#pager').style.display='none';const ls=$('#loadStatus');if(ls){ls.style.display='none';ls.textContent=''}}}
-  ;['A','B'].forEach(which=>{$('#mockLine'+which).onchange=()=>setStageBase(which);$('#mockSide'+which).onchange=()=>setStageBase(which);$('#mockGarmentUrl'+which).onchange=()=>setStageBase(which);$('#btnCenter'+which+which).onclick=()=>centerOverlays(which);$('#btnExportPng'+which).onclick=()=>{const c=$('#mockCanvas'+which);if(!c.width)return;const a=document.createElement('a');a.download=`mock_${which}.png`;a.href=c.toDataURL('image/png');a.click()};$('#ovFile'+which).onchange=e=>{const f=e.target.files?.[0];if(f)addOverlayFile(which,f)};$('#btnAddUrl'+which).onclick=()=>{const url=$('#ovUrl'+which).value.trim();if(url)addOverlayUrl(which,url)}});
-  window.addEventListener('resize',debounce(()=>{drawStage('A');drawStage('B')},150))
-}
-
+function bind(){$('#btnSearch').onclick=onSearch;$('#searchInput').onkeydown=e=>{if(e.key==='Enter')onSearch()};['#brandFilter','#styleFilter','#colorFilter','#sizeFilter','#sortField','#sortDir'].forEach(id=>$(id).onchange=()=>{state.catalogPage.page=1;refreshCatalogDisplay()});['#dtfRate','#wastePct','#spSetup','#spRun','#markupPct','#taxPct','#shipping'].forEach(id=>$(id).oninput=calcTotals);$('#btnAddPlacement').onclick=addPlacement;$('#btnExport').onclick=generatePDF;$('#btnEmail').onclick=composeEmail;$('#btnShare').onclick=shareUrl;$('#btnNew').onclick=()=>{state.lines=[];state.placements=[];renderLines();renderPlacements();calcTotals();populateMockLineOptions()};const pager=$('#pager');if(pager){$('#btnPrevPage').onclick=()=>setPage(state.catalogPage.page-1);$('#btnNextPage').onclick=()=>setPage(state.catalogPage.page+1);$('#pageSize').onchange=()=>{state.catalogPage.size=Number($('#pageSize').value||20);state.catalogPage.page=1;refreshCatalogDisplay()}}const reset=$('#btnReset');if(reset){reset.onclick=()=>{$('#searchInput').value='';['#brandFilter','#styleFilter','#colorFilter','#sizeFilter'].forEach(id=>{const el=$(id);if(el)el.value=''});$('#sortField').value='brandName';$('#sortDir').value='asc';state.catalogOriginal=[];state.catalogFiltered=[];$('#results').innerHTML='';if($('#pager'))$('#pager').style.display='none';const ls=$('#loadStatus');if(ls){ls.style.display='none';ls.textContent=''}}}['A','B'].forEach(which=>{$('#mockLine'+which).onchange=()=>setStageBase(which);$('#mockSide'+which).onchange=()=>setStageBase(which);$('#mockGarmentUrl'+which).onchange=()=>setStageBase(which);$('#btnCenter'+which+which).onclick=()=>centerOverlays(which);$('#btnExportPng'+which).onclick=()=>{const c=$('#mockCanvas'+which);if(!c.width)return;const a=document.createElement('a');a.download=`mock_${which}.png`;a.href=c.toDataURL('image/png');a.click()};$('#ovFile'+which).onchange=e=>{const f=e.target.files?.[0];if(f)addOverlayFile(which,f)};$('#btnAddUrl'+which).onclick=()=>{const url=$('#ovUrl'+which).value.trim();if(url)addOverlayUrl(which,url)}});window.addEventListener('resize',debounce(()=>{drawStage('A');drawStage('B')},150))}
 document.addEventListener('DOMContentLoaded',()=>{bind();restoreFromHash();calcTotals()});
-
 console.groupCollapsed('Dev tests');
 console.assert(priceMultiplier(11)===2.5,'tier 11');
 console.assert(priceMultiplier(12)===1.0,'tier 12');
