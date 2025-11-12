@@ -89,7 +89,14 @@ label{font-size:12px;color:rgb(var(--muted))}
     <div class="row" style="margin-top:10px">
       <div class="field" style="flex:2">
         <label>Search catalog</label>
-        <input id="searchInput" placeholder="Search by brand, style, color, sku, etc." />
+        <input id="searchInput" placeholder="Search catalog..." />
+<select id="supplierSelect">
+  <option value="sns" selected>S&S</option>
+  <option value="sanmar">SanMar</option>
+</select>
+<button onclick="searchCatalog()">Search</button>
+
+<div id="results"></div>
       </div>
       <div class="field" style="max-width:120px">
         <label>&nbsp;</label>
@@ -502,6 +509,40 @@ console.assert(roundInc(6.29,0.25)===6.25,'round .25 a');
 console.assert(roundInc(10.97,0.25)===11.0,'round .25 b');
 console.assert(roundInc(10.88,0.25)===10.75,'round .25 c');
 console.groupEnd();
+  async function searchCatalog() {
+    const query = document.querySelector("#searchInput").value;
+    const supplier = document.querySelector("#supplierSelect").value;
+
+    try {
+      const res = await fetch(`/api/catalog?supplier=${supplier}&query=${encodeURIComponent(query)}`);
+      const products = await res.json();
+      
+      const container = document.querySelector("#results");
+      container.innerHTML = "";
+
+      if (products.length === 0) {
+        container.innerHTML = "<p>No products found.</p>";
+        return;
+      }
+
+      // Render simple cards
+      products.forEach(p => {
+        const card = document.createElement("div");
+        card.className = "product-card";
+        card.innerHTML = `
+          <h3>${p.brand} — ${p.style}</h3>
+          <p>${p.color} • ${p.size}</p>
+          <p><strong>$${p.price}</strong></p>
+          <img src="${p.imageFront}" alt="${p.style}" width="100" />
+          <small>Source: ${p.provider}</small>
+        `;
+        container.appendChild(card);
+      });
+    } catch (err) {
+      console.error("Fetch error:", err);
+    }
+  }
+
 </script>
 </body>
 </html>
